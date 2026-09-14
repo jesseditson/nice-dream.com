@@ -1,0 +1,7 @@
+upload_prefix = "d231569e7d76945fac8ab0c65c351c8e6ff1e1a5278ee13fc6e4699fece0ba8f/"
+site_url = "https://nice-dream.com"
+
+[metadata]
+source_template_ref = "heads/minimal"
+source_template_sha = "2a69d3b1998432dd8b3a2501013576170f57805d"
+source_template_repo = "archival-website"

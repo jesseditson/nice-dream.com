@@ -1,1 +1,12 @@
-{% layout 'theme' title: "Archival Website" %}
+{% layout 'theme' title: objects.site.name %}
+
+<h1>
+  {{ objects.site.name }}
+</h1>
+
+<div class="content">
+  {% for section in objects.section %}
+    <h2>{{ section.name }}</h2>
+    <div>{{ section.body }}</div>
+  {% endfor %}
+</div>
