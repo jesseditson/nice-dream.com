@@ -1,0 +1,6 @@
+# Archival
+dist
+bin/tmp
+
+# MacOS
+.DS_Store
