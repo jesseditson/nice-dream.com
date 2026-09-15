@@ -1,0 +1,36 @@
+body = """
+<p style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    <strong>A bit about us:</strong>
+</p>
+<p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    Nice Dream is the latest chapter of Nice Dream Ices — the beloved Joshua Tree Farmers Market
+    booth offering hyper- seasonal, peak-produce-driven ice creams &amp; sorbets.
+</p>
+<p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    With the founding of Nice Dream Ices, it was Coral and Trevor’s nice dream (get it) to return
+    the sweetness they found to their newfound desert community. It remains our goal to this day —
+    to bring lightness, joy, and care to someone else’s day.
+</p>
+<p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    At our flagship location, we now also offer multi-roaster coffee &amp; multi-varietal matcha
+    programs, local &amp; heirloom grain-focused pastries, sustainably-sourced seafood-driven
+    lunch &amp; dinner menus with Japanese aesthetics and Californian sensibilities, and a
+    cocktail bar that will change everything you knew to be true about cocktails. Whew, what a
+    mouthful.
+</p>
+<p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    TL;DR — technique 🤝 seasonality.
+</p>
+<p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    Thoughtful sourcing and cooking with the seasons remains at the heart of everything we do at
+    Nice Dream. We can only pull off great food and drink magic because of our amazing partners:
+    Gaytan Family Farms, Nest Farm, T&amp;D Farms, JH Family Ranch, Wong Farms, Sea Stephanie
+    Fish, Browne Trading, The Rice Factory, Dorothea Coffee, Push x Pull, Little Wolf Coffee, Botz
+    Coffee, Sey Coffee, April Coffee Roasters, Kettl Tea, Moka Origins, Heilala Vanilla, Central
+    Milling, and Tehachapi Grain Project.
+</p>
+<p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
+    <em>For general inquiries, please email </em
+    ><a target="_blank" href="index.html"><em>hello@nice-dream.com</em></a>
+</p>
+"""

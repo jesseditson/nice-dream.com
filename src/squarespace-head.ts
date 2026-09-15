@@ -15,7 +15,7 @@
   register("squarespace-common_vendors", "js", `/assets.squarespace.com/universal/scripts-compressed/common-vendors-5001a530f667e618-min.en-US.js`);
   register("squarespace-common", "js", `/assets.squarespace.com/universal/scripts-compressed/common-2bc931760ea9e232-min.en-US.js`);
   register("squarespace-user_account_core", "js", `/assets.squarespace.com/universal/scripts-compressed/user-account-core-cab31650bcf3b4ec-min.en-US.js`);
-  register("squarespace-user_account_core", "css", `/assets.squarespace.com/universal/styles-compressed/user-account-core-bd42ce75d5951748-min.en-US.css`);
+  register("squarespace-user_account_core", "css", `/css/user-account-core-bd42ce75d5951748-min.en-US.css`);
   register("squarespace-performance", "js", `/assets.squarespace.com/universal/scripts-compressed/performance-${performanceHash}-min.en-US.js`);
 
   Static.COOKIE_BANNER_CAPABLE = true;

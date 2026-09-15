@@ -2,7 +2,11 @@
 
 [site]
 name = "string"
+instagram_link = "string"
+substack_link = "string"
 
-[section]
-name = "string"
+[home]
+body = "markdown"
+
+[about]
 body = "markdown"
