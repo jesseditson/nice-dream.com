@@ -82,7 +82,7 @@
 /* ── FONTS ─────────────────────────────────────────────────────── */
 @font-face {
   font-family: 'Perrrot';
-  src: url('/fonts/sushi-reservations/perrrot.otf') format('opentype');
+  src: url('/fonts/perrrot.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

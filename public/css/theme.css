@@ -10,10 +10,15 @@
     }
 }
 
-.top-bun, 
-.patty, 
+.top-bun,
+.patty,
 .bottom-bun {
   height: 1px;
+}
+
+.sqs-block-html .sqs-html-content .sqsrte-text-highlight a:is(:link, :visited, :hover, :active) {
+  text-decoration: underline wavy 0.1em;
+  text-underline-offset: 0.25em;
 }
 
 .fe-68f2c7f4f8c75a590c3a2c8c {
