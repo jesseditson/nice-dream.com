@@ -1,0 +1,1 @@
+{% assign time_parts = time | split: ":" %}{% assign time_hour = time_parts[0] | plus: 0 %}{% assign time_hour12 = time_hour | modulo: 12 %}{% if time_hour12 == 0 %}{% assign time_hour12 = 12 %}{% endif %}{{ time_hour12 }}{% if time_parts[1] != "00" %}:{{ time_parts[1] }}{% endif %}{% if time_hour < 12 %}am{% else %}pm{% endif %}

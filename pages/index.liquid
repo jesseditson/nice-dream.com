@@ -370,30 +370,17 @@
                       </script>
 
                       <div class="sqs-html-content" data-sqsp-text-block-content>
-                        <h4 style="white-space:pre-wrap;" data-rte-preserve-empty="true">Nice Dream</h4>
+                        <h4 style="white-space:pre-wrap;" data-rte-preserve-empty="true">{{ business.name }}</h4>
                         <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
-                          56778 29 Palms Highway Yucca Valley, CA 92284
+                          {{ business.street_address }} {{ business.locality }}, {{ business.region }} {{ business.postal_code }}
                         </p>
+                        {% for hours in business.hours %}
                         <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
-                          Thursday 8am-9pm
+                          {{ hours.label }} {% if hours.opens == "" %}CLOSED{% else %}{% include 'hours_time', time: hours.opens %}-{% include 'hours_time', time: hours.closes %}{% endif %}
                         </p>
+                        {% endfor %}
                         <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
-                          Friday &amp; Saturday 8am-9pm
-                        </p>
-                        <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
-                          Sunday 8am-4pm
-                        </p>
-                        <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
-                          Mon-Wed CLOSED
-                        </p>
-                        <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
-                          <em
-                            >Coffee &amp; tea, pastries, and ice cream are served all day. Lunch service runs 11am -
-                            3pm; dinner service runs 5:30 - 9pm (last seating 8pm). Reservations for dinner are not
-                            required, but strongly encouraged. </em
-                          ><a href="sushi-reservations.html"
-                            ><strong><em>Book here</em></strong></a
-                          ><em>.</em>
+                          {{ business.hours_note }}
                         </p>
                         <p class="sqsrte-small" style="white-space:pre-wrap;" data-rte-preserve-empty="true">
                           <span

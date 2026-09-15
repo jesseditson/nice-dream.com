@@ -10,3 +10,26 @@ body = "markdown"
 
 [about]
 body = "markdown"
+
+[sample_menu]
+menu = "upload"
+
+[business]
+name = "string"
+description = "string"
+street_address = "string"
+locality = "string"
+region = "string"
+postal_code = "string"
+country = "string"
+phone = "string"
+cuisine = "string"
+price_range = "string"
+hours_note = "string"
+
+# days uses schema.org openingHours shorthand (Mo Tu We Th Fr Sa Su, ranges like Fr-Sa); opens/closes are 24h HH:MM, blank opens means closed
+[business.hours]
+label = "string"
+days = "string"
+opens = "string"
+closes = "string"
