@@ -11,3 +11,6 @@ bin/tmp
 # npm/node
 node_modules
 npm-debug.log*
+
+# Compiled from src/scripts
+public/js

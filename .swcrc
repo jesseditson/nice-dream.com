@@ -1,0 +1,10 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  "isModule": false,
+  "jsc": {
+    "parser": {
+      "syntax": "typescript"
+    },
+    "target": "es2020"
+  }
+}

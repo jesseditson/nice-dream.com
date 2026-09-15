@@ -1,5 +1,6 @@
 upload_prefix = "d231569e7d76945fac8ab0c65c351c8e6ff1e1a5278ee13fc6e4699fece0ba8f/"
 site_url = "https://nice-dream.com"
+prebuild = ["npm ci", "npm run build"]
 
 [metadata]
 source_template_ref = "heads/minimal"
