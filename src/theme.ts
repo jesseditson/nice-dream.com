@@ -40,7 +40,7 @@
   const animateContent = async () => {
     const targets = Array.from(document.body.querySelectorAll<HTMLElement>(ANIMATED_SELECTOR)).filter(isAnimatable);
     targets.forEach((element) => element.classList.add("preFade"));
-    // Clears the static.css `hideContent` animation that keeps the page invisible until boot.
+    // Clears the site.css `hideContent` animation that keeps the page invisible until boot.
     document.body.dataset.animationState = "booted";
 
     await nextFrame();

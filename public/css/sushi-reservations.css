@@ -1,35 +1,34 @@
 .fe-6a1e4da62319877274021f84 {
-  --grid-gutter: calc(var(--sqs-mobile-site-gutter, 6vw) - 11.0px);
-  --cell-max-width: calc( ( var(--sqs-site-max-width, 1500px) - (11.0px * (8 - 1)) ) / 8 );
+  --grid-gutter: calc(var(--sqs-mobile-site-gutter, 6vw) - 11px);
+  --cell-max-width: calc((var(--sqs-site-max-width, 1500px) - (11px * (8 - 1))) / 8);
 
   display: grid;
   position: relative;
   grid-area: 1/1/-1/-1;
-  grid-template-rows: repeat(6,minmax(24px, auto));
+  grid-template-rows: repeat(6, minmax(24px, auto));
   grid-template-columns:
     minmax(var(--grid-gutter), 1fr)
     repeat(8, minmax(0, var(--cell-max-width)))
     minmax(var(--grid-gutter), 1fr);
-  row-gap: 11.0px;
-  column-gap: 11.0px;
+  row-gap: 11px;
+  column-gap: 11px;
   overflow-x: hidden;
   overflow-x: clip;
 }
 
 @media (min-width: 768px) {
-  .background-width--inset .fe-6a1e4da62319877274021f84 {
-    --inset-padding: calc(var(--sqs-site-gutter) * 2);
-  }
-
   .fe-6a1e4da62319877274021f84 {
-    --grid-gutter: calc(var(--sqs-site-gutter, 4vw) - 11.0px);
-    --cell-max-width: calc( ( var(--sqs-site-max-width, 1500px) - (11.0px * (24 - 1)) ) / 24 );
+    --grid-gutter: calc(var(--sqs-site-gutter, 4vw) - 11px);
+    --cell-max-width: calc((var(--sqs-site-max-width, 1500px) - (11px * (24 - 1))) / 24);
     --inset-padding: 0vw;
 
     --row-height-scaling-factor: 0.0215;
-    --container-width: min(var(--sqs-site-max-width, 1500px), calc(100vw - var(--sqs-site-gutter, 4vw) * 2 - var(--inset-padding) ));
+    --container-width: min(
+      var(--sqs-site-max-width, 1500px),
+      calc(100vw - var(--sqs-site-gutter, 4vw) * 2 - var(--inset-padding))
+    );
 
-    grid-template-rows: repeat(40,minmax(calc(var(--container-width) * var(--row-height-scaling-factor)), auto));
+    grid-template-rows: repeat(40, minmax(calc(var(--container-width) * var(--row-height-scaling-factor)), auto));
     grid-template-columns:
       minmax(var(--grid-gutter), 1fr)
       repeat(24, minmax(0, var(--cell-max-width)))
@@ -37,17 +36,23 @@
   }
 }
 
+.fe-block-yui_3_17_2_1_1780370817547_489 {
+  grid-area: 1/2/7/10;
+  z-index: 1;
+}
 
+.fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block {
+  justify-content: flex-start;
+}
+
+.fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block-alignment-wrapper {
+  align-items: flex-start;
+}
+
+@media (min-width: 768px) {
   .fe-block-yui_3_17_2_1_1780370817547_489 {
-    grid-area: 1/2/7/10;
+    grid-area: 1/9/38/20;
     z-index: 1;
-
-    @media (max-width: 767px) {
-
-
-
-
-    }
   }
 
   .fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block {
@@ -57,49 +62,35 @@
   .fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block-alignment-wrapper {
     align-items: flex-start;
   }
-
-  @media (min-width: 768px) {
-    .fe-block-yui_3_17_2_1_1780370817547_489 {
-      grid-area: 1/9/38/20;
-      z-index: 1;
-
-
-
-
-
-
-    }
-
-    .fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block {
-      justify-content: flex-start;
-    }
-
-    .fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block-alignment-wrapper {
-      align-items: flex-start;
-    }
-  }
+}
 
 /* ── FONTS ─────────────────────────────────────────────────────── */
 @font-face {
-  font-family: 'Perrrot';
-  src: url('/fonts/perrrot.otf') format('opentype');
+  font-family: "Perrrot";
+  src: url("/fonts/perrrot.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 /* ── RESET ─────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 /* ── TOKENS ────────────────────────────────────────────────────── */
 :root {
-  --ink:    #161410;        /* hand-drawn black */
+  --ink: #161410; /* hand-drawn black */
   --ink-70: #4a463f;
   --ink-50: #76716a;
   --ink-30: #a8a299;
-  --paper:  #ffffff;        /* white backdrop */
-  --sheet:  #ffffff;        /* white card */
-  --line:   #161410;
+  --paper: #ffffff; /* white backdrop */
+  --sheet: #ffffff; /* white card */
+  --line: #161410;
 }
 
 /* ── BASE ──────────────────────────────────────────────────────── */
@@ -112,7 +103,7 @@ html {
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: 'Nunito', 'Avenir Next', 'Avenir', sans-serif;
+  font-family: "Nunito", "Avenir Next", "Avenir", sans-serif;
   min-height: 100vh;
   padding: 40px 20px 72px;
   display: flex;
@@ -121,7 +112,7 @@ body {
 
 /* faint dotted texture */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -168,20 +159,11 @@ body::before {
 }
 
 .nd-title {
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 40px;
-  line-height: 1.0;
+  line-height: 1;
   letter-spacing: 0.01em;
   color: var(--ink);
-}
-
-.nd-eyebrow {
-  font-family: 'Perrrot', 'Nunito', sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: var(--ink-50);
-  margin-bottom: 12px;
 }
 
 /* hand-drawn wavy divider */
@@ -207,7 +189,9 @@ body::before {
   text-decoration-thickness: 1.5px;
 }
 
-.nd-blurb a:hover { opacity: 0.55; }
+.nd-blurb a:hover {
+  opacity: 0.55;
+}
 
 .nd-blurb-note {
   font-size: 13px;
@@ -229,10 +213,14 @@ body::before {
   background: var(--sheet);
   color: var(--ink);
   text-decoration: none;
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 17px;
   letter-spacing: 0.02em;
-  transition: transform 0.1s ease, box-shadow 0.12s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.12s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .nd-menu-link:hover {
@@ -256,11 +244,13 @@ body::before {
 }
 
 /* ── FORM FIELDS ───────────────────────────────────────────────── */
-.nd-field { margin-bottom: 24px; }
+.nd-field {
+  margin-bottom: 24px;
+}
 
 .nd-label {
   display: block;
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 19px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -269,7 +259,7 @@ body::before {
 }
 
 .nd-label .nd-optional {
-  font-family: 'Nunito', 'Avenir Next', sans-serif;
+  font-family: "Nunito", "Avenir Next", sans-serif;
   font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--ink-30);
@@ -282,7 +272,7 @@ body::before {
 .nd-select,
 .nd-textarea {
   width: 100%;
-  font-family: 'Nunito', 'Avenir Next', 'Avenir', sans-serif;
+  font-family: "Nunito", "Avenir Next", "Avenir", sans-serif;
   font-size: 14.5px;
   color: var(--ink);
   background: var(--sheet);
@@ -292,11 +282,15 @@ body::before {
   outline: none;
   appearance: none;
   -webkit-appearance: none;
-  transition: box-shadow 0.12s ease, border-color 0.12s ease;
+  transition:
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
 }
 
 .nd-input::placeholder,
-.nd-textarea::placeholder { color: var(--ink-30); }
+.nd-textarea::placeholder {
+  color: var(--ink-30);
+}
 
 .nd-input:focus,
 .nd-select:focus,
@@ -340,7 +334,9 @@ body::before {
   background: #fdeef3;
 }
 
-.nd-field-error.visible { display: block; }
+.nd-field-error.visible {
+  display: block;
+}
 
 /* ── CONTACT PREFERENCE TOGGLES ────────────────────────────────── */
 /* radios are hidden direct children of .nd-contact-group; the pill
@@ -365,23 +361,31 @@ body::before {
   margin-top: 4px;
   border: 1.5px solid var(--line);
   border-radius: 11px;
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 16px;
   letter-spacing: 0.04em;
   color: var(--ink);
   background: var(--sheet);
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.12s ease;
   user-select: none;
 }
 
-.nd-pill-b { margin-left: 8px; }
+.nd-pill-b {
+  margin-left: 8px;
+}
 
-.nd-toggle-pill:hover { box-shadow: 3px 3px 0 var(--ink); }
+.nd-toggle-pill:hover {
+  box-shadow: 3px 3px 0 var(--ink);
+}
 
 /* Pure-CSS checked state — sibling radio selected highlights its pill */
 #nd-pref-email:checked ~ .nd-pill-a,
-#nd-pref-sms:checked   ~ .nd-pill-b {
+#nd-pref-sms:checked ~ .nd-pill-b {
   background: var(--ink);
   color: var(--sheet);
   box-shadow: none;
@@ -392,8 +396,12 @@ body::before {
   margin-top: 16px;
   display: none;
 }
-#nd-pref-email:checked ~ #nd-email-field { display: block; }
-#nd-pref-sms:checked   ~ #nd-phone-field { display: block; }
+#nd-pref-email:checked ~ #nd-email-field {
+  display: block;
+}
+#nd-pref-sms:checked ~ #nd-phone-field {
+  display: block;
+}
 
 /* ── NEWSLETTER CHECKBOX ───────────────────────────────────────── */
 .nd-newsletter-label {
@@ -418,10 +426,12 @@ body::before {
   position: relative;
 }
 
-.nd-newsletter-label input[type="checkbox"]:checked { background: var(--ink); }
+.nd-newsletter-label input[type="checkbox"]:checked {
+  background: var(--ink);
+}
 
 .nd-newsletter-label input[type="checkbox"]:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 6px;
   top: 2px;
@@ -434,7 +444,7 @@ body::before {
 }
 
 .nd-newsletter-text {
-  font-family: 'Nunito', 'Avenir Next', sans-serif;
+  font-family: "Nunito", "Avenir Next", sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: var(--ink-70);
@@ -443,7 +453,7 @@ body::before {
 /* ── SUBMIT ────────────────────────────────────────────────────── */
 .nd-submit {
   width: 100%;
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 22px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -453,9 +463,13 @@ body::before {
   border-radius: 13px;
   padding: 15px;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, color 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background 0.15s ease,
+    color 0.15s ease;
   margin-top: 6px;
-  box-shadow: 4px 4px 0 rgba(22,20,16,0.25);
+  box-shadow: 4px 4px 0 rgba(22, 20, 16, 0.25);
 }
 
 .nd-submit:hover {
@@ -470,7 +484,9 @@ body::before {
 }
 
 /* ── CONFIRMATION PAGE ─────────────────────────────────────────── */
-#nd-confirmation { display: none; }
+#nd-confirmation {
+  display: none;
+}
 
 .nd-confirm-dog {
   width: 168px;
@@ -480,7 +496,7 @@ body::before {
 }
 
 .nd-confirm-title {
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 38px;
   line-height: 1.05;
   color: var(--ink);
@@ -495,7 +511,10 @@ body::before {
   margin-bottom: 12px;
 }
 
-.nd-confirm-body strong { color: var(--ink); font-weight: 800; }
+.nd-confirm-body strong {
+  color: var(--ink);
+  font-weight: 800;
+}
 
 .nd-confirm-note {
   font-size: 13px;
@@ -525,7 +544,7 @@ body::before {
 .nd-footmark {
   text-align: center;
   margin-top: 22px;
-  font-family: 'Perrrot', 'Nunito', sans-serif;
+  font-family: "Perrrot", "Nunito", sans-serif;
   font-size: 13px;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -534,21 +553,24 @@ body::before {
 
 /* ── RESPONSIVE ────────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  body { padding: 24px 14px 52px; }
-  .nd-sheet { padding: 32px 24px 30px; border-radius: 16px; box-shadow: 5px 6px 0 rgba(22,20,16,0.9); }
-  .nd-title { font-size: 33px; }
-  .nd-confirm-title { font-size: 31px; }
+  body {
+    padding: 24px 14px 52px;
+  }
+  .nd-sheet {
+    padding: 32px 24px 30px;
+    border-radius: 16px;
+    box-shadow: 5px 6px 0 rgba(22, 20, 16, 0.9);
+  }
+  .nd-title {
+    font-size: 33px;
+  }
+  .nd-confirm-title {
+    font-size: 31px;
+  }
 }
 
 .fe-block-yui_3_17_2_1_1780370817547_489 {
   --opacity: 100%;
-  --translate-x: 0px;
-  --translate-y: 0px;
-  --rotation: 0deg;
-  --scale-x: 100%;
-  --scale-y: 100%;
-  --skew-x: 0deg;
-  --skew-y: 0deg;
   --origin-x: 50%;
   --origin-y: 50%;
   --block-transform: none;

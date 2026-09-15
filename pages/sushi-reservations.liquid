@@ -1,14 +1,9 @@
-{% capture components %}
-<link rel="stylesheet" type="text/css" href="/css/website.components.code.styles.css"/>
-<link rel="stylesheet" type="text/css" href="/css/website.components.html.styles.css"/>
-{% endcapture %}
 {%
   layout 'theme'
   , title: 'Sushi Reservations — Nice Dream'
   , page: 'sushi-reservations'
   , collection_id: '6a1e4d804c523c68c922bfed'
   , stylesheet: '/css/sushi-reservations.css'
-  , components: components
 %}
 
 <article
@@ -89,8 +84,6 @@
               <div class="fe-block fe-block-yui_3_17_2_1_1780370817547_489">
                 <div
                   class="sqs-block website-component-block sqs-block-website-component sqs-block-code code-block"
-                  data-block-css="[&quot;/css/website.components.code.styles.css&quot;]"
-                  data-block-scripts="[&quot;/js/website.components.code.visitor.js&quot;]"
                   data-block-type="1337"
                   data-definition-name="website.components.code"
                   data-sqsp-block="code"
@@ -143,7 +136,7 @@
 
                             <a
                               class="nd-menu-link"
-                              href="https://static1.squarespace.com/static/6140f1a0f496ab080247496c/t/6a1df782683f532561b51a20/1780348802446/Nice+Dream+Dinner+Menu.pdf"
+                              href="{{sample_menus | where: "slug", "sushi" | map: "url" | first }}"
                               target="_blank"
                               rel="noopener"
                             >

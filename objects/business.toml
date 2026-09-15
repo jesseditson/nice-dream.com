@@ -6,9 +6,7 @@ region = "CA"
 postal_code = "92284"
 country = "US"
 phone = "+1 760-239-7919"
-# free text, e.g. "Japanese, Californian"
 cuisine = ""
-# dollar signs ("$" to "$$$$") or a range like "$15-40"
 price_range = ""
 hours_note = '<em>Coffee &amp; tea, pastries, and ice cream are served all day. Lunch service runs 11am - 3pm; dinner service runs 5:30 - 9pm (last seating 8pm). Reservations for dinner are not required, but strongly encouraged. </em><a href="sushi-reservations.html"><strong><em>Book here</em></strong></a><em>.</em>'
 
