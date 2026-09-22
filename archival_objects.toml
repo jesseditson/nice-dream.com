@@ -1,13 +1,5 @@
 # This file is used to define the objects available on your site.
 
-[site]
-name = "string"
-instagram_link = "string"
-substack_link = "string"
-
-[home]
-body = "markdown"
-
 [about]
 body = "markdown"
 
