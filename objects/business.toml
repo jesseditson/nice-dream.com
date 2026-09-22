@@ -12,12 +12,12 @@ hours_note = '<em>Coffee &amp; tea, pastries, and ice cream are served all day. 
 
 [[hours]]
 closes = "21:00"
-days = "Th"
-label = "Thursday"
+days = "Th-Sa"
+label = "Thursday-Saturday"
 opens = "08:00"
 
 [[hours]]
-closes = "21:00"
-days = "Fr-Sa"
-label = "Friday & Saturday"
-opens = "08:00"
+closes = "16:00"
+days = "Su"
+label = "Sunday"
+opens = "8:00"
