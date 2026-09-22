@@ -1,5 +1,5 @@
 (() => {
-  const header = document.getElementById("header");
+  const header = document.querySelector<HTMLElement>(".site-header");
   if (!header) {
     return;
   }

@@ -6,40 +6,21 @@
     "h4",
     "h5",
     "p",
-    "footer .sqs-block-content",
-    '[data-animation-role="image"]:not([data-animation-override])',
-    '[data-animation-role="button"]',
-    '[data-animation-role="header-element"]',
-    '[data-animation-role="content"]',
-    '[data-animation-role="date"]',
-    '[data-animation-role="section"]',
-    '[data-animation-role="quote"]:not([data-animation-override])',
-    '[data-animation-role="video"]',
-    ".list-item-basic-animation",
-    ".list-item-rich-animation",
-    ".sqs-block-marquee",
-    ".sqs-block-accordion",
-    ".sqs-block.sqs-background-enabled",
-    ".sqs-block-shape",
+    "footer .block__content",
+    '[data-animate="image"]',
+    '[data-animate="header-element"]',
   ].join(",");
   const ANIMATION_DURATION = "0.90s";
   const ANIMATION_STAGGER_SECONDS = 0.6;
 
   const FOCUSABLE_SELECTOR =
     'input,select,textarea,a[href],button,[tabindex],audio[controls],video[controls],[contenteditable]:not([contenteditable="false"]),iframe';
-  const SECTION_THEMES = ["white", "white-bold", "light", "light-bold", "dark", "dark-bold", "black", "black-bold", "bright", "bright-inverse"];
 
   const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
-  const isAnimatable = (element: Element) =>
-    !element.closest("[data-has-block-animations]") &&
-    !element.querySelector("[data-has-block-animations]") &&
-    !element.closest(".image-block-outer-wrapper")?.querySelector("[data-animation-override]") &&
-    !element.closest(".form-wrapper.hidden, .Marquee-measure");
-
   const animateContent = async () => {
-    const targets = Array.from(document.body.querySelectorAll<HTMLElement>(ANIMATED_SELECTOR)).filter(isAnimatable);
-    targets.forEach((element) => element.classList.add("preFade"));
+    const targets = Array.from(document.body.querySelectorAll<HTMLElement>(ANIMATED_SELECTOR));
+    targets.forEach((element) => element.classList.add("reveal"));
     // Clears the site.css `hideContent` animation that keeps the page invisible until boot.
     document.body.dataset.animationState = "booted";
 
@@ -54,7 +35,7 @@
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("fadeIn");
+          entry.target.classList.add("reveal--visible");
           observer.unobserve(entry.target);
         }
       });
@@ -89,40 +70,32 @@
   };
 
   const initHeader = (header: HTMLElement) => {
-    const menu = header.querySelector<HTMLElement>(".header-menu");
+    const menu = header.querySelector<HTMLElement>(".mobile-menu");
     if (!menu) {
       return;
     }
-    const burgers = Array.from(header.querySelectorAll<HTMLElement>(".header-burger-btn"));
-    const folders = Array.from(menu.querySelectorAll<HTMLElement>(".header-menu-nav-folder"));
-    const firstSection = header.nextElementSibling?.querySelector<HTMLElement>(".page-section, .sqs-empty-section");
-    const logo = header.querySelector<HTMLImageElement>(".header-title-logo img");
+    const toggles = Array.from(header.querySelectorAll<HTMLElement>(".menu-toggle__button"));
+    const folders = Array.from(menu.querySelectorAll<HTMLElement>(".mobile-menu__folder"));
+    const firstSection = header.nextElementSibling?.querySelector<HTMLElement>(".page-section");
+    const logo = header.querySelector<HTMLImageElement>(".site-header__logo img");
 
     let isOpen = false;
     let closedTheme = "";
     let revertFocus: (() => void) | undefined;
 
-    const setBurgersActive = (active: boolean) => {
-      burgers.forEach((burger) => {
-        burger.classList.toggle("burger--active", active);
-        burger.querySelector(".js-header-burger-open-title")?.toggleAttribute("hidden", active);
-        burger.querySelector(".js-header-burger-close-title")?.toggleAttribute("hidden", !active);
+    const setTogglesActive = (active: boolean) => {
+      toggles.forEach((toggle) => {
+        toggle.classList.toggle("menu-toggle__button--active", active);
+        toggle.querySelector(".menu-toggle__open-label")?.toggleAttribute("hidden", active);
+        toggle.querySelector(".menu-toggle__close-label")?.toggleAttribute("hidden", !active);
       });
-    };
-
-    const setHeaderTheme = (theme: string) => {
-      header.dataset.sectionTheme = theme;
-      header.classList.remove(...SECTION_THEMES);
-      if (theme) {
-        header.classList.add(theme);
-      }
     };
 
     const resetFolders = () => {
       folders.forEach((folder) => {
         folder.scrollTop = 0;
-        folder.classList.remove("header-menu-nav-folder--open");
-        folder.classList.toggle("header-menu-nav-folder--active", folder.dataset.folder === "root");
+        folder.classList.remove("mobile-menu__folder--open");
+        folder.classList.toggle("mobile-menu__folder--active", folder.dataset.folder === "root");
         folder.classList.add("transition-disabled");
         setTimeout(() => folder.classList.remove("transition-disabled"));
       });
@@ -140,10 +113,10 @@
         return;
       }
       isOpen = true;
-      document.body.classList.add("header--menu-open");
-      closedTheme = header.dataset.sectionTheme ?? "";
-      setHeaderTheme(menu.dataset.sectionTheme ?? "");
-      setBurgersActive(true);
+      document.body.classList.add("menu-open");
+      closedTheme = header.dataset.theme ?? "";
+      header.dataset.theme = menu.dataset.theme ?? "";
+      setTogglesActive(true);
       resetFolders();
       document.addEventListener("keyup", onKeyUp);
       revertFocus = containFocus(header);
@@ -154,9 +127,9 @@
         return;
       }
       isOpen = false;
-      document.body.classList.remove("header--menu-open");
-      setHeaderTheme(closedTheme);
-      setBurgersActive(false);
+      document.body.classList.remove("menu-open");
+      header.dataset.theme = closedTheme;
+      setTogglesActive(false);
       document.removeEventListener("keyup", onKeyUp);
       revertFocus?.();
     };
@@ -168,9 +141,9 @@
       menu.style.paddingTop = `${headerHeight}px`;
     };
 
-    setBurgersActive(false);
+    setTogglesActive(false);
     resetFolders();
-    burgers.forEach((burger) => burger.addEventListener("click", () => (isOpen ? closeMenu() : openMenu())));
+    toggles.forEach((toggle) => toggle.addEventListener("click", () => (isOpen ? closeMenu() : openMenu())));
 
     document.documentElement.style.scrollBehavior = "smooth";
     if (logo?.complete) {
@@ -184,7 +157,7 @@
     }).observe(header);
   };
 
-  const header = document.getElementById("header");
+  const header = document.querySelector<HTMLElement>(".site-header");
   if (header) {
     initHeader(header);
   }

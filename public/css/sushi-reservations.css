@@ -1,6 +1,6 @@
-.fe-6a1e4da62319877274021f84 {
-  --grid-gutter: calc(var(--sqs-mobile-site-gutter, 6vw) - 11px);
-  --cell-max-width: calc((var(--sqs-site-max-width, 1500px) - (11px * (8 - 1))) / 8);
+.reservation-grid {
+  --grid-gutter: calc(var(--site-gutter-mobile, 6vw) - 11px);
+  --cell-max-width: calc((var(--site-max-width, 1500px) - (11px * (8 - 1))) / 8);
 
   display: grid;
   position: relative;
@@ -17,15 +17,15 @@
 }
 
 @media (min-width: 768px) {
-  .fe-6a1e4da62319877274021f84 {
-    --grid-gutter: calc(var(--sqs-site-gutter, 4vw) - 11px);
-    --cell-max-width: calc((var(--sqs-site-max-width, 1500px) - (11px * (24 - 1))) / 24);
+  .reservation-grid {
+    --grid-gutter: calc(var(--site-gutter, 4vw) - 11px);
+    --cell-max-width: calc((var(--site-max-width, 1500px) - (11px * (24 - 1))) / 24);
     --inset-padding: 0vw;
 
     --row-height-scaling-factor: 0.0215;
     --container-width: min(
-      var(--sqs-site-max-width, 1500px),
-      calc(100vw - var(--sqs-site-gutter, 4vw) * 2 - var(--inset-padding))
+      var(--site-max-width, 1500px),
+      calc(100vw - var(--site-gutter, 4vw) * 2 - var(--inset-padding))
     );
 
     grid-template-rows: repeat(40, minmax(calc(var(--container-width) * var(--row-height-scaling-factor)), auto));
@@ -36,35 +36,25 @@
   }
 }
 
-.fe-block-yui_3_17_2_1_1780370817547_489 {
+.reservation-grid__form {
   grid-area: 1/2/7/10;
   z-index: 1;
 }
 
-.fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block {
+.reservation-grid__form .block {
   justify-content: flex-start;
 }
 
-.fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block-alignment-wrapper {
-  align-items: flex-start;
-}
-
 @media (min-width: 768px) {
-  .fe-block-yui_3_17_2_1_1780370817547_489 {
+  .reservation-grid__form {
     grid-area: 1/9/38/20;
     z-index: 1;
   }
 
-  .fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block {
+  .reservation-grid__form .block {
     justify-content: flex-start;
   }
-
-  .fe-block-yui_3_17_2_1_1780370817547_489 .sqs-block-alignment-wrapper {
-    align-items: flex-start;
-  }
 }
-
-/* ── FONTS ─────────────────────────────────────────────────────── */
 @font-face {
   font-family: "Perrrot";
   src: url("/fonts/perrrot.otf") format("opentype");
@@ -72,8 +62,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-/* ── RESET ─────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -81,19 +69,15 @@
   margin: 0;
   padding: 0;
 }
-
-/* ── TOKENS ────────────────────────────────────────────────────── */
 :root {
-  --ink: #161410; /* hand-drawn black */
+  --ink: #161410;
   --ink-70: #4a463f;
   --ink-50: #76716a;
   --ink-30: #a8a299;
-  --paper: #ffffff; /* white backdrop */
-  --sheet: #ffffff; /* white card */
+  --paper: #ffffff;
+  --sheet: #ffffff;
   --line: #161410;
 }
-
-/* ── BASE ──────────────────────────────────────────────────────── */
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -109,8 +93,6 @@ body {
   display: flex;
   justify-content: center;
 }
-
-/* faint dotted texture */
 body::before {
   content: "";
   position: fixed;
@@ -121,8 +103,6 @@ body::before {
   opacity: 0;
   z-index: 0;
 }
-
-/* ── CONTAINER ─────────────────────────────────────────────────── */
 #nd-reservation-form {
   position: relative;
   z-index: 1;
@@ -137,8 +117,6 @@ body::before {
   padding: 44px 44px 40px;
   box-shadow: 7px 9px 0 rgba(22, 20, 16, 0.9);
 }
-
-/* ── HEADER ────────────────────────────────────────────────────── */
 .nd-header {
   text-align: center;
   margin-bottom: 26px;
@@ -165,8 +143,6 @@ body::before {
   letter-spacing: 0.01em;
   color: var(--ink);
 }
-
-/* hand-drawn wavy divider */
 .nd-wave {
   display: block;
   width: 100%;
@@ -200,8 +176,6 @@ body::before {
   font-style: italic;
   margin-bottom: 2px;
 }
-
-/* ── SAMPLE MENU LINK ──────────────────────────────────────────── */
 .nd-menu-link {
   display: inline-flex;
   align-items: center;
@@ -242,8 +216,6 @@ body::before {
 .nd-menu-link:hover .nd-menu-link-arrow {
   transform: translateX(3px);
 }
-
-/* ── FORM FIELDS ───────────────────────────────────────────────── */
 .nd-field {
   margin-bottom: 24px;
 }
@@ -337,11 +309,6 @@ body::before {
 .nd-field-error.visible {
   display: block;
 }
-
-/* ── CONTACT PREFERENCE TOGGLES ────────────────────────────────── */
-/* radios are hidden direct children of .nd-contact-group; the pill
-   labels are their direct siblings so :checked ~ rules (reveal AND
-   highlight) work with pure CSS and no descendant combinator. */
 .nd-contact-radio {
   position: absolute;
   opacity: 0;
@@ -382,16 +349,12 @@ body::before {
 .nd-toggle-pill:hover {
   box-shadow: 3px 3px 0 var(--ink);
 }
-
-/* Pure-CSS checked state — sibling radio selected highlights its pill */
 #nd-pref-email:checked ~ .nd-pill-a,
 #nd-pref-sms:checked ~ .nd-pill-b {
   background: var(--ink);
   color: var(--sheet);
   box-shadow: none;
 }
-
-/* ── CONTACT FIELD (revealed by CSS, no JS) ────────────────────── */
 .nd-contact-field {
   margin-top: 16px;
   display: none;
@@ -402,8 +365,6 @@ body::before {
 #nd-pref-sms:checked ~ #nd-phone-field {
   display: block;
 }
-
-/* ── NEWSLETTER CHECKBOX ───────────────────────────────────────── */
 .nd-newsletter-label {
   display: flex;
   align-items: flex-start;
@@ -449,8 +410,6 @@ body::before {
   line-height: 1.5;
   color: var(--ink-70);
 }
-
-/* ── SUBMIT ────────────────────────────────────────────────────── */
 .nd-submit {
   width: 100%;
   font-family: "Perrrot", "Nunito", sans-serif;
@@ -482,8 +441,6 @@ body::before {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 var(--ink);
 }
-
-/* ── CONFIRMATION PAGE ─────────────────────────────────────────── */
 #nd-confirmation {
   display: none;
 }
@@ -529,8 +486,6 @@ body::before {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-
-/* ── ERROR ─────────────────────────────────────────────────────── */
 .nd-error {
   display: none;
   margin-top: 12px;
@@ -539,8 +494,6 @@ body::before {
   font-style: italic;
   text-align: center;
 }
-
-/* ── FOOTER MARK ───────────────────────────────────────────────── */
 .nd-footmark {
   text-align: center;
   margin-top: 22px;
@@ -550,8 +503,6 @@ body::before {
   text-transform: uppercase;
   color: var(--ink-30);
 }
-
-/* ── RESPONSIVE ────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   body {
     padding: 24px 14px 52px;
@@ -569,7 +520,7 @@ body::before {
   }
 }
 
-.fe-block-yui_3_17_2_1_1780370817547_489 {
+.reservation-grid__form {
   --opacity: 100%;
   --origin-x: 50%;
   --origin-y: 50%;
