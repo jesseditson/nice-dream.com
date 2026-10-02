@@ -1,9 +1,9 @@
 {%
   layout 'theme'
-  , title: 'Sushi Reservations — Nice Dream'
-  , page: 'sushi-reservations'
+  , title: 'Reservations — Nice Dream'
+  , page: 'reservations'
   , collection_id: '6a1e4d804c523c68c922bfed'
-  , stylesheet: '/css/sushi-reservations.css'
+  , stylesheet: '/css/reservations.css'
 %}
 
 <article class="page-content">
@@ -35,24 +35,20 @@
                             </svg>
 
                             <p class="nd-blurb">
-                              Nice Dreams of Sushi is this season's dinner concept — fish-forward, carefully sourced,
-                              and made with a lot of care. Our cocktail bar, Sugar Water, is making its much anticipated
-                              debut, and cocktails (NA + alcoholic) will be available for our guests. If you have
-                              questions about the menu or allergens, email us at
-                              <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
-                              >.
+                              {{ dinner.blurb }}
                             </p>
                             <p class="nd-blurb-note">
                               Your reservation isn't confirmed until we reach out — expect to hear from us within 24
                               hours.
                             </p>
 
-                            <a class="nd-menu-link" href="{{sample_menus | where: "slug", "sushi" | map: "url" | first }}" target="_blank" rel="noopener">
+                            {% if dinner.sample_menu %}<a class="nd-menu-link" href="{{ dunner.sample_menu.url }}" target="_blank" rel="noopener">
                               <span class="nd-menu-link-text">Peek at the sample menu</span>
                               <svg class="nd-menu-link-arrow" viewBox="0 0 20 12" fill="none" aria-hidden="true">
                                 <path d="M1 6 H17 M12 1.5 L17.5 6 L12 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                               </svg>
                             </a>
+                            {% endif %}
                             <p class="nd-blurb-note" style="margin-top:12px;">
                               Please note that we have limited vegan and vegetarian options.
                             </p>
@@ -202,7 +198,7 @@
                       </div>
                       <!-- /nd-reservation-form -->
 
-                      <script src="/js/sushi-reservations.js"></script>
+                      <script src="/js/reservations.js"></script>
                     </div>
                   </div>
                 </div>

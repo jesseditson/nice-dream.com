@@ -3,8 +3,12 @@
 [about]
 body = "markdown"
 
-[sample_menu]
-menu = "upload"
+[lunch]
+sample_menu = "upload"
+
+[dinner]
+sample_menu = "upload"
+blurb = "markdown"
 
 [business]
 name = "string"

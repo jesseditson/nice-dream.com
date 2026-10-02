@@ -8,7 +8,7 @@ country = "US"
 phone = "+1 760-239-7919"
 cuisine = ""
 price_range = ""
-hours_note = '<em>Coffee &amp; tea, pastries, and ice cream are served all day. Lunch service runs 11am - 3pm; dinner service runs 5:30 - 9pm (last seating 8pm). Reservations for dinner are not required, but strongly encouraged. </em><a href="sushi-reservations.html"><strong><em>Book here</em></strong></a><em>.</em>'
+hours_note = '<em>Coffee &amp; tea, pastries, and ice cream are served all day. Lunch service runs 11am - 3pm; dinner service runs 5:30 - 9pm (last seating 8pm). Reservations for dinner are not required, but strongly encouraged. </em><a href="reservations.html"><strong><em>Book here</em></strong></a><em>.</em>'
 
 [[hours]]
 closes = "21:00"

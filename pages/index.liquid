@@ -44,23 +44,24 @@
                   <div class="block__content">
                     <div>
                       <div class="text-block__content">
-                        <h4 style="white-space:pre-wrap;">{{ business.name }}</h4>
-                        <p class="text-small" style="white-space:pre-wrap;">
+                        <h4>{{ business.name }}</h4>
+                        <p class="text-small">
                           {{ business.street_address }} {{ business.locality }}, {{ business.region }} {{ business.postal_code }}
                         </p>
                         {% for hours in business.hours %}
-                        <p class="text-small" style="white-space:pre-wrap;">
+                        <p class="text-small">
                           {{ hours.label }} {% if hours.opens == "" %}CLOSED{% else %}{% include 'hours_time', time: hours.opens %}-{% include 'hours_time', time: hours.closes %}{% endif %}
                         </p>
                         {% endfor %}
-                        <p class="text-small" style="white-space:pre-wrap;">
+                        <p class="text-small">
                           {{ business.hours_note }}
                         </p>
-                        <p class="text-small" style="white-space:pre-wrap;">
-                          <span class="text-highlight"><a target="_blank" href="{{sample_menus | where: "slug", "lunch" | map: "url" | first }}">Sample Menus</a
+                        <p class="text-small">
+                          {% if lunch.sample_menu %}
+                          <span class="text-highlight"><a target="_blank" href="{{ lunch.sample_menu.url }}">Sample Menus</a
                             ></span
-                          ><span class="text-highlight"></span
-                          ><span class="text-highlight"></span>
+                          >
+                          {% endif %}
                         </p>
                       </div>
                     </div>

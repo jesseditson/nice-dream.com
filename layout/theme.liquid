@@ -28,7 +28,7 @@
 <meta name="twitter:card" content="summary" />
 {% if description %}<meta name="twitter:description" content="{{ description }}" />
 {% endif %}<meta name="description" content="{% if description %}{{ description }}{% endif %}" />
-<script type="application/ld+json">{"url":"https://nice-dream.com","name":"Nice Dream","description":"","image":"/img/NiceDream-Godard-logo_v1.png","@context":"http://schema.org","@type":"WebSite"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":{% include 'json_string', value: business.name %},"url":"{{ site_url }}",{% if business.description != "" %}"description":{% include 'json_string', value: business.description %},{% endif %}"image":"{{ site_url }}/img/NiceDream-Godard-logo_v1-1500w.png",{% if business.phone != "" %}"telephone":{% include 'json_string', value: business.phone %},{% endif %}{% if business.cuisine != "" %}"servesCuisine":{% include 'json_string', value: business.cuisine %},{% endif %}{% if business.price_range != "" %}"priceRange":{% include 'json_string', value: business.price_range %},{% endif %}"acceptsReservations":"{{ site_url }}/sushi-reservations.html","address":{"@type":"PostalAddress","streetAddress":{% include 'json_string', value: business.street_address %},"addressLocality":{% include 'json_string', value: business.locality %},"addressRegion":{% include 'json_string', value: business.region %},"postalCode":{% include 'json_string', value: business.postal_code %},"addressCountry":{% include 'json_string', value: business.country %}},"openingHours":[{% assign hours_separator = "" %}{% for hours in business.hours %}{% if hours.opens != "" %}{{ hours_separator }}"{{ hours.days }} {{ hours.opens }}-{{ hours.closes }}"{% assign hours_separator = "," %}{% endif %}{% endfor %}]}</script><link rel="stylesheet" type="text/css" href="/css/site.css" />
+<script type="application/ld+json">{"url":"https://nice-dream.com","name":"Nice Dream","description":"","image":"/img/NiceDream-Godard-logo_v1.png","@context":"http://schema.org","@type":"WebSite"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":{% include 'json_string', value: business.name %},"url":"{{ site_url }}",{% if business.description != "" %}"description":{% include 'json_string', value: business.description %},{% endif %}"image":"{{ site_url }}/img/NiceDream-Godard-logo_v1-1500w.png",{% if business.phone != "" %}"telephone":{% include 'json_string', value: business.phone %},{% endif %}{% if business.cuisine != "" %}"servesCuisine":{% include 'json_string', value: business.cuisine %},{% endif %}{% if business.price_range != "" %}"priceRange":{% include 'json_string', value: business.price_range %},{% endif %}"acceptsReservations":"{{ site_url }}/reservations.html","address":{"@type":"PostalAddress","streetAddress":{% include 'json_string', value: business.street_address %},"addressLocality":{% include 'json_string', value: business.locality %},"addressRegion":{% include 'json_string', value: business.region %},"postalCode":{% include 'json_string', value: business.postal_code %},"addressCountry":{% include 'json_string', value: business.country %}},"openingHours":[{% assign hours_separator = "" %}{% for hours in business.hours %}{% if hours.opens != "" %}{{ hours_separator }}"{{ hours.days }} {{ hours.opens }}-{{ hours.closes }}"{% assign hours_separator = "," %}{% endif %}{% endfor %}]}</script><link rel="stylesheet" type="text/css" href="/css/site.css" />
 {% if stylesheet %}<link rel="stylesheet" type="text/css" href="{{ stylesheet }}" />
 {% endif %}
     
@@ -212,9 +212,9 @@
 
 
   
-    <div class="site-nav__item {% if page == 'sushi-reservations' %} site-nav__item--active{% endif %}">
-      <a href="sushi-reservations.html" data-animate="header-element" {% if page == 'sushi-reservations' %}aria-current="page" {% endif %}>
-        Sushi Reservations
+    <div class="site-nav__item {% if page == 'reservations' %} site-nav__item--active{% endif %}">
+      <a href="reservations.html" data-animate="header-element" {% if page == 'reservations' %}aria-current="page" {% endif %}>
+        Reservations
       </a>
     </div>
   
@@ -283,7 +283,7 @@
 
               
                 <div class="site-header__action site-header__cta" data-animate="header-element">
-                  <a class="button button--outline" href="sushi-reservations.html">
+                  <a class="button button--outline" href="reservations.html">
                     Reservations
                   </a>
                 </div>
@@ -359,8 +359,8 @@
 
 
   
-    <div class="site-nav__item {% if page == 'sushi-reservations' %} site-nav__item--active{% endif %}">
-      <a href="sushi-reservations.html" data-animate="header-element" {% if page == 'sushi-reservations' %}aria-current="page" {% endif %}>
+    <div class="site-nav__item {% if page == 'reservations' %} site-nav__item--active{% endif %}">
+      <a href="reservations.html" data-animate="header-element" {% if page == 'reservations' %}aria-current="page" {% endif %}>
         Sushi Reservations
       </a>
     </div>
@@ -430,7 +430,7 @@
 
               
                 <div class="site-header__action site-header__cta" data-animate="header-element">
-                  <a class="button button--outline" href="sushi-reservations.html">
+                  <a class="button button--outline" href="reservations.html">
                     Reservations
                   </a>
                 </div>
@@ -456,8 +456,8 @@
       
         
           
-            <div class="mobile-menu__item {% if page == 'sushi-reservations' %} mobile-menu__item--active{% endif %}">
-              <a href="sushi-reservations.html" {% if page == 'sushi-reservations' %}aria-current="page" {% endif %}>
+            <div class="mobile-menu__item {% if page == 'reservations' %} mobile-menu__item--active{% endif %}">
+              <a href="reservations.html" {% if page == 'reservations' %}aria-current="page" {% endif %}>
                 <div class="mobile-menu__label">
                   Sushi Reservations
                 </div>
@@ -491,7 +491,7 @@
             
             
             <div class="mobile-menu__cta">
-              <a class="button button--outline" href="sushi-reservations.html">
+              <a class="button button--outline" href="reservations.html">
                 Reservations
               </a>
             </div>
