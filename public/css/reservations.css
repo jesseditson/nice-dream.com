@@ -738,6 +738,7 @@ body::before {
   display: block;
   height: 1.4em;
   width: auto;
+  transform: translateY(3px);
 }
 
 .nd-pill-radio:checked + .nd-segment .nd-segment-logo {
