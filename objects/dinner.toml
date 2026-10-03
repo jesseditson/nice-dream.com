@@ -4,6 +4,7 @@ and made with a lot of care. Our cocktail bar, Sugar Water, is making its much a
 debut, and cocktails (NA + alcoholic) will be available for our guests. If you have
 questions about the menu or allergens, email us at
 [hello<span>&#64;</span>nice-dream.com](mailto:hello@nice-dream.com)"""
+blurb_note = "_Please note that we have limited vegan and vegetarian options._"
 slot_minutes = 30.0
 hold_minutes = 90.0
 weekends_ahead = 3.0

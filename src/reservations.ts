@@ -153,7 +153,7 @@
       setStatus("");
     } catch {
       availability = null;
-      setStatus("We couldn't load what's open right now — please email us to book.", true);
+      setStatus("We couldn't load our reservations right now — please email us at hello@nice-dream.com to book.", true);
     }
     renderDates();
   };

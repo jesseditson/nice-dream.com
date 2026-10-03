@@ -27,9 +27,17 @@
                         <div id="nd-form-view">
                           <div class="nd-sheet">
                             <header class="nd-header">
-                              <img class="nd-hero-dog" src="/img/nd-hero-dog.png" alt="Nice Dream dachshund holding a fork and spoon" />
-                              <img class="nd-wordmark" src="/img/nd-wordmark.png" alt="Nice Dream" />
-                              <h1 class="nd-title">Dinner Reservations</h1>
+                              <img class="nd-hero-dog" src="/img/nd-hero-dog.png" alt="Karen holding a fork and spoon" />
+                              <div class="reservation-logos">
+                                <img class="nd-wordmark" src="/img/nd-wordmark.png" alt="Nice Dream" />
+                                <img class="sw-wordmark" src="/img/sugar-water.svg" alt="Sugar Water" />
+                              </div>
+                              <svg viewBox="0 0 200 40" class="nd-title">
+                              <!-- text-anchor="middle" centers it; x and y position it on the canvas -->
+                              <text x="100" y="25" text-anchor="middle" font-size="20">
+                                Reservations
+                              </text>
+                            </svg>
                             </header>
 
                             <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
@@ -38,9 +46,6 @@
 
                             <p class="nd-blurb">
                               {{ dinner.blurb }}
-                            </p>
-                            <p class="nd-blurb-note">
-                              Every night and time shown below is still open — pick one and the table is yours.
                             </p>
 
                             {% if dinner.sample_menu %}<a class="nd-menu-link" href="{{ dinner.sample_menu.url }}" target="_blank" rel="noopener">
@@ -51,7 +56,7 @@
                             </a>
                             {% endif %}
                             <p class="nd-blurb-note" style="margin-top:12px;">
-                              Please note that we have limited vegan and vegetarian options.
+                              {{ dinner.blurb_note }}
                             </p>
 
                             <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
@@ -173,7 +178,7 @@
                         <!-- ── CONFIRMATION VIEW ──────────────────────────────────────── -->
                         <div id="nd-confirmation">
                           <div class="nd-sheet">
-                            <img class="nd-confirm-dog" src="/img/nd-confirm-dog.png" alt="A dachshund curled up asleep" />
+                            <img class="nd-confirm-dog" src="/img/nd-confirm-dog.png" alt="Karen curled up asleep" />
                             <h2 class="nd-confirm-title">
                               You're<br>
                               booked.

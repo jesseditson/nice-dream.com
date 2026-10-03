@@ -9,6 +9,7 @@ sample_menu = "upload"
 [dinner]
 sample_menu = "upload"
 blurb = "markdown"
+blurb_note = "markdown"
 # Reservations — carriers/reservations and pages/reservations.liquid both read these.
 # minutes between seatings
 slot_minutes = "number"
