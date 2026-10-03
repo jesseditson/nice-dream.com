@@ -27,3 +27,8 @@ reservations_sheet_id = "***REMOVED***"
 days = "Th-Sa"
 first = "17:30"
 last = "20:00"
+
+[[reservation_emails]]
+email = "jesse@nice-dream.com"
+[[reservation_emails]]
+email = "ren@nice-dream.com"

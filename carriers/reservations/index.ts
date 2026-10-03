@@ -5,7 +5,8 @@
  *                  party sizes each one can still take
  *   POST (JSON)    { party_size, date, time, name, contact_method, email?,
  *                    phone?, notes?, newsletter?, area? } — takes a booking,
- *                    in the dining room unless `area` is "bar"
+ *                    in the dining room unless `area` is "bar", and emails a
+ *                    summary to each of `dinner.reservation_emails`
  *
  * The rules (nights, seating times, table counts) and the Google credentials
  * all live on the dinner object, so the room is edited as content.
@@ -31,7 +32,8 @@ import {
   slotsOn,
   todayIn,
 } from "./room";
-import { appendBooking, readBookings } from "./sheet";
+import { notifyStaff } from "./notify";
+import { type NewBooking, appendBooking, readBookings } from "./sheet";
 import { ensureSheet } from "./setup";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -118,20 +120,24 @@ const carrier: Carrier = async (_params, body, objects) => {
     const tables = seatParty(area, party, occupiedAt(bookings, date, start, rules), rules);
     if (!tables) return refuse("Sorry — that time just filled up. Pick another and we'll hold it for you.");
 
-    await appendBooking(
-      client,
-      {
-        date,
-        start,
-        tables,
-        party,
-        name,
-        method: sms ? "Text (SMS)" : "Email",
-        contact,
-        notes,
-        newsletter: truthy(fields.newsletter),
-      },
-      rules,
+    const booking: NewBooking = {
+      date,
+      start,
+      tables,
+      party,
+      name,
+      method: sms ? "Text (SMS)" : "Email",
+      contact,
+      notes,
+      newsletter: truthy(fields.newsletter),
+    };
+    const largeParty = area === "dining" && party >= rules.largePartyMin;
+    await appendBooking(client, booking, rules);
+    await notifyStaff(
+      objects.EMAIL,
+      dinner.reservation_emails.map((recipient) => recipient.email ?? ""),
+      { ...booking, area, largeParty, sheetId: dinner.reservations_sheet_id },
+      sms ? undefined : contact,
     );
 
     return reply({
@@ -144,7 +150,7 @@ const carrier: Carrier = async (_params, body, objects) => {
       name,
       area,
       tables,
-      large_party: area === "dining" && party >= rules.largePartyMin,
+      large_party: largeParty,
     });
   }
 

@@ -186,6 +186,21 @@ every template and from the built site — but *not* from this repo, so treat
 - `reservations_sheet_id` is the id from the sheet's URL —
   `https://docs.google.com/spreadsheets/d/<THIS PART>/edit`.
 
+## Booking emails
+
+Every booking the form takes is emailed to each `email` in the dinner object's
+`[[reservation_emails]]` list, from `reservation@nice-dream.com`. The email gives the
+guest's name, the date and time, the party size, the table or bar seats, how to
+reach them, any notes, whether they signed up for the newsletter, and a link to the
+Tracker. Large parties are flagged, because the form told them we'd reach out.
+When the guest left an email, replying goes straight to them.
+
+Sending uses archival's `objects.EMAIL`, so the site's plan has to include email,
+and `reservation@nice-dream.com` has to exist in the site's email settings. The
+booking is on the sheet before the email goes out, so a failed send never turns
+a guest away. It is logged instead, and archival emails the site's owner if
+delivery fails later. Rows typed into the Tracker by hand aren't emailed.
+
 ## The spreadsheet
 
 The carrier builds the tabs it needs the first time it sees a spreadsheet
@@ -239,9 +254,11 @@ npm test
 `archival-objects.d.ts` is generated from `archival_objects.toml` and committed —
 it holds the schema, never any values.
 
-`npm test` runs `room.test.ts` with Node's built-in test runner, which executes
-the TypeScript directly and so needs Node 22.18 or newer. The tests cover
-everything under [Table assignment](#table-assignment) — what each party size
-gets, how long a table is held, the spacing order, 4-tops, and the open/closed
-flags the form reads — against a room defined in the test file, so they don't
-depend on `objects/dinner.toml` or touch the spreadsheet.
+`npm test` runs the `*.test.ts` files with Node's built-in test runner, which
+executes the TypeScript directly and so needs Node 22.18 or newer. `room.test.ts`
+covers everything under [Table assignment](#table-assignment) — what each party
+size gets, how long a table is held, the spacing order, 4-tops, and the
+open/closed flags the form reads — against a room defined in the test file.
+`notify.test.ts` covers the [booking email](#booking-emails) against a stand-in
+for `objects.EMAIL`. Neither depends on `objects/dinner.toml`, touches the
+spreadsheet, or sends mail.

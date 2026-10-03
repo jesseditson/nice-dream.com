@@ -45,6 +45,10 @@ days = "string"
 first = "string"
 last = "string"
 
+# staff emailed a summary of every booking the form takes, from reservation@nice-dream.com
+[dinner.reservation_emails]
+email = "string"
+
 [business]
 name = "string"
 description = "string"
