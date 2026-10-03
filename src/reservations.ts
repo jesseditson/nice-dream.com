@@ -8,7 +8,8 @@
     link.textContent = address;
   });
 
-  type Slot = { time: string; label: string; two: boolean; four: boolean; communal: boolean };
+  type Area = "dining" | "bar";
+  type Slot = { time: string; label: string; two: boolean; four: boolean; communal: boolean; bar: number };
   type Night = { date: string; label: string; slots: Slot[] };
   type Availability = { ok: boolean; error?: string; today: string; dates: Night[] };
   type BookingResult = {
@@ -17,6 +18,7 @@
     date_label: string;
     time_label: string;
     party_size: number;
+    area: Area;
     large_party: boolean;
   };
 
@@ -24,14 +26,21 @@
   const endpoint = form.dataset.endpoint ?? "/carriers/reservations";
   const largePartyMin = Number(form.dataset.largePartyMin) || 6;
   const maxParty = Number(form.dataset.maxParty) || 8;
+  const barSeats = Number(form.dataset.barSeats) || 0;
 
   const dateSelect = byId<HTMLSelectElement>("nd-date");
   const timePills = byId("nd-times");
+  const partyRadios = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="party"]'));
   const partyMore = byId<HTMLInputElement>("nd-party-more");
   const partyCount = byId<HTMLInputElement>("nd-party-count");
   const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
 
   let availability: Availability | null = null;
+
+  const area = (): Area =>
+    form.querySelector<HTMLInputElement>('input[name="area"]:checked')?.value === "bar" ? "bar" : "dining";
+
+  const partyLimit = (): number => (area() === "bar" ? barSeats : maxParty);
 
   // 5+ without a number yet still needs a communal table, so price it as the smallest such party.
   const partySize = (): number => {
@@ -44,7 +53,10 @@
   const seatingFor = (party: number): "two" | "four" | "communal" =>
     party <= 2 ? "two" : party <= 4 ? "four" : "communal";
 
-  const slotOpen = (slot: Slot, party: number) => party >= 1 && party <= maxParty && slot[seatingFor(party)];
+  const slotOpen = (slot: Slot, party: number) => {
+    if (party < 1 || party > partyLimit()) return false;
+    return area() === "bar" ? party <= slot.bar : slot[seatingFor(party)];
+  };
   const nightOpen = (night: Night, party: number) => night.slots.some((slot) => slotOpen(slot, party));
 
   const setVisible = (element: HTMLElement, visible: boolean) => element.classList.toggle("visible", visible);
@@ -123,22 +135,40 @@
       placeholder(
         dateSelect,
         availability.dates.length
-          ? `No tables left for a party of ${party} — try another size`
+          ? `No ${area() === "bar" ? "bar seats" : "tables"} left for a party of ${party} — try another size`
           : "No dinner service in the next few weeks",
       );
     }
     renderTimes();
   };
 
+  // Sizes the chosen area can't seat are struck out; a choice that no longer fits drops to the largest that does.
+  const limitPartyPills = () => {
+    const limit = partyLimit();
+    for (const radio of partyRadios) {
+      const smallest = radio.value === "more" ? 5 : Number(radio.value);
+      radio.disabled = smallest > limit;
+      form.querySelector(`label[for="${radio.id}"]`)?.classList.toggle("nd-pill--off", radio.disabled);
+    }
+    if (partyRadios.some((radio) => radio.checked && !radio.disabled)) return;
+    const largest = partyRadios.filter((radio) => !radio.disabled).pop();
+    if (largest) largest.checked = true;
+  };
+
   const updateParty = () => {
+    limitPartyPills();
     const more = partyMore.checked;
+    const dining = area() === "dining";
     setVisible(byId("nd-party-count-field"), more);
     partyCount.disabled = !more;
     partyCount.required = more;
+    partyCount.max = String(partyLimit());
     const party = partySize();
-    setVisible(byId("nd-large-party"), party >= largePartyMin && party <= maxParty);
-    setVisible(byId("nd-party-too-big"), party > maxParty);
-    submitButton.disabled = party > maxParty;
+    setVisible(byId("nd-large-party"), dining && party >= largePartyMin && party <= maxParty);
+    setVisible(byId("nd-party-too-big"), dining && party > maxParty);
+    const barNote = document.getElementById("nd-bar-note");
+    if (barNote) setVisible(barNote, !dining);
+    submitButton.disabled = party > partyLimit();
     renderDates();
   };
 
@@ -158,7 +188,7 @@
     renderDates();
   };
 
-  form.querySelectorAll<HTMLInputElement>('input[name="party"]').forEach((radio) => {
+  form.querySelectorAll<HTMLInputElement>('input[name="area"], input[name="party"]').forEach((radio) => {
     radio.addEventListener("change", updateParty);
   });
   partyCount.addEventListener("input", updateParty);
@@ -193,8 +223,11 @@
     const name = byId<HTMLInputElement>("nd-name").value.trim().split(" ")[0];
     byId("nd-confirm-name").textContent = name || "there";
     byId("nd-confirm-when").textContent = `${result.date_label} at ${result.time_label}`;
+    const solo = result.party_size === 1;
     byId("nd-confirm-party").textContent =
-      result.party_size === 1 ? "a table for one" : `a table for ${result.party_size}`;
+      result.area === "bar"
+        ? solo ? "a seat at the bar" : `${result.party_size} seats at the bar`
+        : solo ? "a table for one" : `a table for ${result.party_size}`;
     setVisible(byId("nd-confirm-large"), result.large_party);
     byId("nd-form-view").style.display = "none";
     byId("nd-confirmation").style.display = "block";
@@ -218,6 +251,7 @@
 
     const sms = byId<HTMLInputElement>("nd-pref-sms").checked;
     const payload = {
+      area: area(),
       party_size: partySize(),
       date: dateSelect.value,
       time,
@@ -260,7 +294,7 @@
         byId("nd-error").style.display = "block";
       })
       .finally(() => {
-        submitButton.disabled = partySize() > maxParty;
+        submitButton.disabled = partySize() > partyLimit();
         submitButton.textContent = idleLabel;
       });
   });

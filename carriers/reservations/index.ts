@@ -4,7 +4,8 @@
  *   GET            every seating we offer in the booking window, and which
  *                  party sizes each one can still take
  *   POST (JSON)    { party_size, date, time, name, contact_method, email?,
- *                    phone?, notes?, newsletter? } — takes a booking
+ *                    phone?, notes?, newsletter?, area? } — takes a booking,
+ *                    in the dining room unless `area` is "bar"
  *
  * The rules (nights, seating times, table counts) and the Google credentials
  * all live on the dinner object, so the room is edited as content.
@@ -15,7 +16,7 @@
 import type { Carrier, CarrierJsonValue } from "@archival/carrier";
 import { accessToken, sheetsClient } from "./google";
 import {
-  assignTables,
+  type Area,
   availabilityOn,
   formatClock,
   formatDateLabel,
@@ -25,7 +26,7 @@ import {
   occupiedAt,
   parseHHMM,
   readRules,
-  seatingFor,
+  seatParty,
   serviceDates,
   slotsOn,
   todayIn,
@@ -78,6 +79,7 @@ const carrier: Carrier = async (_params, body, objects) => {
       return refuse("Send the booking as a JSON object or a form post.");
     }
     const fields = body as Record<string, unknown>;
+    const area: Area = text(fields.area).toLowerCase() === "bar" ? "bar" : "dining";
     const party = integer(fields.party_size);
     const date = text(fields.date);
     const start = parseHHMM(text(fields.time));
@@ -96,6 +98,12 @@ const carrier: Carrier = async (_params, body, objects) => {
     if (!sms && !EMAIL_RE.test(contact)) return refuse("That email address doesn't look right.");
     if (sms && contact.replace(/\D/g, "").length < 7) return refuse("That phone number doesn't look right.");
     if (!Number.isFinite(party) || party < 1) return refuse("How many are coming?");
+    if (area === "bar" && !rules.barSeats) return refuse("We aren't taking reservations at the bar.");
+    if (area === "bar" && party > rules.barSeats) {
+      return refuse(
+        `The bar seats parties of up to ${rules.barSeats} — choose the dining room for a larger group.`,
+      );
+    }
     if (party > rules.maxParty) {
       return refuse(`We can seat parties of up to ${rules.maxParty} online — email us for anything larger.`);
     }
@@ -107,7 +115,7 @@ const carrier: Carrier = async (_params, body, objects) => {
 
     // Availability is decided here, from a fresh read, so a form left open can't
     // take a table that filled up in the meantime.
-    const tables = assignTables(seatingFor(party), occupiedAt(bookings, date, start, rules), rules);
+    const tables = seatParty(area, party, occupiedAt(bookings, date, start, rules), rules);
     if (!tables) return refuse("Sorry — that time just filled up. Pick another and we'll hold it for you.");
 
     await appendBooking(
@@ -134,8 +142,9 @@ const carrier: Carrier = async (_params, body, objects) => {
       time_label: formatClock(start),
       party_size: party,
       name,
+      area,
       tables,
-      large_party: party >= rules.largePartyMin,
+      large_party: area === "dining" && party >= rules.largePartyMin,
     });
   }
 
@@ -146,6 +155,7 @@ const carrier: Carrier = async (_params, body, objects) => {
     today,
     max_party: rules.maxParty,
     large_party_min: rules.largePartyMin,
+    bar_seats: rules.barSeats,
     hold_minutes: rules.holdMinutes,
     dates: dates.map((date) => ({
       date,
@@ -156,6 +166,7 @@ const carrier: Carrier = async (_params, body, objects) => {
         two: slot.two,
         four: slot.four,
         communal: slot.communal,
+        bar: slot.bar,
       })),
     })),
   });

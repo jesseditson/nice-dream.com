@@ -7,6 +7,7 @@
 %}
 {% assign large_party_min = dinner.large_party_min | floor %}
 {% assign max_party = dinner.max_party | floor %}
+{% assign bar_seats = dinner.bar_seats | floor %}
 
 <article class="page-content">
   <section class="page-region">
@@ -63,7 +64,19 @@
                               <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                             </svg>
 
-                            <form id="nd-form" data-endpoint="/carriers/reservations" data-large-party-min="{{ large_party_min }}" data-max-party="{{ max_party }}" novalidate>
+                            <form id="nd-form" data-endpoint="/carriers/reservations" data-large-party-min="{{ large_party_min }}" data-max-party="{{ max_party }}" data-bar-seats="{{ bar_seats }}" novalidate>
+                              {% if bar_seats > 0 %}
+                              <!-- Dining room or bar -->
+                              <div class="nd-field">
+                                <div class="nd-segmented" role="radiogroup" aria-label="Where would you like to sit?">
+                                  <input class="nd-pill-radio" type="radio" name="area" id="nd-area-dining" value="dining" checked />
+                                  <label class="nd-segment" for="nd-area-dining">Dining room</label>
+                                  <input class="nd-pill-radio" type="radio" name="area" id="nd-area-bar" value="bar" />
+                                  <label class="nd-segment" for="nd-area-bar"><img class="nd-segment-logo" src="/img/sugar-water.svg" alt="Sugar Water bar" /></label>
+                                </div>
+                              </div>
+                              {% endif %}
+
                               <!-- 1. Party size -->
                               <div class="nd-field">
                                 <span class="nd-label" id="nd-party-label">How many of you?</span>
@@ -79,6 +92,11 @@
                                   <input class="nd-pill-radio" type="radio" name="party" id="nd-party-more" value="more" />
                                   <label class="nd-pill" for="nd-party-more">5+</label>
                                 </div>
+                                {% if bar_seats > 0 %}
+                                <p class="nd-field-note nd-bar-note" id="nd-bar-note">
+                                  The bar seats parties of up to {{ bar_seats }}.
+                                </p>
+                                {% endif %}
 
                                 <div class="nd-subfield" id="nd-party-count-field">
                                   <label class="nd-label" for="nd-party-count">How many exactly?</label>

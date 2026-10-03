@@ -92,6 +92,7 @@ body {
   padding: 40px 20px 72px;
   display: flex;
   justify-content: center;
+  position: relative;
 }
 body::before {
   content: "";
@@ -687,8 +688,98 @@ body::before {
   display: block;
 }
 
-/* The notice appears on interaction, so it shouldn't wait for the page-load stagger. */
-.nd-notice .reveal {
+/* These appear on interaction, so they shouldn't wait for the page-load stagger. */
+.nd-notice .reveal,
+.nd-bar-note.reveal {
   transition-delay: 0s !important;
   transition-duration: 0.25s !important;
+}
+
+.nd-segmented {
+  display: flex;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--sheet);
+}
+
+.nd-segment {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 0;
+  font-family: "Perrrot", "Nunito", sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.nd-segment ~ .nd-segment {
+  border-left: 1.5px solid var(--line);
+}
+
+.nd-pill-radio:not(:checked) + .nd-segment:hover {
+  background: #f6f4f0;
+}
+
+.nd-pill-radio:checked + .nd-segment {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.nd-segment-logo {
+  display: block;
+  height: 1.4em;
+  width: auto;
+}
+
+.nd-pill-radio:checked + .nd-segment .nd-segment-logo {
+  filter: invert(1);
+}
+
+.nd-pill-radio:focus-visible + .nd-segment {
+  outline: 2px solid currentColor;
+  outline-offset: -5px;
+}
+
+.nd-bar-note {
+  display: none;
+}
+
+.nd-bar-note.visible {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .nd-segment {
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+}
+
+.page-section .page-section__border,
+.page-section .page-section__background {
+  background-color: transparent;
+}
+
+.bg-shader {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.bg-shader.visible {
+  opacity: 1;
 }

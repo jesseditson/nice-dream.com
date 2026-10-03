@@ -29,7 +29,7 @@ const layoutKey = (rules: Rules): string => {
     `v${SETUP_VERSION}`,
     `slot=${rules.slotMinutes}`,
     `hold=${rules.holdMinutes}`,
-    `tables=${rules.twoTops}+${rules.fourTops}@${rules.fourTopStart}+${rules.communalTables}`,
+    `tables=${rules.twoTops}+${rules.fourTops}@${rules.fourTopStart}+${rules.communalTables}+${rules.barSeats}`,
     windows,
   ].join(" ");
 };
@@ -65,6 +65,7 @@ const tableIds = (rules: Rules): string[] => [
   ...Array.from({ length: rules.twoTops }, (_, index) => String(index + 1)),
   ...Array.from({ length: rules.fourTops }, (_, index) => String(rules.fourTopStart + index)),
   ...Array.from({ length: rules.communalTables }, (_, index) => `C${index + 1}`),
+  ...Array.from({ length: rules.barSeats }, (_, index) => `B${index + 1}`),
 ];
 
 /** Matrix columns run from the earliest first seating through the end of the latest last seating. */

@@ -7,6 +7,9 @@
  * 4-tops, and "C1".."Cn" for the communal tables. Parties of 3 and 4 take a
  * 4-top, or adjacent 2-tops (1/2, 3/4, …) combined into one; anything larger
  * sits communal.
+ *
+ * The bar is its own area: seats "B1".."Bn", one guest each. A party only sits
+ * there when it asks to, and the dining room never spills onto it.
  */
 
 export type Rules = {
@@ -19,11 +22,14 @@ export type Rules = {
   fourTops: number;
   fourTopStart: number;
   communalTables: number;
+  barSeats: number;
   maxParty: number;
   largePartyMin: number;
   /** First and last seating as minutes past midnight, by weekday (0 = Sunday). */
   seatings: Map<number, { first: number; last: number }>;
 };
+
+export type Area = "dining" | "bar";
 
 export type Seating = "two" | "four" | "communal";
 
@@ -39,6 +45,8 @@ export type SlotAvailability = {
   two: boolean;
   four: boolean;
   communal: boolean;
+  /** The largest party the bar can still seat together. */
+  bar: number;
 };
 
 const PAIR_SEATS = 4;
@@ -266,6 +274,47 @@ export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules)
   return best?.map(String) ?? null;
 };
 
+/** Each unbroken stretch of free bar seats, by seat number. */
+const freeBarRuns = (taken: Set<string>, rules: Rules): number[][] => {
+  const runs: number[][] = [];
+  let run: number[] = [];
+  for (let seat = 1; seat <= rules.barSeats; seat += 1) {
+    if (!taken.has(`B${seat}`)) {
+      run.push(seat);
+      continue;
+    }
+    if (run.length) runs.push(run);
+    run = [];
+  }
+  if (run.length) runs.push(run);
+  return runs;
+};
+
+/**
+ * Adjacent bar seats for a party, one each, or null when no stretch of free
+ * seats is long enough. The party takes the shortest stretch that fits, from
+ * its low end, so a longer one stays whole for a bigger party.
+ */
+export const assignBarSeats = (party: number, taken: Set<string>, rules: Rules): string[] | null => {
+  if (party < 1) return null;
+  let best: number[] | null = null;
+  for (const run of freeBarRuns(taken, rules)) {
+    if (run.length >= party && (!best || run.length < best.length)) best = run;
+  }
+  return best?.slice(0, party).map((seat) => `B${seat}`) ?? null;
+};
+
+/** Where a party sits in the area it asked for; a full area never borrows from the other. */
+export const seatParty = (
+  area: Area,
+  party: number,
+  taken: Set<string>,
+  rules: Rules,
+): string[] | null =>
+  area === "bar"
+    ? assignBarSeats(party, taken, rules)
+    : assignTables(seatingFor(party), taken, rules);
+
 /**
  * What each seating on `date` can still take. Seatings at or before
  * `earliest` are closed — pass the current time for today, -1 otherwise.
@@ -277,13 +326,14 @@ export const availabilityOn = (
   earliest: number,
 ): SlotAvailability[] =>
   slotsOn(date, rules).map((time) => {
-    if (time <= earliest) return { time, two: false, four: false, communal: false };
+    if (time <= earliest) return { time, two: false, four: false, communal: false, bar: 0 };
     const taken = occupiedAt(bookings, date, time, rules);
     return {
       time,
       two: assignTables("two", taken, rules) !== null,
       four: assignTables("four", taken, rules) !== null,
       communal: assignTables("communal", taken, rules) !== null,
+      bar: Math.max(0, ...freeBarRuns(taken, rules).map((run) => run.length)),
     };
   });
 
@@ -298,6 +348,7 @@ type DinnerConfig = {
   four_tops: number | null;
   four_top_start: number | null;
   communal_tables: number | null;
+  bar_seats: number | null;
   max_party: number | null;
   large_party_min: number | null;
   seatings: { days: string | null; first: string | null; last: string | null }[];
@@ -326,6 +377,7 @@ export const readRules = (dinner: DinnerConfig): Rules => {
     fourTops: whole(dinner.four_tops, 0),
     fourTopStart: Math.max(twoTops + 1, whole(dinner.four_top_start, twoTops + communalTables + 1)),
     communalTables,
+    barSeats: whole(dinner.bar_seats, 0),
     maxParty: whole(dinner.max_party, 8),
     largePartyMin: whole(dinner.large_party_min, 6),
     seatings,

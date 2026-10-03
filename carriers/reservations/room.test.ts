@@ -4,12 +4,14 @@ import {
   type Booking,
   type Rules,
   type Seating,
+  assignBarSeats,
   assignTables,
   availabilityOn,
   formatHHMM,
   occupiedAt,
   parseHHMM,
   readRules,
+  seatParty,
   seatingFor,
 } from "./room.ts";
 
@@ -28,6 +30,7 @@ const room = (overrides: Partial<Config> = {}): Rules =>
     four_tops: 0,
     four_top_start: 13,
     communal_tables: 2,
+    bar_seats: 4,
     max_party: 8,
     large_party_min: 6,
     seatings: [{ days: "Th-Sa", first: "17:30", last: "20:00" }],
@@ -270,6 +273,101 @@ describe("assignTables for parties of 5 and up", () => {
   });
 });
 
+describe("assignBarSeats", () => {
+  const everyTable = taken(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, "C1", "C2");
+
+  test("a solo guest takes the first seat", () => {
+    assert.deepEqual(assignBarSeats(1, taken(), room()), ["B1"]);
+  });
+
+  test("a party gets one adjacent seat each", () => {
+    assert.deepEqual(assignBarSeats(3, taken(), room()), ["B1", "B2", "B3"]);
+  });
+
+  test("a party as large as the bar takes every seat", () => {
+    assert.deepEqual(assignBarSeats(4, taken(), room()), ["B1", "B2", "B3", "B4"]);
+  });
+
+  test("the next party sits beside the last", () => {
+    assert.deepEqual(assignBarSeats(2, taken("B1", "B2"), room()), ["B3", "B4"]);
+  });
+
+  test("takes the shortest stretch that fits", () => {
+    assert.deepEqual(assignBarSeats(1, taken("B2"), room()), ["B1"]);
+    assert.deepEqual(assignBarSeats(2, taken("B2"), room()), ["B3", "B4"]);
+  });
+
+  test("leaves a longer stretch whole for a bigger party", () => {
+    const longBar = room({ bar_seats: 6 });
+    assert.deepEqual(assignBarSeats(2, taken("B3"), longBar), ["B1", "B2"]);
+    assert.deepEqual(assignBarSeats(3, taken("B3"), longBar), ["B4", "B5", "B6"]);
+  });
+
+  test("equal stretches go to the lower seats", () => {
+    assert.deepEqual(assignBarSeats(1, taken("B2", "B3"), room()), ["B1"]);
+  });
+
+  test("never splits a party across a taken seat", () => {
+    assert.equal(assignBarSeats(3, taken("B2"), room()), null);
+    assert.equal(assignBarSeats(2, taken("B2", "B4"), room()), null);
+  });
+
+  test("refuses a party larger than the bar", () => {
+    assert.equal(assignBarSeats(5, taken(), room()), null);
+  });
+
+  test("refuses when every seat is taken", () => {
+    assert.equal(assignBarSeats(1, taken("B1", "B2", "B3", "B4"), room()), null);
+  });
+
+  test("refuses a party of none", () => {
+    assert.equal(assignBarSeats(0, taken(), room()), null);
+  });
+
+  test("there is no bar while bar_seats is 0", () => {
+    assert.equal(assignBarSeats(1, taken(), room({ bar_seats: 0 })), null);
+  });
+
+  test("ignores what is taken in the dining room", () => {
+    assert.deepEqual(assignBarSeats(2, everyTable, room()), ["B1", "B2"]);
+  });
+});
+
+describe("seatParty", () => {
+  const diningFull = taken(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "C1", "C2");
+  const barFull = taken("B1", "B2", "B3", "B4");
+
+  test("seats a dining-room party at a table", () => {
+    assert.deepEqual(seatParty("dining", 2, taken(), room()), ["5"]);
+    assert.deepEqual(seatParty("dining", 4, taken(), room()), ["5", "6"]);
+    assert.deepEqual(seatParty("dining", 6, taken(), room()), ["C1"]);
+  });
+
+  test("seats a bar party at the bar", () => {
+    assert.deepEqual(seatParty("bar", 2, taken(), room()), ["B1", "B2"]);
+  });
+
+  test("a full dining room never overflows onto an empty bar", () => {
+    for (const party of [1, 2, 3, 4, 5, 8]) {
+      assert.equal(seatParty("dining", party, diningFull, room()), null, `party of ${party}`);
+    }
+  });
+
+  test("a full bar never overflows into an empty dining room", () => {
+    for (const party of [1, 2, 3, 4]) {
+      assert.equal(seatParty("bar", party, barFull, room()), null, `party of ${party}`);
+    }
+  });
+
+  test("a bar party too big for the bar is not moved to a table", () => {
+    assert.equal(seatParty("bar", 6, taken(), room()), null);
+  });
+
+  test("guests at the bar are not neighbours for the 2-top spread", () => {
+    assert.deepEqual(seatParty("dining", 2, barFull, room()), ["5"]);
+  });
+});
+
 describe("availabilityOn", () => {
   const busyNight = [
     ...[5, 10, 1, 3, 7].map((table) => booking("18:30", table)),
@@ -315,6 +413,33 @@ describe("availabilityOn", () => {
       assert.deepEqual(openSeatings(kind, [], room(), at("18:00")), afterSix, kind);
     }
   });
+
+  const barRoom = (bookings: Booking[], rules: Rules = room(), earliest = -1): number[] =>
+    availabilityOn(THURSDAY, bookings, rules, earliest).map((slot) => slot.bar);
+
+  test("an empty bar can take a party as large as the bar at every seating", () => {
+    assert.deepEqual(barRoom([]), [4, 4, 4, 4, 4, 4]);
+  });
+
+  test("reports the longest free stretch of the bar while seats are held", () => {
+    assert.deepEqual(barRoom([booking("18:30", "B1", "B2")]), [2, 2, 2, 2, 2, 4]);
+    assert.deepEqual(barRoom([booking("18:30", "B2")]), [2, 2, 2, 2, 2, 4]);
+  });
+
+  test("a full dining room leaves the bar open, and a full bar leaves the dining room open", () => {
+    assert.deepEqual(barRoom(busyNight), [4, 4, 4, 4, 4, 4]);
+    const fullBar = [booking("18:30", "B1", "B2", "B3", "B4")];
+    assert.deepEqual(barRoom(fullBar), [0, 0, 0, 0, 0, 4]);
+    assert.deepEqual(openSeatings("two", fullBar), everySeating);
+  });
+
+  test("the bar is closed at seatings at or before the cutoff", () => {
+    assert.deepEqual(barRoom([], room(), at("18:00")), [0, 0, 4, 4, 4, 4]);
+  });
+
+  test("there is no bar room while bar_seats is 0", () => {
+    assert.deepEqual(barRoom([], room({ bar_seats: 0 })), [0, 0, 0, 0, 0, 0]);
+  });
 });
 
 describe("readRules table settings", () => {
@@ -327,18 +452,20 @@ describe("readRules table settings", () => {
     four_tops: null,
     four_top_start: null,
     communal_tables: null,
+    bar_seats: null,
     max_party: null,
     large_party_min: null,
     seatings: [],
   };
 
-  test("defaults to ten 2-tops, no 4-tops and two communal tables", () => {
+  test("defaults to ten 2-tops, no 4-tops, two communal tables and no bar", () => {
     const rules = readRules(unset);
     assert.equal(rules.twoTops, 10);
     assert.equal(rules.firstTable, 5);
     assert.equal(rules.fourTops, 0);
     assert.equal(rules.fourTopStart, 13);
     assert.equal(rules.communalTables, 2);
+    assert.equal(rules.barSeats, 0);
     assert.equal(rules.holdMinutes, 90);
   });
 

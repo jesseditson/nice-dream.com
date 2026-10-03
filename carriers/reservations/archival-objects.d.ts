@@ -43,6 +43,7 @@ export interface DinnerObject {
   order: number | null;
   sample_menu: ArchivalFile | null;
   blurb: string | null;
+  blurb_note: string | null;
   /**
    * Reservations — carriers/reservations and pages/reservations.liquid both read these.
    * minutes between seatings
@@ -62,6 +63,8 @@ export interface DinnerObject {
   four_top_start: number | null;
   /** communal tables take parties of 5 up to max_party */
   communal_tables: number | null;
+  /** seats at the bar (B1, B2, …), one guest each; booked only when a guest picks the bar, never as overflow from the dining room. 0 hides the choice */
+  bar_seats: number | null;
   /** the largest party the form accepts */
   max_party: number | null;
   /** parties of this size or more see large_party_notice before booking and are told we'll reach out to confirm */

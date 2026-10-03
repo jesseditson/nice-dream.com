@@ -13,6 +13,7 @@ first_table = 5.0
 four_tops = 0.0
 four_top_start = 13.0
 communal_tables = 2.0
+bar_seats = 4.0
 max_party = 8.0
 large_party_min = 6.0
 large_party_notice = """
