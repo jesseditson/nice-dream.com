@@ -41,6 +41,7 @@
     form.querySelector<HTMLInputElement>('input[name="area"]:checked')?.value === "bar" ? "bar" : "dining";
 
   const partyLimit = (): number => (area() === "bar" ? barSeats : maxParty);
+  const submitLabel = (): string => (area() === "bar" ? "Book the bar" : "Book a table");
 
   // 5+ without a number yet still needs a communal table, so price it as the smallest such party.
   const partySize = (): number => {
@@ -169,6 +170,7 @@
     const barNote = document.getElementById("nd-bar-note");
     if (barNote) setVisible(barNote, !dining);
     submitButton.disabled = party > partyLimit();
+    submitButton.textContent = submitLabel();
     renderDates();
   };
 
@@ -263,7 +265,6 @@
       newsletter: byId<HTMLInputElement>("nd-newsletter").checked,
     };
 
-    const idleLabel = submitButton.textContent;
     submitButton.disabled = true;
     submitButton.textContent = "Booking…";
 
@@ -295,7 +296,7 @@
       })
       .finally(() => {
         submitButton.disabled = partySize() > partyLimit();
-        submitButton.textContent = idleLabel;
+        submitButton.textContent = submitLabel();
       });
   });
 
