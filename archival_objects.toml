@@ -20,6 +20,10 @@ weekends_ahead = "number"
 two_tops = "number"
 # the 2-top seated first on an empty night; later bookings spread out from it
 first_table = "number"
+# how many dedicated 4-tops the room has (0 until they arrive); parties of 3–4 take one before combining 2-tops
+four_tops = "number"
+# the table number of the first 4-top; the rest count up from it
+four_top_start = "number"
 # communal tables take parties of 5 up to max_party
 communal_tables = "number"
 # the largest party the form accepts

@@ -29,7 +29,7 @@ const layoutKey = (rules: Rules): string => {
     `v${SETUP_VERSION}`,
     `slot=${rules.slotMinutes}`,
     `hold=${rules.holdMinutes}`,
-    `tables=${rules.twoTops}+${rules.communalTables}`,
+    `tables=${rules.twoTops}+${rules.fourTops}@${rules.fourTopStart}+${rules.communalTables}`,
     windows,
   ].join(" ");
 };
@@ -63,6 +63,7 @@ const listSheets = async (client: SheetsClient): Promise<SheetInfo[]> => {
 
 const tableIds = (rules: Rules): string[] => [
   ...Array.from({ length: rules.twoTops }, (_, index) => String(index + 1)),
+  ...Array.from({ length: rules.fourTops }, (_, index) => String(rules.fourTopStart + index)),
   ...Array.from({ length: rules.communalTables }, (_, index) => `C${index + 1}`),
 ];
 

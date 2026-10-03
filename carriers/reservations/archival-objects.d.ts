@@ -43,7 +43,10 @@ export interface DinnerObject {
   order: number | null;
   sample_menu: ArchivalFile | null;
   blurb: string | null;
-  /** minutes between seatings */
+  /**
+   * Reservations — carriers/reservations and pages/reservations.liquid both read these.
+   * minutes between seatings
+   */
   slot_minutes: number | null;
   /** how long a booking holds its table, in minutes */
   hold_minutes: number | null;
@@ -53,6 +56,10 @@ export interface DinnerObject {
   two_tops: number | null;
   /** the 2-top seated first on an empty night; later bookings spread out from it */
   first_table: number | null;
+  /** how many dedicated 4-tops the room has (0 until they arrive); parties of 3–4 take one before combining 2-tops */
+  four_tops: number | null;
+  /** the table number of the first 4-top; the rest count up from it */
+  four_top_start: number | null;
   /** communal tables take parties of 5 up to max_party */
   communal_tables: number | null;
   /** the largest party the form accepts */

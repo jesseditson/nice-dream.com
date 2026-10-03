@@ -3,9 +3,10 @@
  * and how bookings spread across the floor. Pure functions over `Rules`, so the
  * same logic prices availability and places a booking.
  *
- * Tables are "1".."N" for the 2-tops and "C1".."Cn" for the communal tables.
- * Adjacent 2-tops (1/2, 3/4, …) combine into a 4-top for parties of 3 and 4;
- * anything larger sits communal.
+ * Tables are "1".."N" for the 2-tops, numbered from `fourTopStart` for the
+ * 4-tops, and "C1".."Cn" for the communal tables. Parties of 3 and 4 take a
+ * 4-top, or adjacent 2-tops (1/2, 3/4, …) combined into one; anything larger
+ * sits communal.
  */
 
 export type Rules = {
@@ -15,6 +16,8 @@ export type Rules = {
   weekendsAhead: number;
   twoTops: number;
   firstTable: number;
+  fourTops: number;
+  fourTopStart: number;
   communalTables: number;
   maxParty: number;
   largePartyMin: number;
@@ -207,20 +210,22 @@ export const occupiedAt = (
   return taken;
 };
 
-const distanceFrom = (table: number, taken: Set<string>): number => {
+// 4-top numbers aren't positions in the row of 2-tops, so only 2-tops count as neighbours.
+const distanceFrom = (table: number, taken: Set<string>, rules: Rules): number => {
   let nearest = Infinity;
   for (const id of taken) {
     const other = Number(id);
-    if (!Number.isNaN(other)) nearest = Math.min(nearest, Math.abs(other - table));
+    if (other >= 1 && other <= rules.twoTops) nearest = Math.min(nearest, Math.abs(other - table));
   }
   return nearest;
 };
 
 /**
  * The tables a party of this seating should get, or null when none are free.
- * 2-tops and pairs go to whichever free spot is furthest from anyone already
- * seated, ties broken toward `firstTable`, so an empty room fills from the
- * middle outward and neighbours stay as far apart as the night allows.
+ * A party of 3–4 takes a 4-top while one is free and a pair of 2-tops after
+ * that. 2-tops and pairs go to whichever free spot is furthest from anyone
+ * already seated, ties broken toward `firstTable`, so an empty room fills from
+ * the middle outward and neighbours stay as far apart as the night allows.
  */
 export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules): string[] | null => {
   if (seating === "communal") {
@@ -229,6 +234,13 @@ export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules)
       if (!taken.has(id)) return [id];
     }
     return null;
+  }
+
+  if (seating === "four") {
+    for (let index = 0; index < rules.fourTops; index += 1) {
+      const id = String(rules.fourTopStart + index);
+      if (!taken.has(id)) return [id];
+    }
   }
 
   const candidates: number[][] = [];
@@ -243,7 +255,7 @@ export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules)
   let bestCentre = Infinity;
   for (const tables of candidates) {
     if (tables.some((table) => taken.has(String(table)))) continue;
-    const spread = Math.min(...tables.map((table) => distanceFrom(table, taken)));
+    const spread = Math.min(...tables.map((table) => distanceFrom(table, taken, rules)));
     const centre = Math.min(...tables.map((table) => Math.abs(table - rules.firstTable)));
     if (spread > bestSpread || (spread === bestSpread && centre < bestCentre)) {
       best = tables;
@@ -283,6 +295,8 @@ type DinnerConfig = {
   weekends_ahead: number | null;
   two_tops: number | null;
   first_table: number | null;
+  four_tops: number | null;
+  four_top_start: number | null;
   communal_tables: number | null;
   max_party: number | null;
   large_party_min: number | null;
@@ -301,6 +315,7 @@ export const readRules = (dinner: DinnerConfig): Rules => {
     for (const day of parseDays(window.days ?? "")) seatings.set(day, { first, last });
   }
   const twoTops = whole(dinner.two_tops, 10);
+  const communalTables = whole(dinner.communal_tables, 2);
   return {
     timezone: "America/Los_Angeles",
     slotMinutes: whole(dinner.slot_minutes, 30),
@@ -308,7 +323,9 @@ export const readRules = (dinner: DinnerConfig): Rules => {
     weekendsAhead: whole(dinner.weekends_ahead, 3),
     twoTops,
     firstTable: Math.min(twoTops, whole(dinner.first_table, Math.ceil(twoTops / 2))),
-    communalTables: whole(dinner.communal_tables, 2),
+    fourTops: whole(dinner.four_tops, 0),
+    fourTopStart: Math.max(twoTops + 1, whole(dinner.four_top_start, twoTops + communalTables + 1)),
+    communalTables,
     maxParty: whole(dinner.max_party, 8),
     largePartyMin: whole(dinner.large_party_min, 6),
     seatings,

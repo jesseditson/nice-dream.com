@@ -28,9 +28,9 @@ A `GET` answers with one entry per service night:
 }
 ```
 
-`two`, `four` and `communal` say whether a 2-top, a combined 4-top, or a
-communal table is free for that seating, so the form answers every party size
-from one request.
+`two`, `four` and `communal` say whether that seating can still take a party of
+1–2, of 3–4, or of 5 and up, so the form answers every party size from one
+request. [Table assignment](#table-assignment) explains how each is decided.
 
 A `POST` body is `{ party_size, date, time, name, contact_method, email?,
 phone?, notes?, newsletter? }` — `time` as `HH:MM`, `contact_method` as `email`
@@ -50,16 +50,98 @@ Everything the carrier decides with lives on the `dinner` object
   block, and a booking holds its table for `hold_minutes`.
 - The form offers `weekends_ahead` service weeks, counting the current week
   only if it still has a night left. Tonight is offered until the last seating.
-- The room has `two_tops` 2-tops, numbered from 1, and `communal_tables`
-  communal tables (`C1`, `C2`, …). Adjacent 2-tops combine in fixed pairs (1/2,
-  3/4, …) into a 4-top. Parties of 1–2 take a 2-top, 3–4 a pair, 5 up to
-  `max_party` a communal table.
-- 2-tops and pairs go to whichever free spot is furthest from anyone already
-  seated during that hold, ties broken toward `first_table` — so an empty night
-  starts at table 5 and neighbours stay as far apart as the room allows.
+- The room is `two_tops` 2-tops, `four_tops` 4-tops and `communal_tables`
+  communal tables, and the form takes parties up to `max_party`. Which table a
+  party gets is covered under [Table assignment](#table-assignment).
 - Parties of `large_party_min` or more are shown `large_party_notice` before
   they book and are told we'll reach out to confirm; the booking itself is
   taken like any other.
+
+## Table assignment
+
+The carrier picks a party's table at the moment it takes the booking and writes
+it to the Tracker's Table(s) column. It never moves a booking afterwards; to
+reseat a party, edit that cell.
+
+The same logic decides what the form shows as open (a seating is open for a
+party size when the carrier could seat that party) and fills in Table(s) for
+rows staff type into the Tracker without one.
+
+### The room
+
+| Tables | Named | Set by |
+| --- | --- | --- |
+| 2-tops | `1`–`10` | `two_tops` |
+| 4-tops | `13`, `14` | `four_tops`, numbered up from `four_top_start` |
+| Communal | `C1`, `C2` | `communal_tables` |
+
+`four_tops` is 0 until the tables exist. Set it to 2 and tables 13 and 14 start
+taking bookings and get their own rows on the Tables tab.
+
+Two 2-tops can be pushed together to seat four, but only in the fixed pairs
+1/2, 3/4, 5/6, 7/8 and 9/10 — never 2/3 or 4/5.
+
+### What a party gets
+
+| Party | Gets |
+| --- | --- |
+| 1–2 | one 2-top |
+| 3–4 | a 4-top if one is free (`13` before `14`), otherwise a pair of 2-tops |
+| 5 up to `max_party` | a communal table (`C1` before `C2`) |
+| more than `max_party` | refused, and asked to email |
+
+A party is never seated at a larger kind of table than this: two people don't
+get a 4-top or a communal table, even when every 2-top is taken.
+
+### When a table is free
+
+A booking holds its tables for `hold_minutes` from its seating time. A table is
+free for a new party only if nothing already booked on it overlaps the new
+party's own hold. With 90-minute holds and seatings every 30 minutes, a 6:30
+booking blocks its table for the 5:30, 6:00, 6:30, 7:00 and 7:30 seatings and
+leaves it free at 8:00.
+
+Rows whose Status is `cancelled` hold nothing.
+
+### Spacing
+
+2-tops and pairs are chosen to keep parties as far apart as the night allows:
+
+1. Start from every free 2-top — or, for a party of 3–4, every pair with both
+   tables free.
+2. For each, find the distance to the nearest 2-top that is taken. Distance is
+   the difference between table numbers, so table 3 is two away from table 5. A
+   pair is measured from whichever of its two tables is closer.
+3. Take the one with the largest distance.
+4. On a tie, take the one closest to `first_table`. If that ties too, take the
+   lowest table number.
+
+With nothing seated, every table ties at step 3, so the first booking of the
+night goes to `first_table` — table 5, or the pair 5/6.
+
+"Taken" means held at any point during the new party's hold, not only at the
+same seating time: a 7:00 party of two arriving after a 6:30 party on table 5
+is seated at table 10. Only 2-tops count as neighbours. A seated 4-top or
+communal table doesn't push anyone away, because their numbers aren't
+positions in the row of 2-tops.
+
+On an empty night, parties booking the same seating fill the room in this
+order:
+
+| Parties of | Order |
+| --- | --- |
+| 1–2 | 5, 10, 1, 3, 7, 4, 6, 2, 8, 9 |
+| 3–4, no 4-tops | 5/6, 1/2, 9/10, 3/4, 7/8 |
+| 3–4, with 4-tops | 13, 14, 5/6, 1/2, 9/10, 3/4, 7/8 |
+| 5 and up | C1, C2 |
+
+### What spacing costs
+
+Spreading 2-tops out breaks up the pairs. Five parties of two at one seating
+take tables 5, 10, 1, 3 and 7, which leaves one table in use in every pair. A
+party of 3–4 is then turned away for that seating and the ones that overlap it,
+even though five 2-tops are empty. Once the room has 4-tops, those parties go
+to 13 and 14 first and this matters less.
 
 ## Google credentials
 
@@ -87,7 +169,7 @@ The source of truth. Row 1 is a header; bookings are appended from row 2.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Date | Name | Time | Party Size | Contact Method | Contact | Notes | Table(s) | Server | Arrived | Status | Newsletter | Booked At |
 
-- **Table(s)** is what the carrier assigned — `5`, `5, 6`, or `C1`. Change it
+- **Table(s)** is what the carrier assigned — `5`, `5, 6`, `13`, or `C1`. Change it
   to move a party; the Tables and Host Sheet tabs follow.
 - **Server** and **Arrived** are for the host to fill in on the night.
 - **Status** is `booked` or `cancelled`. Cancelling gives the table back and the
