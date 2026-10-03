@@ -23,6 +23,13 @@ your visit to confirm the details."""
 google_service_account = "***REMOVED***"
 reservations_sheet_id = "***REMOVED***"
 
+[sample_menu]
+display_type = "upload"
+filename = "sample-menu.pdf"
+sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
+mime = "application/pdf"
+name = "sample-menu.pdf"
+
 [[seatings]]
 days = "Th-Sa"
 first = "17:30"
@@ -30,5 +37,6 @@ last = "20:00"
 
 [[reservation_emails]]
 email = "jesse@nice-dream.com"
+
 [[reservation_emails]]
 email = "ren@nice-dream.com"
