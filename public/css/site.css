@@ -1064,19 +1064,19 @@ body:not(.menu-open) .site-header .site-header__bar .site-header__gradient {
 .site-header__logo a {
   display: inline-block;
   max-width: 100%;
-  max-height: 20px;
+  max-height: 15px;
 }
 .site-header__logo img {
   width: auto;
   max-width: 100%;
-  max-height: 20px;
+  max-height: 15px;
 }
 @media screen and (max-width: 767px) {
   .site-header__logo a {
-    max-height: 30px;
+    max-height: 22px;
   }
   .site-header__logo img {
-    max-height: 30px;
+    max-height: 22px;
   }
 }
 .menu-toggle {
