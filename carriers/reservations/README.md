@@ -202,7 +202,15 @@ layout; the carrier owns it.
 npm install
 npm run types        # regenerate archival-objects.d.ts after schema edits
 npm run typecheck
+npm test
 ```
 
 `archival-objects.d.ts` is generated from `archival_objects.toml` and committed —
 it holds the schema, never any values.
+
+`npm test` runs `room.test.ts` with Node's built-in test runner, which executes
+the TypeScript directly and so needs Node 22.18 or newer. The tests cover
+everything under [Table assignment](#table-assignment) — what each party size
+gets, how long a table is held, the spacing order, 4-tops, and the open/closed
+flags the form reads — against a room defined in the test file, so they don't
+depend on `objects/dinner.toml` or touch the spreadsheet.

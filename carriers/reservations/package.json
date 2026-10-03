@@ -6,10 +6,12 @@
   "description": "Real-time dinner availability and bookings, backed by the reservations Google Sheet.",
   "scripts": {
     "types": "archival-carrier-types",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
   },
   "devDependencies": {
     "@archival/carrier": "^0.18.0",
+    "@types/node": "^26.6.4",
     "typescript": "^7.0.0"
   }
 }
