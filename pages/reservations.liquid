@@ -5,6 +5,8 @@
   , collection_id: '6a1e4d804c523c68c922bfed'
   , stylesheet: '/css/reservations.css'
 %}
+{% assign large_party_min = dinner.large_party_min | floor %}
+{% assign max_party = dinner.max_party | floor %}
 
 <article class="page-content">
   <section class="page-region">
@@ -38,11 +40,10 @@
                               {{ dinner.blurb }}
                             </p>
                             <p class="nd-blurb-note">
-                              Your reservation isn't confirmed until we reach out — expect to hear from us within 24
-                              hours.
+                              Every night and time shown below is still open — pick one and the table is yours.
                             </p>
 
-                            {% if dinner.sample_menu %}<a class="nd-menu-link" href="{{ dunner.sample_menu.url }}" target="_blank" rel="noopener">
+                            {% if dinner.sample_menu %}<a class="nd-menu-link" href="{{ dinner.sample_menu.url }}" target="_blank" rel="noopener">
                               <span class="nd-menu-link-text">Peek at the sample menu</span>
                               <svg class="nd-menu-link-arrow" viewBox="0 0 20 12" fill="none" aria-hidden="true">
                                 <path d="M1 6 H17 M12 1.5 L17.5 6 L12 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
@@ -57,52 +58,55 @@
                               <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                             </svg>
 
-                            <form id="nd-gform" action="https://docs.google.com/forms/d/e/1FAIpQLSchcYHiVAHnNARJgtRk0WhL7K8-BvEp77tvW_gExAjUfM10cg/formResponse" method="POST">
-                              <!-- 1. Name -->
+                            <form id="nd-form" data-endpoint="/carriers/reservations" data-large-party-min="{{ large_party_min }}" data-max-party="{{ max_party }}" novalidate>
+                              <!-- 1. Party size -->
                               <div class="nd-field">
-                                <label class="nd-label" for="nd-name">Your name</label>
-                                <input class="nd-input" type="text" id="nd-name" name="entry.770264563" placeholder="First and last name" required autocomplete="name" />
+                                <span class="nd-label" id="nd-party-label">How many of you?</span>
+                                <div class="nd-pills" role="radiogroup" aria-labelledby="nd-party-label">
+                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-2" value="2" checked />
+                                  <label class="nd-pill" for="nd-party-2">2</label>
+                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-3" value="3" />
+                                  <label class="nd-pill" for="nd-party-3">3</label>
+                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-4" value="4" />
+                                  <label class="nd-pill" for="nd-party-4">4</label>
+                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-more" value="more" />
+                                  <label class="nd-pill" for="nd-party-more">5+</label>
+                                </div>
+
+                                <div class="nd-subfield" id="nd-party-count-field">
+                                  <label class="nd-label" for="nd-party-count">How many exactly?</label>
+                                  <input class="nd-input nd-input--short" type="number" id="nd-party-count" name="party_count" min="5" max="{{ max_party }}" step="1" inputmode="numeric" placeholder="5" disabled />
+                                </div>
+
+                                <div class="nd-notice" id="nd-large-party" role="note">
+                                  {{ dinner.large_party_notice }}
+                                </div>
+                                <p class="nd-field-error" id="nd-party-too-big" role="alert">
+                                  For parties larger than {{ max_party }}, please email us at
+                                  <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+                                  > and we'll sort it out together.
+                                </p>
                               </div>
 
+                              <!-- 2. Night -->
                               <div class="nd-field">
                                 <label class="nd-label" for="nd-date">Which night?</label>
-                                <input class="nd-input" type="date" id="nd-date" name="entry.1485072520" min="2026-06-23" required />
-                                <p class="nd-field-note">
-                                  Reservations are for Thursday, Friday & Saturday. No dinner service on Sundays.
-                                </p>
-                                <p class="nd-field-error" id="nd-date-error" role="alert">
-                                  Sorry — we serve dinner Thursday, Friday &amp; Saturday only. Please pick one of those
-                                  nights.
-                                </p>
+                                <select class="nd-select" id="nd-date" name="date" required disabled>
+                                  <option value="" disabled selected>Checking what's open…</option>
+                                </select>
+                                <p class="nd-field-note nd-availability-status" id="nd-availability-status" role="status"></p>
                               </div>
 
-                              <!-- 3. Preferred time -->
+                              <!-- 3. Time -->
                               <div class="nd-field">
-                                <label class="nd-label" for="nd-time">Preferred time</label>
-                                <select class="nd-select" id="nd-time" name="entry.292497760" required>
-                                  <option value="" disabled selected>— select a time —</option>
-                                  <option value="6:00 PM">6:00 PM</option>
-                                  <option value="6:30 PM">6:30 PM</option>
-                                  <option value="7:00 PM">7:00 PM</option>
-                                  <option value="7:30 PM">7:30 PM</option>
-                                  <option value="8:00 PM">8:00 PM</option>
-                                </select>
+                                <span class="nd-label" id="nd-time-label">What time?</span>
+                                <div class="nd-pills" id="nd-times" role="radiogroup" aria-labelledby="nd-time-label"></div>
                               </div>
 
-                              <!-- 4. Party size -->
+                              <!-- 4. Name -->
                               <div class="nd-field">
-                                <label class="nd-label" for="nd-party">Party size</label>
-                                <select class="nd-select" id="nd-party" name="entry.561670517" required>
-                                  <option value="" disabled selected>— select party size —</option>
-                                  <option value="1">1</option>
-                                  <option value="2">2</option>
-                                  <option value="3">3</option>
-                                  <option value="4">4</option>
-                                  <option value="5">5</option>
-                                  <option value="6">6</option>
-                                  <option value="7">7</option>
-                                  <option value="8">8</option>
-                                </select>
+                                <label class="nd-label" for="nd-name">Your name</label>
+                                <input class="nd-input" type="text" id="nd-name" name="name" placeholder="First and last name" required autocomplete="name" />
                               </div>
 
                               <!-- 5. Contact preference -->
@@ -111,23 +115,23 @@
                                 can reveal the matching field with NO JavaScript.
                               -->
                               <div class="nd-field nd-contact-group">
-                                <label class="nd-label">How should we reach you?</label>
+                                <span class="nd-label">How should we reach you?</span>
 
-                                <input class="nd-contact-radio" type="radio" name="entry.207621246" id="nd-pref-email" value="Email" required />
-                                <input class="nd-contact-radio" type="radio" name="entry.207621246" id="nd-pref-sms" value="Text (SMS)" />
+                                <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-email" value="email" required />
+                                <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-sms" value="sms" />
                                 <label class="nd-toggle-pill nd-pill-a" for="nd-pref-email">Email</label
                                 ><label class="nd-toggle-pill nd-pill-b" for="nd-pref-sms">Text (SMS)</label>
 
                                 <!-- Email field -->
                                 <div class="nd-contact-field" id="nd-email-field">
                                   <label class="nd-label" for="nd-email" style="margin-top:0;">Email address</label>
-                                  <input class="nd-input" type="email" id="nd-email" name="entry.744037489" placeholder="you@example.com" autocomplete="email" />
+                                  <input class="nd-input" type="email" id="nd-email" name="email" placeholder="you@example.com" autocomplete="email" />
                                 </div>
 
                                 <!-- Phone field -->
                                 <div class="nd-contact-field" id="nd-phone-field">
                                   <label class="nd-label" for="nd-phone" style="margin-top:0;">Mobile number</label>
-                                  <input class="nd-input" type="tel" id="nd-phone" name="entry.1144138777" placeholder="(   )   -    " autocomplete="tel" disabled />
+                                  <input class="nd-input" type="tel" id="nd-phone" name="phone" placeholder="(   )   -    " autocomplete="tel" disabled />
                                 </div>
                               </div>
 
@@ -137,13 +141,13 @@
                                   Anything we should know?
                                   <span class="nd-optional">optional</span>
                                 </label>
-                                <textarea class="nd-textarea" id="nd-notes" name="entry.1999442507" placeholder="Allergies, special occasions, or other requests"></textarea>
+                                <textarea class="nd-textarea" id="nd-notes" name="notes" placeholder="Allergies, special occasions, or other requests"></textarea>
                               </div>
 
                               <!-- 7. Newsletter -->
                               <div class="nd-field">
                                 <label class="nd-newsletter-label">
-                                  <input type="checkbox" id="nd-newsletter" name="entry.1906633097" value="Yes! I'd love to receive the newsletter!" />
+                                  <input type="checkbox" id="nd-newsletter" name="newsletter" value="yes" />
                                   <span class="nd-newsletter-text">
                                     Sign me up for updates from Nice Dream &amp; Sugar Water
                                   </span>
@@ -151,7 +155,8 @@
                               </div>
 
                               <!-- Submit -->
-                              <button class="nd-submit" type="submit">Request a table</button>
+                              <button class="nd-submit" type="submit">Book a table</button>
+                              <p class="nd-field-error nd-refusal" id="nd-refusal" role="alert"></p>
                               <p class="nd-error" id="nd-error">
                                 Something went wrong &mdash; please email us directly at
                                 <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
@@ -170,8 +175,8 @@
                           <div class="nd-sheet">
                             <img class="nd-confirm-dog" src="/img/nd-confirm-dog.png" alt="A dachshund curled up asleep" />
                             <h2 class="nd-confirm-title">
-                              We got<br>
-                              your request.
+                              You're<br>
+                              booked.
                             </h2>
 
                             <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
@@ -179,15 +184,16 @@
                             </svg>
 
                             <p class="nd-confirm-body">
-                              Thank you for reaching out, <strong id="nd-confirm-name"></strong>. We'll confirm your
-                              reservation within <strong>24 hours</strong>.
+                              See you soon, <strong id="nd-confirm-name"></strong> — we're holding
+                              <strong id="nd-confirm-party"></strong> on
+                              <strong id="nd-confirm-when"></strong>.
                             </p>
-                            <p class="nd-confirm-body">
-                              Please note: <strong>your reservation is not finalized until you hear from us.</strong>
-                              We'll reach out via the contact information you provided.
+                            <p class="nd-confirm-body nd-confirm-large" id="nd-confirm-large">
+                              Since you're a larger group, <strong>we'll reach out to confirm the details</strong>
+                              using the contact information you provided.
                             </p>
                             <p class="nd-confirm-note">
-                              Questions in the meantime? Email us at
+                              Need to change or cancel? Email us at
                               <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
                               >.
                             </p>

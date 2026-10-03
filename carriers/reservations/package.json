@@ -1,0 +1,15 @@
+{
+  "name": "nice-dream-reservations-carrier",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "description": "Real-time dinner availability and bookings, backed by the reservations Google Sheet.",
+  "scripts": {
+    "types": "archival-carrier-types",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@archival/carrier": "^0.18.0",
+    "typescript": "^7.0.0"
+  }
+}

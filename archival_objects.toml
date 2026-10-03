@@ -9,6 +9,34 @@ sample_menu = "upload"
 [dinner]
 sample_menu = "upload"
 blurb = "markdown"
+# Reservations — carriers/reservations and pages/reservations.liquid both read these.
+# minutes between seatings
+slot_minutes = "number"
+# how long a booking holds its table, in minutes
+hold_minutes = "number"
+# how many service weekends ahead the form offers
+weekends_ahead = "number"
+# 2-tops are numbered 1..two_tops and combine in adjacent pairs (1/2, 3/4, …) for parties of 3–4
+two_tops = "number"
+# the 2-top seated first on an empty night; later bookings spread out from it
+first_table = "number"
+# communal tables take parties of 5 up to max_party
+communal_tables = "number"
+# the largest party the form accepts
+max_party = "number"
+# parties of this size or more see large_party_notice before booking and are told we'll reach out to confirm
+large_party_min = "number"
+large_party_notice = "markdown"
+# the whole JSON key of a Google service account with the Sheets API enabled, shared on the spreadsheet as an Editor
+google_service_account = "secret"
+# the id from the spreadsheet's URL: docs.google.com/spreadsheets/d/<id>/edit
+reservations_sheet_id = "secret"
+
+# seating windows; days uses the same shorthand as business.hours, first/last are the first and last seating as 24h HH:MM
+[dinner.seatings]
+days = "string"
+first = "string"
+last = "string"
 
 [business]
 name = "string"

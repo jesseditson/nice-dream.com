@@ -4,3 +4,22 @@ and made with a lot of care. Our cocktail bar, Sugar Water, is making its much a
 debut, and cocktails (NA + alcoholic) will be available for our guests. If you have
 questions about the menu or allergens, email us at
 [hello<span>&#64;</span>nice-dream.com](mailto:hello@nice-dream.com)"""
+slot_minutes = 30.0
+hold_minutes = 90.0
+weekends_ahead = 3.0
+two_tops = 10.0
+first_table = 5.0
+communal_tables = 2.0
+max_party = 8.0
+large_party_min = 6.0
+large_party_notice = """
+Parties of six or more are seated at one of our communal tables. We charge a
+cancellation fee for no-shows and late cancellations, and we'll reach out before
+your visit to confirm the details."""
+google_service_account = "***REMOVED***"
+reservations_sheet_id = "***REMOVED***"
+
+[[seatings]]
+days = "Th-Sa"
+first = "17:30"
+last = "20:00"

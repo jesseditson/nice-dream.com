@@ -530,3 +530,145 @@ body::before {
   transform: var(--block-transform);
   transform-origin: var(--origin-x) var(--origin-y);
 }
+
+.nd-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.nd-pill-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.nd-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  font-family: "Perrrot", "Nunito", sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--sheet);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 0.12s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.12s ease;
+}
+
+.nd-pill:hover {
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.nd-pill-radio:checked + .nd-pill {
+  background: var(--ink);
+  color: var(--sheet);
+  box-shadow: none;
+}
+
+.nd-pill-radio:focus-visible + .nd-pill {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.nd-pill--off,
+.nd-pill--off:hover {
+  color: var(--ink-30);
+  border-color: #dcd8d1;
+  background: #f6f4f0;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.nd-subfield {
+  display: none;
+  margin-top: 16px;
+}
+
+.nd-subfield.visible {
+  display: block;
+}
+
+.nd-input--short {
+  max-width: 140px;
+}
+
+.nd-notice {
+  display: none;
+  margin-top: 14px;
+  padding: 12px 15px;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  background: #fbf7ee;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-70);
+}
+
+.nd-notice.visible {
+  display: block;
+}
+
+.nd-notice p {
+  margin: 0;
+}
+
+.nd-notice p + p {
+  margin-top: 8px;
+}
+
+.nd-select:disabled {
+  color: var(--ink-50);
+  cursor: default;
+  opacity: 1;
+}
+
+.nd-select option:disabled {
+  color: var(--ink-30);
+}
+
+.nd-availability-status {
+  display: none;
+}
+
+.nd-availability-status.visible {
+  display: block;
+}
+
+.nd-availability-status--error {
+  color: #b03a63;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.nd-refusal {
+  margin-top: 12px;
+}
+
+#nd-confirm-large {
+  display: none;
+}
+
+#nd-confirm-large.visible {
+  display: block;
+}
+
+/* The notice appears on interaction, so it shouldn't wait for the page-load stagger. */
+.nd-notice .reveal {
+  transition-delay: 0s !important;
+  transition-duration: 0.25s !important;
+}

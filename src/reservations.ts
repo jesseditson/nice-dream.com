@@ -8,30 +8,161 @@
     link.textContent = address;
   });
 
-  const OPEN_DAYS = [4, 5, 6]; // Thu, Fri, Sat
-  const dateInput = byId<HTMLInputElement>("nd-date");
-  const dateError = byId("nd-date-error");
+  type Slot = { time: string; label: string; two: boolean; four: boolean; communal: boolean };
+  type Night = { date: string; label: string; slots: Slot[] };
+  type Availability = { ok: boolean; error?: string; today: string; dates: Night[] };
+  type BookingResult = {
+    ok: boolean;
+    error?: string;
+    date_label: string;
+    time_label: string;
+    party_size: number;
+    large_party: boolean;
+  };
 
-  const validateDate = () => {
-    if (!dateInput.value) {
-      dateInput.setCustomValidity("");
-      dateError.classList.remove("visible");
+  const form = byId<HTMLFormElement>("nd-form");
+  const endpoint = form.dataset.endpoint ?? "/carriers/reservations";
+  const largePartyMin = Number(form.dataset.largePartyMin) || 6;
+  const maxParty = Number(form.dataset.maxParty) || 8;
+
+  const dateSelect = byId<HTMLSelectElement>("nd-date");
+  const timePills = byId("nd-times");
+  const partyMore = byId<HTMLInputElement>("nd-party-more");
+  const partyCount = byId<HTMLInputElement>("nd-party-count");
+  const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+
+  let availability: Availability | null = null;
+
+  // 5+ without a number yet still needs a communal table, so price it as the smallest such party.
+  const partySize = (): number => {
+    const checked = form.querySelector<HTMLInputElement>('input[name="party"]:checked');
+    if (!checked) return 0;
+    if (checked.value !== "more") return Number(checked.value);
+    return Number(partyCount.value) || 5;
+  };
+
+  const seatingFor = (party: number): "two" | "four" | "communal" =>
+    party <= 2 ? "two" : party <= 4 ? "four" : "communal";
+
+  const slotOpen = (slot: Slot, party: number) => party >= 1 && party <= maxParty && slot[seatingFor(party)];
+  const nightOpen = (night: Night, party: number) => night.slots.some((slot) => slotOpen(slot, party));
+
+  const setVisible = (element: HTMLElement, visible: boolean) => element.classList.toggle("visible", visible);
+
+  const setStatus = (message: string, isError = false) => {
+    const status = byId("nd-availability-status");
+    status.textContent = message;
+    status.classList.toggle("nd-availability-status--error", isError);
+    setVisible(status, message !== "");
+  };
+
+  const placeholder = (select: HTMLSelectElement, label: string) => {
+    const option = new Option(label, "");
+    option.disabled = true;
+    option.selected = true;
+    select.add(option);
+    select.disabled = true;
+  };
+
+  const selectedTime = (): string =>
+    form.querySelector<HTMLInputElement>('input[name="time"]:checked')?.value ?? "";
+
+  const renderTimes = () => {
+    const previous = selectedTime();
+    timePills.textContent = "";
+    const night = availability?.dates.find((entry) => entry.date === dateSelect.value);
+    if (!night) {
+      const hint = document.createElement("p");
+      hint.className = "nd-field-note";
+      hint.textContent = availability ? "Pick a night first." : "Checking what's open…";
+      timePills.append(hint);
       return;
     }
-    const [y, m, d] = dateInput.value.split("-").map(Number);
-    const day = new Date(y, m - 1, d).getDay();
-    if (OPEN_DAYS.includes(day)) {
-      dateInput.setCustomValidity("");
-      dateError.classList.remove("visible");
-    } else {
-      dateInput.setCustomValidity("We serve dinner Thursday, Friday & Saturday only.");
-      dateError.classList.add("visible");
+    const party = partySize();
+    for (const slot of night.slots) {
+      const open = slotOpen(slot, party);
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "time";
+      input.value = slot.time;
+      input.id = `nd-time-${slot.time.replace(":", "")}`;
+      input.className = "nd-pill-radio";
+      input.disabled = !open;
+      input.checked = open && slot.time === previous;
+      const label = document.createElement("label");
+      label.htmlFor = input.id;
+      label.className = open ? "nd-pill" : "nd-pill nd-pill--off";
+      label.textContent = slot.label;
+      if (!open) label.title = "Nothing left at this time";
+      timePills.append(input, label);
     }
   };
 
-  // 'change' fires reliably on mobile date pickers; 'input' covers desktop.
-  dateInput.addEventListener("change", validateDate);
-  dateInput.addEventListener("input", validateDate);
+  // Nights that can't seat the party stay listed but grayed; the first that can is selected.
+  const renderDates = () => {
+    const previous = dateSelect.value;
+    dateSelect.textContent = "";
+    if (!availability) {
+      placeholder(dateSelect, "Checking what's open…");
+      renderTimes();
+      return;
+    }
+    const party = partySize();
+    let selected = "";
+    for (const night of availability.dates) {
+      const open = nightOpen(night, party);
+      const option = new Option(open ? night.label : `${night.label} — fully booked`, night.date);
+      option.disabled = !open;
+      dateSelect.add(option);
+      if (open && (night.date === previous || !selected)) selected = night.date;
+    }
+    if (selected) {
+      dateSelect.value = selected;
+      dateSelect.disabled = false;
+    } else {
+      placeholder(
+        dateSelect,
+        availability.dates.length
+          ? `No tables left for a party of ${party} — try another size`
+          : "No dinner service in the next few weeks",
+      );
+    }
+    renderTimes();
+  };
+
+  const updateParty = () => {
+    const more = partyMore.checked;
+    setVisible(byId("nd-party-count-field"), more);
+    partyCount.disabled = !more;
+    partyCount.required = more;
+    const party = partySize();
+    setVisible(byId("nd-large-party"), party >= largePartyMin && party <= maxParty);
+    setVisible(byId("nd-party-too-big"), party > maxParty);
+    submitButton.disabled = party > maxParty;
+    renderDates();
+  };
+
+  const loadAvailability = async () => {
+    setStatus("Checking what's open…");
+    try {
+      const response = await fetch(endpoint, { headers: { accept: "application/json" } });
+      if (!response.ok) throw new Error(await response.text());
+      const result = (await response.json()) as Availability;
+      if (!result.ok) throw new Error(result.error);
+      availability = result;
+      setStatus("");
+    } catch {
+      availability = null;
+      setStatus("We couldn't load what's open right now — please email us to book.", true);
+    }
+    renderDates();
+  };
+
+  form.querySelectorAll<HTMLInputElement>('input[name="party"]').forEach((radio) => {
+    radio.addEventListener("change", updateParty);
+  });
+  partyCount.addEventListener("input", updateParty);
+  dateSelect.addEventListener("change", renderTimes);
 
   const setContactVisible = (field: HTMLElement, input: HTMLInputElement, visible: boolean) => {
     field.classList.toggle("visible", visible);
@@ -48,37 +179,92 @@
   };
 
   // Listeners are attached here rather than inline so they survive script-rewriting proxies like Cloudflare Rocket Loader.
-  document.querySelectorAll<HTMLInputElement>('input[name="entry.207621246"]').forEach((radio) => {
-    radio.addEventListener("change", () => showContact(radio.value === "Email" ? "email" : "phone"));
+  form.querySelectorAll<HTMLInputElement>('input[name="contact_method"]').forEach((radio) => {
+    radio.addEventListener("change", () => showContact(radio.value === "email" ? "email" : "phone"));
   });
 
-  const form = byId<HTMLFormElement>("nd-gform");
+  const showRefusal = (message: string) => {
+    const refusal = byId("nd-refusal");
+    refusal.textContent = message;
+    setVisible(refusal, message !== "");
+  };
+
+  const showConfirmation = (result: BookingResult) => {
+    const name = byId<HTMLInputElement>("nd-name").value.trim().split(" ")[0];
+    byId("nd-confirm-name").textContent = name || "there";
+    byId("nd-confirm-when").textContent = `${result.date_label} at ${result.time_label}`;
+    byId("nd-confirm-party").textContent =
+      result.party_size === 1 ? "a table for one" : `a table for ${result.party_size}`;
+    setVisible(byId("nd-confirm-large"), result.large_party);
+    byId("nd-form-view").style.display = "none";
+    byId("nd-confirmation").style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const name = byId<HTMLInputElement>("nd-name").value.trim().split(" ")[0];
-    const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    showRefusal("");
+    byId("nd-error").style.display = "none";
 
+    const time = selectedTime();
+    if (!dateSelect.value) {
+      showRefusal("Pick a night that's still open.");
+      return;
+    }
+    if (!time) {
+      showRefusal("Pick a time that's still open.");
+      return;
+    }
+
+    const sms = byId<HTMLInputElement>("nd-pref-sms").checked;
+    const payload = {
+      party_size: partySize(),
+      date: dateSelect.value,
+      time,
+      name: byId<HTMLInputElement>("nd-name").value,
+      contact_method: sms ? "sms" : "email",
+      email: byId<HTMLInputElement>("nd-email").value,
+      phone: byId<HTMLInputElement>("nd-phone").value,
+      notes: byId<HTMLTextAreaElement>("nd-notes").value,
+      newsletter: byId<HTMLInputElement>("nd-newsletter").checked,
+    };
+
+    const idleLabel = submitButton.textContent;
     submitButton.disabled = true;
-    submitButton.textContent = "Sending…";
+    submitButton.textContent = "Booking…";
 
-    const timeout = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("timeout")), 8000);
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("timeout")), 15000);
     });
 
     Promise.race([
-      fetch(form.action, { method: "POST", mode: "no-cors", body: new FormData(form) }),
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify(payload),
+      }),
       timeout,
     ])
-      .then(() => {
-        byId("nd-form-view").style.display = "none";
-        byId("nd-confirm-name").textContent = name || "there";
-        byId("nd-confirmation").style.display = "block";
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      .then(async (response) => {
+        if (!response.ok) throw new Error(await response.text());
+        const result = (await response.json()) as BookingResult;
+        if (!result.ok) {
+          showRefusal(result.error ?? "We couldn't take that booking.");
+          // The room may have filled while they typed, so reoffer what's left.
+          await loadAvailability();
+          return;
+        }
+        showConfirmation(result);
       })
       .catch(() => {
-        submitButton.disabled = false;
-        submitButton.textContent = "Request a table";
         byId("nd-error").style.display = "block";
+      })
+      .finally(() => {
+        submitButton.disabled = partySize() > maxParty;
+        submitButton.textContent = idleLabel;
       });
   });
+
+  updateParty();
+  void loadAvailability();
 })();
