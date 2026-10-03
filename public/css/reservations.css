@@ -141,6 +141,7 @@ body::before {
   width: 188px;
   height: auto;
   display: block;
+  transform: translateY(20%);
 }
 
 .reservation-logos {
