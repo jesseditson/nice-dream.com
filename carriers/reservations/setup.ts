@@ -5,10 +5,10 @@
  * Sheet are formulas over Tracker, so rebuilding them loses nothing.
  */
 import type { SheetsClient } from "./google";
-import { type Rules } from "./room";
+import { type Rules, holdFor } from "./room";
 import { COL, CONFIG, HOST, TABLES, TRACKER, TRACKER_COLUMNS, columnLetter } from "./sheet";
 
-const SETUP_VERSION = 2;
+const SETUP_VERSION = 3;
 
 type SheetInfo = {
   properties: { sheetId: number; title: string };
@@ -29,6 +29,7 @@ const layoutKey = (rules: Rules): string => {
     `v${SETUP_VERSION}`,
     `slot=${rules.slotMinutes}`,
     `hold=${rules.holdMinutes}`,
+    ...rules.holdOverrides.map(({ min, max, minutes }) => `hold${min}-${max}=${minutes}`),
     `tables=${rules.twoTops}+${rules.fourTops}@${rules.fourTopStart}+${rules.communalTables}+${rules.barSeats}`,
     windows,
   ].join(" ");
@@ -73,7 +74,8 @@ const matrixSlots = (rules: Rules): number[] => {
   const windows = [...rules.seatings.values()];
   if (!windows.length) return [];
   const first = Math.min(...windows.map((window) => window.first));
-  const last = Math.max(...windows.map((window) => window.last)) + rules.holdMinutes - rules.slotMinutes;
+  const longestHold = Math.max(rules.holdMinutes, ...rules.holdOverrides.map(({ minutes }) => minutes));
+  const last = Math.max(...windows.map((window) => window.last)) + longestHold - rules.slotMinutes;
   const slots: number[] = [];
   for (let time = first; time <= last; time += rules.slotMinutes) slots.push(time);
   return slots;
@@ -83,10 +85,17 @@ const timeFormula = (minutes: number): string => `=TIME(${Math.floor(minutes / 6
 
 const tracker = (column: number): string => `${TRACKER}!$${columnLetter(column)}$2:$${columnLetter(column)}`;
 
+const HOLDS_TOP = 5;
+
+/** The largest party either area seats, so every party size gets a row in the Config hold table. */
+const partyCap = (rules: Rules): number => Math.max(rules.maxParty, rules.barSeats);
+
 /** Who holds table `$A<row>` during the seating in `<column>$3`, on the date in B1. */
-const tablesCellFormula = (row: number, column: string): string => {
+const tablesCellFormula = (row: number, column: string, rules: Rules): string => {
   const slot = `ROUND(${column}$3*1440)`;
   const start = `ROUND(${tracker(COL.time)}*1440)`;
+  const holds = `${CONFIG}!$A$${HOLDS_TOP}:$B$${HOLDS_TOP + partyCap(rules) - 1}`;
+  const hold = `IFERROR(VLOOKUP(${tracker(COL.party)},${holds},2,FALSE),${CONFIG}!$B$2)`;
   return (
     `=IFERROR(TEXTJOIN(" / ",TRUE,FILTER(` +
     `${tracker(COL.name)}&" ("&${tracker(COL.party)}&")",` +
@@ -94,7 +103,7 @@ const tablesCellFormula = (row: number, column: string): string => {
     `${tracker(COL.status)}<>"cancelled",` +
     `REGEXMATCH(","&SUBSTITUTE(${tracker(COL.tables)}&""," ","")&",",","&$A${row}&","),` +
     `${start}<=${slot},` +
-    `${start}+${CONFIG}!$B$2>${slot}` +
+    `${start}+${hold}>${slot}` +
     `)),"")`
   );
 };
@@ -183,9 +192,10 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
   const matrixTop = 3;
   const matrixRows = ids.map((id, index) => [
     `'${id}`,
-    ...slots.map((_, column) => tablesCellFormula(matrixTop + 1 + index, columnLetter(column + 1))),
+    ...slots.map((_, column) => tablesCellFormula(matrixTop + 1 + index, columnLetter(column + 1), rules)),
   ]);
 
+  await client("POST", "/values:batchClear", { ranges: [`${CONFIG}!A${HOLDS_TOP - 1}:B`] });
   await client("POST", "/values:batchUpdate", {
     valueInputOption: "USER_ENTERED",
     data: [
@@ -196,6 +206,8 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
           ["Layout", layout],
           ["Hold (minutes)", rules.holdMinutes],
           ["", "Managed by carriers/reservations — edit objects/dinner.toml instead."],
+          ["Party", "Hold (minutes)"],
+          ...Array.from({ length: partyCap(rules) }, (_, index) => [index + 1, holdFor(index + 1, rules)]),
         ],
       },
       {

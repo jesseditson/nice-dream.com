@@ -9,7 +9,7 @@
   });
 
   type Area = "dining" | "bar";
-  type Slot = { time: string; label: string; two: boolean; four: boolean; communal: boolean; bar: number };
+  type Slot = { time: string; label: string; dining: number[]; bar: number[] };
   type Night = { date: string; label: string; slots: Slot[] };
   type Availability = { ok: boolean; error?: string; today: string; dates: Night[] };
   type BookingResult = {
@@ -51,13 +51,7 @@
     return Number(partyCount.value) || 5;
   };
 
-  const seatingFor = (party: number): "two" | "four" | "communal" =>
-    party <= 2 ? "two" : party <= 4 ? "four" : "communal";
-
-  const slotOpen = (slot: Slot, party: number) => {
-    if (party < 1 || party > partyLimit()) return false;
-    return area() === "bar" ? party <= slot.bar : slot[seatingFor(party)];
-  };
+  const slotOpen = (slot: Slot, party: number) => slot[area()].includes(party);
   const nightOpen = (night: Night, party: number) => night.slots.some((slot) => slotOpen(slot, party));
 
   const setVisible = (element: HTMLElement, visible: boolean) => element.classList.toggle("visible", visible);

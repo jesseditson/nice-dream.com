@@ -22,17 +22,17 @@ A `GET` answers with one entry per service night:
       "date": "2026-10-02",
       "label": "Friday, October 2nd",
       "slots": [
-        { "time": "17:30", "label": "5:30 PM", "two": true, "four": false, "communal": true, "bar": 2 }
+        { "time": "17:30", "label": "5:30 PM", "dining": [1, 2, 5, 6, 7, 8], "bar": [1, 2] }
       ]
     }
   ]
 }
 ```
 
-`two`, `four` and `communal` say whether that seating can still take a
-dining-room party of 1–2, of 3–4, or of 5 and up. `bar` is the largest party
-the bar can still seat together. Between them the form answers every party
-size, in either area, from one request. [Table assignment](#table-assignment)
+`dining` and `bar` list every party size that seating can still take in each
+area. A party's size decides both its table and how long it holds it, so
+availability is worked out size by size. Between them the form answers every
+party size, in either area, from one request. [Table assignment](#table-assignment)
 explains how each is decided.
 
 A `POST` body is `{ party_size, date, time, name, contact_method, email?,
@@ -51,7 +51,8 @@ Everything the carrier decides with lives on the `dinner` object
 (`objects/dinner.toml`; field notes in `archival_objects.toml`):
 
 - Seatings run every `slot_minutes` from `first` to `last` in each `[[seatings]]`
-  block, and a booking holds its table for `hold_minutes`.
+  block, and a booking holds its table for `hold_minutes`, unless a
+  `[[hold_overrides]]` row covers its party size.
 - The form offers `weekends_ahead` service weeks, counting the current week
   only if it still has a night left. Tonight is offered until the last seating.
 - The dining room is `two_tops` 2-tops, `four_tops` 4-tops and
@@ -133,6 +134,32 @@ booking blocks its table for the 5:30, 6:00, 6:30, 7:00 and 7:30 seatings and
 leaves it free at 8:00.
 
 Rows whose Status is `cancelled` hold nothing.
+
+### Hold length by party size
+
+`[[hold_overrides]]` rows on the dinner object change the hold for some party
+sizes:
+
+```toml
+[[hold_overrides]]
+parties = "1-2"
+hold_minutes = 75
+
+[[hold_overrides]]
+parties = "6+"
+hold_minutes = 150
+```
+
+`parties` is one size (`"5"`), a range (`"6-8"`) or open-ended (`"6+"`). If
+rows overlap, the first one that matches wins. Any size no row covers holds
+for `hold_minutes`. A row with an unreadable `parties` or no `hold_minutes` is
+ignored.
+
+Each booking holds for its own party's length, both when it's placed and while
+it blocks later bookings. Bar bookings work the same way. The Tracker's Party
+Size column decides the hold for rows staff type in, so changing a party size
+there also changes how long the booking holds its table. The hidden Config tab
+lists the hold for every party size, and the Tables tab uses it.
 
 ### Back-to-back bookings
 

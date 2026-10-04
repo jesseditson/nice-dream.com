@@ -15,7 +15,9 @@
 export type Rules = {
   timezone: string;
   slotMinutes: number;
+  /** How long a booking holds its tables, unless an override covers its party size. */
   holdMinutes: number;
+  holdOverrides: HoldOverride[];
   weekendsAhead: number;
   twoTops: number;
   firstTable: number;
@@ -29,6 +31,9 @@ export type Rules = {
   seatings: Map<number, { first: number; last: number }>;
 };
 
+/** Parties of `min`..`max` guests hold their tables for `minutes`. */
+export type HoldOverride = { min: number; max: number; minutes: number };
+
 export type Area = "dining" | "bar";
 
 export type Seating = "two" | "four" | "communal";
@@ -37,16 +42,15 @@ export type Booking = {
   date: string;
   /** Seating time as minutes past midnight. */
   start: number;
+  party: number;
   tables: string[];
 };
 
+/** The party sizes each area can still seat. */
 export type SlotAvailability = {
   time: number;
-  two: boolean;
-  four: boolean;
-  communal: boolean;
-  /** The largest party the bar can still seat together. */
-  bar: number;
+  dining: number[];
+  bar: number[];
 };
 
 const PAIR_SEATS = 4;
@@ -201,39 +205,45 @@ export const serviceDates = (today: string, rules: Rules): string[] => {
 export const seatingFor = (party: number): Seating =>
   party <= 2 ? "two" : party <= PAIR_SEATS ? "four" : "communal";
 
-/** Tables held by any booking that overlaps a seating starting at `start`. */
+/** The first override covering `party` wins. */
+export const holdFor = (party: number, rules: Rules): number =>
+  rules.holdOverrides.find(({ min, max }) => party >= min && party <= max)?.minutes ?? rules.holdMinutes;
+
+/** Tables held by any booking that overlaps a seating starting at `start` and lasting `hold`. */
 export const occupiedAt = (
   bookings: Booking[],
   date: string,
   start: number,
+  hold: number,
   rules: Rules,
 ): Set<string> => {
   const taken = new Set<string>();
   for (const booking of bookings) {
     if (booking.date !== date) continue;
     const overlaps =
-      booking.start < start + rules.holdMinutes && start < booking.start + rules.holdMinutes;
+      booking.start < start + hold && start < booking.start + holdFor(booking.party, rules);
     if (overlaps) for (const table of booking.tables) taken.add(table);
   }
   return taken;
 };
 
 /**
- * Tables free for a seating starting at `start` but booked back-to-back with
- * it: a booking ends less than one slot before it, or starts less than one
- * slot after its hold is up, so staff would have to turn the table.
+ * Tables free for a seating starting at `start` and lasting `hold` but booked
+ * back-to-back with it: a booking ends less than one slot before it, or starts
+ * less than one slot after its hold is up, so staff would have to turn the table.
  */
 export const turningAt = (
   bookings: Booking[],
   date: string,
   start: number,
+  hold: number,
   rules: Rules,
 ): Set<string> => {
-  const end = start + rules.holdMinutes;
+  const end = start + hold;
   const turning = new Set<string>();
   for (const booking of bookings) {
     if (booking.date !== date) continue;
-    const bookingEnd = booking.start + rules.holdMinutes;
+    const bookingEnd = booking.start + holdFor(booking.party, rules);
     const endsJustBefore = bookingEnd <= start && start - bookingEnd < rules.slotMinutes;
     const startsJustAfter = booking.start >= end && booking.start - end < rules.slotMinutes;
     if (endsJustBefore || startsJustAfter) for (const table of booking.tables) turning.add(table);
@@ -366,15 +376,16 @@ export const availabilityOn = (
   earliest: number,
 ): SlotAvailability[] =>
   slotsOn(date, rules).map((time) => {
-    if (time <= earliest) return { time, two: false, four: false, communal: false, bar: 0 };
-    const taken = occupiedAt(bookings, date, time, rules);
-    return {
-      time,
-      two: assignTables("two", taken, rules) !== null,
-      four: assignTables("four", taken, rules) !== null,
-      communal: assignTables("communal", taken, rules) !== null,
-      bar: Math.max(0, ...freeBarRuns(taken, rules).map((run) => run.length)),
+    const open = (area: Area, largest: number): number[] => {
+      const parties: number[] = [];
+      if (time <= earliest) return parties;
+      for (let party = 1; party <= largest; party += 1) {
+        const taken = occupiedAt(bookings, date, time, holdFor(party, rules), rules);
+        if (seatParty(area, party, taken, rules)) parties.push(party);
+      }
+      return parties;
     };
+    return { time, dining: open("dining", rules.maxParty), bar: open("bar", rules.barSeats) };
   });
 
 // ---- rules from the dinner object --------------------------------------------
@@ -392,6 +403,16 @@ type DinnerConfig = {
   max_party: number | null;
   large_party_min: number | null;
   seatings: { days: string | null; first: string | null; last: string | null }[];
+  hold_overrides?: { parties: string | null; hold_minutes: number | null }[];
+};
+
+/** `"1-2"` → 1..2, `"5"` → 5..5, `"6+"` → 6 and up. */
+export const parsePartyRange = (spec: string): { min: number; max: number } | null => {
+  const match = spec.trim().match(/^(\d+)\s*(?:(\+)|[-–]\s*(\d+))?$/);
+  if (!match) return null;
+  const min = Number(match[1]);
+  const max = match[2] ? Infinity : Number(match[3] ?? match[1]);
+  return min >= 1 && max >= min ? { min, max } : null;
 };
 
 const whole = (value: number | null, fallback: number): number =>
@@ -405,12 +426,21 @@ export const readRules = (dinner: DinnerConfig): Rules => {
     if (first == null || last == null || last < first) continue;
     for (const day of parseDays(window.days ?? "")) seatings.set(day, { first, last });
   }
+  const holdOverrides: HoldOverride[] = [];
+  for (const override of dinner.hold_overrides ?? []) {
+    const range = parsePartyRange(override.parties ?? "");
+    const minutes = override.hold_minutes;
+    if (range && minutes != null && Number.isFinite(minutes) && minutes > 0) {
+      holdOverrides.push({ ...range, minutes: Math.round(minutes) });
+    }
+  }
   const twoTops = whole(dinner.two_tops, 10);
   const communalTables = whole(dinner.communal_tables, 2);
   return {
     timezone: "America/Los_Angeles",
     slotMinutes: whole(dinner.slot_minutes, 30),
     holdMinutes: whole(dinner.hold_minutes, 90),
+    holdOverrides,
     weekendsAhead: whole(dinner.weekends_ahead, 3),
     twoTops,
     firstTable: Math.min(twoTops, whole(dinner.first_table, Math.ceil(twoTops / 2))),

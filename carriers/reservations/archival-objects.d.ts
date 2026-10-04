@@ -76,6 +76,8 @@ export interface DinnerObject {
   reservations_sheet_id: string | null;
   /** seating windows; days uses the same shorthand as business.hours, first/last are the first and last seating as 24h HH:MM */
   seatings: DinnerSeatingsObject[];
+  /** booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins */
+  hold_overrides: DinnerHoldOverridesObject[];
   /** staff emailed a summary of every booking the form takes, from reservation@nice-dream.com */
   reservation_emails: DinnerReservationEmailsObject[];
 }
@@ -86,6 +88,13 @@ export interface DinnerSeatingsObject {
   days: string | null;
   first: string | null;
   last: string | null;
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins */
+export interface DinnerHoldOverridesObject {
+  parties: string | null;
+  hold_minutes: number | null;
 }
 
 // Child objects are read from their parent's file, so they have no path/order.

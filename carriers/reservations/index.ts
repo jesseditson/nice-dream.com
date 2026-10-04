@@ -22,6 +22,7 @@ import {
   formatClock,
   formatDateLabel,
   formatHHMM,
+  holdFor,
   isIsoDate,
   nowMinutesIn,
   occupiedAt,
@@ -118,12 +119,13 @@ const carrier: Carrier = async (_params, body, objects) => {
 
     // Availability is decided here, from a fresh read, so a form left open can't
     // take a table that filled up in the meantime.
+    const hold = holdFor(party, rules);
     const tables = seatParty(
       area,
       party,
-      occupiedAt(bookings, date, start, rules),
+      occupiedAt(bookings, date, start, hold, rules),
       rules,
-      turningAt(bookings, date, start, rules),
+      turningAt(bookings, date, start, hold, rules),
     );
     if (!tables) return refuse("Sorry — that time just filled up. Pick another and we'll hold it for you.");
 
@@ -176,9 +178,7 @@ const carrier: Carrier = async (_params, body, objects) => {
       slots: availabilityOn(date, bookings, rules, earliest(date)).map((slot) => ({
         time: formatHHMM(slot.time),
         label: formatClock(slot.time),
-        two: slot.two,
-        four: slot.four,
-        communal: slot.communal,
+        dining: slot.dining,
         bar: slot.bar,
       })),
     })),

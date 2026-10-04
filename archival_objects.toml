@@ -45,6 +45,11 @@ days = "string"
 first = "string"
 last = "string"
 
+# booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins
+[dinner.hold_overrides]
+parties = "string"
+hold_minutes = "number"
+
 # staff emailed a summary of every booking the form takes, from reservation@nice-dream.com
 [dinner.reservation_emails]
 email = "string"

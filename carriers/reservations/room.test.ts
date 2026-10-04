@@ -8,8 +8,10 @@ import {
   assignTables,
   availabilityOn,
   formatHHMM,
+  holdFor,
   occupiedAt,
   parseHHMM,
+  parsePartyRange,
   readRules,
   seatParty,
   seatingFor,
@@ -47,7 +49,13 @@ const taken = (...tables: (number | string)[]): Set<string> => new Set(tables.ma
 const booking = (clock: string, ...tables: (number | string)[]): Booking => ({
   date: THURSDAY,
   start: at(clock),
+  party: 2,
   tables: tables.map(String),
+});
+
+const partyOf = (party: number, clock: string, ...tables: (number | string)[]): Booking => ({
+  ...booking(clock, ...tables),
+  party,
 });
 
 /** Seats one kind of party into an empty room until it is full; pairs come back as "5/6". */
@@ -65,18 +73,26 @@ const fillOrder = (seating: Seating, rules: Rules): string[] => {
   return order;
 };
 
-const heldAt = (clock: string, bookings: Booking[], rules: Rules = room()): string[] =>
-  [...occupiedAt(bookings, THURSDAY, at(clock), rules)].sort();
+const heldAt = (
+  clock: string,
+  bookings: Booking[],
+  rules: Rules = room(),
+  hold = rules.holdMinutes,
+): string[] => [...occupiedAt(bookings, THURSDAY, at(clock), hold, rules)].sort();
+
+const KIND_PARTY: Record<Seating, number> = { two: 2, four: 4, communal: 5 };
 
 const openSeatings = (
-  kind: Seating,
+  kind: Seating | number,
   bookings: Booking[],
   rules: Rules = room(),
   earliest = -1,
-): string[] =>
-  availabilityOn(THURSDAY, bookings, rules, earliest)
-    .filter((slot) => slot[kind])
+): string[] => {
+  const party = typeof kind === "number" ? kind : KIND_PARTY[kind];
+  return availabilityOn(THURSDAY, bookings, rules, earliest)
+    .filter((slot) => slot.dining.includes(party))
     .map((slot) => formatHHMM(slot.time));
+};
 
 describe("seatingFor", () => {
   test("parties of 1 and 2 take a 2-top", () => {
@@ -124,7 +140,7 @@ describe("occupiedAt", () => {
   });
 
   test("bookings on another date hold nothing", () => {
-    const friday: Booking = { date: "2026-10-09", start: at("18:30"), tables: ["5"] };
+    const friday: Booking = { ...booking("18:30", 5), date: "2026-10-09" };
     assert.deepEqual(heldAt("18:30", [friday]), []);
   });
 
@@ -132,11 +148,83 @@ describe("occupiedAt", () => {
     const bookings = [booking("18:00", 5), booking("19:00", 1), booking("20:00", 3)];
     assert.deepEqual(heldAt("18:30", bookings), ["1", "5"]);
   });
+
+  test("a booking holds its table for its own party's hold", () => {
+    const rules = room({ hold_overrides: [{ parties: "6-8", hold_minutes: 150 }] });
+    const bookings = [partyOf(6, "18:00", "C1"), partyOf(2, "18:00", 5)];
+    assert.deepEqual(heldAt("20:00", bookings, rules), ["C1"]);
+  });
+
+  test("the new seating's hold decides how far ahead it reaches", () => {
+    const bookings = [booking("20:00", 5)];
+    assert.deepEqual(heldAt("18:00", bookings, room(), 90), []);
+    assert.deepEqual(heldAt("18:00", bookings, room(), 150), ["5"]);
+  });
+});
+
+describe("hold overrides", () => {
+  const overrides = room({
+    hold_overrides: [
+      { parties: "1-2", hold_minutes: 75 },
+      { parties: "6+", hold_minutes: 150 },
+    ],
+  });
+
+  test("parse a size, a range or an open-ended range", () => {
+    assert.deepEqual(parsePartyRange("5"), { min: 5, max: 5 });
+    assert.deepEqual(parsePartyRange(" 1 - 2 "), { min: 1, max: 2 });
+    assert.deepEqual(parsePartyRange("6–8"), { min: 6, max: 8 });
+    assert.deepEqual(parsePartyRange("6+"), { min: 6, max: Infinity });
+  });
+
+  test("reject anything that isn't a party range", () => {
+    for (const spec of ["", "two", "0", "4-2", "1-", "-3"]) assert.equal(parsePartyRange(spec), null, spec);
+  });
+
+  test("a covered party size takes the override's hold", () => {
+    assert.equal(holdFor(1, overrides), 75);
+    assert.equal(holdFor(2, overrides), 75);
+    assert.equal(holdFor(8, overrides), 150);
+  });
+
+  test("other party sizes keep hold_minutes", () => {
+    assert.equal(holdFor(3, overrides), 90);
+    assert.equal(holdFor(5, overrides), 90);
+  });
+
+  test("the first matching override wins", () => {
+    const rules = room({
+      hold_overrides: [
+        { parties: "6", hold_minutes: 120 },
+        { parties: "5-8", hold_minutes: 150 },
+      ],
+    });
+    assert.equal(holdFor(6, rules), 120);
+    assert.equal(holdFor(7, rules), 150);
+  });
+
+  test("overrides with a bad range or no hold are ignored", () => {
+    const rules = room({
+      hold_overrides: [
+        { parties: "lots", hold_minutes: 150 },
+        { parties: "3-4", hold_minutes: null },
+        { parties: "1-2", hold_minutes: 0 },
+      ],
+    });
+    assert.deepEqual(rules.holdOverrides, []);
+  });
+
+  test("a longer hold closes seatings a shorter one leaves open", () => {
+    const rules = room({ hold_overrides: [{ parties: "6-8", hold_minutes: 150 }] });
+    const bookings = [booking("19:30", "C1"), booking("20:00", "C2")];
+    assert.deepEqual(openSeatings(5, bookings, rules), ["17:30", "18:00", "18:30"]);
+    assert.deepEqual(openSeatings(6, bookings, rules), ["17:30"]);
+  });
 });
 
 describe("turningAt", () => {
   const turningAtClock = (clock: string, bookings: Booking[], rules: Rules = room()): string[] =>
-    [...turningAt(bookings, THURSDAY, at(clock), rules)].sort();
+    [...turningAt(bookings, THURSDAY, at(clock), rules.holdMinutes, rules)].sort();
 
   test("a table whose booking ends as the seating starts is turning", () => {
     assert.deepEqual(turningAtClock("19:30", [booking("18:00", 13)]), ["13"]);
@@ -153,6 +241,12 @@ describe("turningAt", () => {
 
   test("overlapping bookings are held, not turning", () => {
     assert.deepEqual(turningAtClock("19:00", [booking("18:00", 13)]), []);
+  });
+
+  test("each booking ends after its own party's hold", () => {
+    const rules = room({ hold_overrides: [{ parties: "3-4", hold_minutes: 60 }] });
+    assert.deepEqual(turningAtClock("19:00", [partyOf(4, "18:00", 13)], rules), ["13"]);
+    assert.deepEqual(turningAtClock("19:30", [partyOf(4, "18:00", 13)], rules), []);
   });
 
   test("bookings on another date don't turn anything", () => {
@@ -193,9 +287,9 @@ describe("assignTables avoiding back-to-back bookings", () => {
     const tables = seatParty(
       "dining",
       4,
-      occupiedAt(bookings, THURSDAY, at730, rules),
+      occupiedAt(bookings, THURSDAY, at730, rules.holdMinutes, rules),
       rules,
-      turningAt(bookings, THURSDAY, at730, rules),
+      turningAt(bookings, THURSDAY, at730, rules.holdMinutes, rules),
     );
     assert.deepEqual(tables, ["14"]);
   });
@@ -483,7 +577,7 @@ describe("availabilityOn", () => {
   });
 
   const barRoom = (bookings: Booking[], rules: Rules = room(), earliest = -1): number[] =>
-    availabilityOn(THURSDAY, bookings, rules, earliest).map((slot) => slot.bar);
+    availabilityOn(THURSDAY, bookings, rules, earliest).map((slot) => Math.max(0, ...slot.bar));
 
   test("an empty bar can take a party as large as the bar at every seating", () => {
     assert.deepEqual(barRoom([]), [4, 4, 4, 4, 4, 4]);

@@ -8,6 +8,7 @@ import {
   type Booking,
   type Rules,
   assignTables,
+  holdFor,
   isIsoDate,
   occupiedAt,
   parseHHMM,
@@ -120,11 +121,12 @@ const assignUnassigned = async (
   const updates: { range: string; values: string[][] }[] = [];
   unassigned.sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start || a.row - b.row);
   for (const entry of unassigned) {
-    const taken = occupiedAt(bookings, entry.date, entry.start, rules);
-    const turning = turningAt(bookings, entry.date, entry.start, rules);
+    const hold = holdFor(entry.party, rules);
+    const taken = occupiedAt(bookings, entry.date, entry.start, hold, rules);
+    const turning = turningAt(bookings, entry.date, entry.start, hold, rules);
     const tables = assignTables(seatingFor(entry.party), taken, rules, turning);
     if (!tables) continue;
-    bookings.push({ date: entry.date, start: entry.start, tables });
+    bookings.push({ date: entry.date, start: entry.start, party: entry.party, tables });
     updates.push({
       range: `${TRACKER}!${columnLetter(COL.tables)}${entry.row}`,
       values: [[tables.join(", ")]],
@@ -156,10 +158,11 @@ export const readBookings = async (
     if (!date || start == null || date < today) return;
     if (cellText(cells[COL.status]).toLowerCase() === "cancelled") return;
     const tables = cellTables(cells[COL.tables]);
+    const party = cellNumber(cells[COL.party]) || 2;
     if (tables.length) {
-      bookings.push({ date, start, tables });
+      bookings.push({ date, start, party, tables });
     } else {
-      unassigned.push({ row: index + 2, date, start, party: cellNumber(cells[COL.party]) || 2 });
+      unassigned.push({ row: index + 2, date, start, party });
     }
   });
   if (unassigned.length) await assignUnassigned(client, bookings, unassigned, rules);
