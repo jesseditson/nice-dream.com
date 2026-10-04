@@ -76,6 +76,10 @@ export interface DinnerObject {
   reservations_sheet_id: string | null;
   /** shared with the Square order webhook (nice-dream-kds-ingest), which sends it to hold a table the moment a walk-in is seated; walk-ins are refused while this is blank */
   walk_in_key: string | null;
+  /** a Square access token that can read orders; with square_location_id set, a table with an open check in Square can't be booked online */
+  square_access_token: string | null;
+  /** the Square location whose open checks are read */
+  square_location_id: string | null;
   /** seating windows; days uses the same shorthand as business.hours, first/last are the first and last seating as 24h HH:MM */
   seatings: DinnerSeatingsObject[];
   /** booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins */

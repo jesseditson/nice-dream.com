@@ -18,6 +18,7 @@ import {
   tableForTicket,
   turningAt,
   walkInAt,
+  withWalkIns,
 } from "./room.ts";
 
 const THURSDAY = "2026-10-08";
@@ -682,6 +683,64 @@ describe("walkInAt", () => {
 
   test("a ticket that isn't a table holds nothing", () => {
     assert.equal(walkIn("Togo", "18:00"), null);
+  });
+});
+
+describe("withWalkIns", () => {
+  const check = (name: string, clock: string, date = THURSDAY) => ({ name, date, start: at(clock) });
+  const twoTopsOpenAt = (clock: string, bookings: Booking[]): number[] =>
+    availabilityOn(THURSDAY, bookings, room(), -1)
+      .filter((slot) => slot.time === at(clock))
+      .flatMap((slot) => slot.dining.filter((party) => party <= 2));
+
+  test("an open check holds its table from when it was opened", () => {
+    const held = withWalkIns([], [check("* 5", "18:42")], room());
+    assert.deepEqual(held, [{ date: THURSDAY, start: at("18:42"), party: 2, tables: ["5"] }]);
+    assert.deepEqual(heldAt("19:00", held), ["5"]);
+    assert.deepEqual(heldAt("20:30", held), []);
+  });
+
+  test("the form stops offering a seating once every table has a booking or a check", () => {
+    const booked = [1, 2, 3, 4, 6, 7, 8, 9, 10].map((table) => booking("19:00", table));
+    assert.deepEqual(twoTopsOpenAt("19:00", booked), [1, 2]);
+    assert.deepEqual(twoTopsOpenAt("19:00", withWalkIns(booked, [check("* 5", "18:42")], room())), []);
+  });
+
+  test("a new booking is seated away from a walk-in", () => {
+    const held = withWalkIns([], [check("* 5", "18:42")], room());
+    assert.deepEqual(seatParty("dining", 2, occupiedAt(held, THURSDAY, at("19:00"), 90, room()), room()), ["10"]);
+  });
+
+  test("the booked party's own check adds nothing", () => {
+    const booked = [booking("18:30", 5), partyOf(4, "19:00", 7, 8)];
+    assert.deepEqual(withWalkIns(booked, [check("* 5", "18:10")], room()), booked);
+    assert.deepEqual(withWalkIns(booked, [check("* 5", "18:55")], room()), booked);
+    assert.deepEqual(withWalkIns(booked, [check("* 8", "19:05")], room()), booked);
+  });
+
+  test("a party seated once the booked one has left is held on its own", () => {
+    const held = withWalkIns([booking("18:00", 5)], [check("* 5", "19:10")], room());
+    assert.equal(held.length, 2);
+    assert.deepEqual(heldAt("20:00", held), ["5"]);
+  });
+
+  test("a walk-in ahead of a booking on the same table is held on its own", () => {
+    assert.equal(withWalkIns([booking("19:30", 5)], [check("* 5", "17:45")], room()).length, 2);
+  });
+
+  test("two checks on one table hold it once", () => {
+    assert.equal(withWalkIns([], [check("* 5", "18:00"), check("* 5", "18:20")], room()).length, 1);
+  });
+
+  test("checks that aren't tables, or are from another day, change nothing tonight", () => {
+    const held = withWalkIns([], [check("Togo", "18:00"), check("* 5", "18:00", WEDNESDAY)], room());
+    assert.deepEqual(heldAt("18:00", held), []);
+  });
+
+  test("leaves the bookings it was given untouched", () => {
+    const booked = [booking("18:30", 3)];
+    withWalkIns(booked, [check("* 5", "18:42")], room());
+    assert.equal(booked.length, 1);
   });
 });
 

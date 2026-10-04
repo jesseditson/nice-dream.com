@@ -10,6 +10,8 @@
  *   POST (JSON)    { walk_in, key } — sent by the Square order webhook when a
  *                    ticket opens; holds the table the ticket is named for
  *
+ * Both count a table as taken while Square has a check open on it.
+ *
  * The rules (nights, seating times, table counts) and the Google credentials
  * all live on the dinner object, so the room is edited as content.
  *
@@ -37,10 +39,12 @@ import {
   todayIn,
   turningAt,
   walkInAt,
+  withWalkIns,
 } from "./room";
 import { notifyStaff } from "./notify";
 import { type NewBooking, appendBooking, readBookings } from "./sheet";
 import { ensureSheet } from "./setup";
+import { openTickets } from "./square";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -85,12 +89,16 @@ const carrier: Carrier = async (_params, body, objects) => {
     if (!walkIn) return reply({ ok: true, held: false });
   }
 
+  const seated =
+    dinner.square_access_token && dinner.square_location_id
+      ? openTickets(dinner.square_access_token, dinner.square_location_id, rules.timezone)
+      : [];
   const client = sheetsClient(
     await accessToken(dinner.google_service_account),
     dinner.reservations_sheet_id,
   );
   await ensureSheet(client, rules);
-  const bookings = await readBookings(client, rules, today);
+  const bookings = withWalkIns(await readBookings(client, rules, today), await seated, rules);
 
   // ---- POST: hold a walk-in's table -----------------------------------------
   if (walkIn) {

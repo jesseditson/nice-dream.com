@@ -136,6 +136,9 @@ leaves it free at 8:00.
 
 Rows whose Status is `cancelled` hold nothing.
 
+A table with an open check in Square is held as well, booked or not — see
+[Walk-ins](#walk-ins).
+
 ### Hold length by party size
 
 `[[hold_overrides]]` rows on the dinner object change the hold for some party
@@ -217,18 +220,8 @@ to 13 and 14 first and this matters less.
 ## Walk-ins
 
 A party seated without a booking has to hold its table too, or the form would
-offer it to someone else. Square tells us when that happens: its order webhook
-([nice-dream-kds-ingest](https://github.com/trevorsimpkin/nice-dream-kds-ingest))
-posts `{ walk_in, key }` here the first time it sees an open ticket, where
-`walk_in` is the ticket's name and `key` is the dinner object's `walk_in_key`.
-
-Square has no event for a table being seated or given a server; the ticket is
-the only signal, and it reaches the webhook when the check is first saved. To
-hold a table before anything is ordered, open it in Square and save the empty
-check.
-
-The carrier appends a Tracker row named `Walk-in`, seated now and already
-marked Arrived, on the table the ticket is named for:
+offer it to someone else. Square is how the carrier knows: a table is taken
+while a check named for it is open.
 
 | Square ticket | Table |
 | --- | --- |
@@ -237,18 +230,51 @@ marked Arrived, on the table the ticket is named for:
 | `13`, `14` | the 4-tops, once `four_tops` is set |
 | `Bar 1`–`Bar 4` | `B1`–`B4` |
 
-Square doesn't say how many sat down, so the row's Party Size is the most the
-table takes — 2 at a 2-top, 4 at a 4-top, `max_party` at a communal table, 1 at
-a bar seat — and the table is held for that party's
-[hold](#hold-length-by-party-size). Fix the Party Size on the row if it
-matters, and set Status to `cancelled` to give the table back early.
+A ticket named anything else (`Togo`, a guest's name) isn't a table and holds
+nothing. Square doesn't say how many sat down, so a walk-in is assumed to be
+the most its table takes — 2 at a 2-top, 4 at a 4-top, `max_party` at a
+communal table, 1 at a bar seat — and holds the table for that party's
+[hold](#hold-length-by-party-size), counted from when the check was opened.
+
+Square has no event for a table being seated or given a server; the check is
+the only signal, and Square has it once it is first saved. To hold a table
+before anything is ordered, open it in Square and save the empty check.
+
+### Open checks
+
+Every time the form loads or a booking is taken, the carrier asks Square for
+the checks opened in the last 12 hours that are still open, and counts each
+one's table as taken. Closing the check gives the table back. Nothing is
+written to the Tracker, so these walk-ins don't appear on the Tables tab.
+
+A check opened within `slot_minutes` of a booking on the same table is that
+booked party sitting down, and adds nothing to the booking's own hold. Any
+other check holds the table in its own right — a party seated early at a table
+booked for later, or one seated after the booked party has left.
+
+This needs two more `secret` fields on the dinner object: `square_access_token`,
+a Square access token that can read orders, and `square_location_id`. While
+either is blank Square isn't asked. If Square doesn't answer within a few
+seconds the failure is logged and the form carries on from the Tracker alone.
+
+### The webhook
+
+Square's order webhook
+([nice-dream-kds-ingest](https://github.com/trevorsimpkin/nice-dream-kds-ingest))
+can also post `{ walk_in, key }` here the first time it sees an open ticket,
+where `walk_in` is the ticket's name and `key` is the dinner object's
+`walk_in_key`. The carrier then appends a Tracker row named `Walk-in`, seated
+now and already marked Arrived, which holds the table like any booking until
+its hold is up or its Status is set to `cancelled`. Fix the Party Size on the
+row if it matters.
 
 The reply is `{ ok: true, held, table }`. Nothing is held, and no row is
 written, when:
 
-- the ticket isn't named for a table (`Togo`, a guest's name);
-- the table is already held for those hours, which is the booked party sitting
-  down;
+- the ticket isn't named for a table;
+- the table is already held for those hours — by the booked party sitting
+  down, or by the open check itself when the Square fields above are set, in
+  which case the webhook has nothing left to do;
 - the party will be gone before the next seating that night — lunch, a night
   without dinner service, or anything after the last seating.
 
@@ -344,5 +370,6 @@ size gets, how long a table is held, the spacing order, 4-tops, and the
 open/closed flags the form reads — and which table a [walk-in](#walk-ins)
 holds, against a room defined in the test file.
 `notify.test.ts` covers the [booking email](#booking-emails) against a stand-in
-for `objects.EMAIL`. Neither depends on `objects/dinner.toml`, touches the
-spreadsheet, or sends mail.
+for `objects.EMAIL`, and `square.test.ts` the [open checks](#open-checks) lookup
+against a stand-in for `fetch`. None depends on `objects/dinner.toml`, touches
+the spreadsheet, calls Square, or sends mail.

@@ -121,22 +121,22 @@ export const formatDateLabel = (date: string): string => {
 };
 
 /** Today's date in the restaurant's timezone, not the server's. */
-export const todayIn = (timezone: string): string =>
+export const todayIn = (timezone: string, at: Date = new Date()): string =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date());
+  }).format(at);
 
 /** Minutes past midnight right now, in the restaurant's timezone. */
-export const nowMinutesIn = (timezone: string): number => {
+export const nowMinutesIn = (timezone: string, at: Date = new Date()): number => {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).formatToParts(new Date());
+  }).formatToParts(at);
   let hours = 0;
   let minutes = 0;
   for (const part of parts) {
@@ -403,6 +403,32 @@ export const walkInAt = (ticket: string, date: string, start: number, rules: Rul
   const end = start + holdFor(party, rules);
   const seatedIntoService = slotsOn(date, rules).some((slot) => slot >= start && slot < end);
   return seatedIntoService ? { date, start, party, tables: [table] } : null;
+};
+
+/** A check open in Square: its ticket name, and when it was opened in the restaurant's time. */
+export type OpenTicket = { name: string; date: string; start: number };
+
+/**
+ * `bookings`, plus a hold for each walk-in Square has a check open for. A
+ * check opened within one seating of a booking on its table is that booked
+ * party sitting down, so it adds nothing; any other holds the table from when
+ * it was opened.
+ */
+export const withWalkIns = (bookings: Booking[], tickets: OpenTicket[], rules: Rules): Booking[] => {
+  const held = [...bookings];
+  for (const ticket of tickets) {
+    const walkIn = walkInAt(ticket.name, ticket.date, ticket.start, rules);
+    if (!walkIn) continue;
+    const [table] = walkIn.tables;
+    const alreadySeated = held.some(
+      (booking) =>
+        booking.date === walkIn.date &&
+        booking.tables.includes(table) &&
+        Math.abs(booking.start - walkIn.start) < rules.slotMinutes,
+    );
+    if (!alreadySeated) held.push(walkIn);
+  }
+  return held;
 };
 
 /**
