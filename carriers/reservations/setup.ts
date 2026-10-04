@@ -8,7 +8,7 @@ import type { SheetsClient } from "./google";
 import { type Rules, holdFor } from "./room";
 import { COL, CONFIG, HOST, TABLES, TRACKER, TRACKER_COLUMNS, columnLetter } from "./sheet";
 
-const SETUP_VERSION = 3;
+const SETUP_VERSION = 4;
 
 type SheetInfo = {
   properties: { sheetId: number; title: string };
@@ -101,6 +101,7 @@ const tablesCellFormula = (row: number, column: string, rules: Rules): string =>
     `${tracker(COL.name)}&" ("&${tracker(COL.party)}&")",` +
     `${tracker(COL.date)}=$B$1,` +
     `${tracker(COL.status)}<>"cancelled",` +
+    `${tracker(COL.status)}<>"left",` +
     `REGEXMATCH(","&SUBSTITUTE(${tracker(COL.tables)}&""," ","")&",",","&$A${row}&","),` +
     `${start}<=${slot},` +
     `${start}+${hold}>${slot}` +
@@ -120,7 +121,7 @@ const hostFormula = (): string =>
     tracker(COL.notes),
     `IF(REGEXMATCH(UPPER(${tracker(COL.arrived)}&""),"^(TRUE|X|Y|YES|✓)$"),"✓","")`,
   ].join(",") +
-  `},${tracker(COL.date)}=$B$1,${tracker(COL.status)}<>"cancelled"),1,TRUE),"No reservations on this date")`;
+  `},${tracker(COL.date)}=$B$1,${tracker(COL.status)}<>"cancelled",${tracker(COL.status)}<>"left"),1,TRUE),"No reservations on this date")`;
 
 const gridRange = (
   sheetId: number,
@@ -267,7 +268,7 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
         rule: {
           condition: {
             type: "ONE_OF_LIST",
-            values: [{ userEnteredValue: "booked" }, { userEnteredValue: "cancelled" }],
+            values: ["booked", "cancelled", "left"].map((userEnteredValue) => ({ userEnteredValue })),
           },
           showCustomUi: true,
           strict: false,

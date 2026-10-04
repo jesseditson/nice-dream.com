@@ -35,24 +35,25 @@ describe("openTickets", () => {
     assert.deepEqual(sent[0].body.query.filter.state_filter, { states: ["OPEN"] });
     assert.deepEqual(sent[0].body.query.sort, { sort_field: "CREATED_AT", sort_order: "ASC" });
     const since = Date.parse(sent[0].body.query.filter.date_time_filter.created_at.start_at);
-    assert.ok(before - since >= 12 * 60 * 60 * 1000 && before - since < 13 * 60 * 60 * 1000);
+    const twelveHours = 12 * 60 * 60 * 1000;
+    assert.ok(since >= before - twelveHours && since <= Date.now() - twelveHours);
   });
 
   test("gives each named check its ticket name and when it opened, in the restaurant's time", async () => {
     square({
       orders: [
-        { ticket_name: "* 5", created_at: "2026-10-09T01:42:10.000Z" },
-        { ticket_name: "Bar 1", created_at: "2026-10-09T07:05:00.000Z" },
+        { id: "A", ticket_name: "* 5", created_at: "2026-10-09T01:42:10.000Z" },
+        { id: "B", ticket_name: "Bar 1", created_at: "2026-10-09T07:05:00.000Z" },
       ],
     });
     assert.deepEqual(await openTickets("token", "LOCATION", PACIFIC), [
-      { name: "* 5", date: "2026-10-08", start: 18 * 60 + 42 },
-      { name: "Bar 1", date: "2026-10-09", start: 5 },
+      { id: "A", name: "* 5", date: "2026-10-08", start: 18 * 60 + 42 },
+      { id: "B", name: "Bar 1", date: "2026-10-09", start: 5 },
     ]);
   });
 
   test("skips orders with no ticket name or no opening time", async () => {
-    square({ orders: [{ created_at: "2026-10-09T01:42:10.000Z" }, { ticket_name: "* 5" }] });
+    square({ orders: [{ id: "A", created_at: "2026-10-09T01:42:10.000Z" }, { id: "B", ticket_name: "* 5" }] });
     assert.deepEqual(await openTickets("token", "LOCATION", PACIFIC), []);
   });
 
@@ -61,14 +62,14 @@ describe("openTickets", () => {
     assert.deepEqual(await openTickets("token", "LOCATION", PACIFIC), []);
   });
 
-  test("answers with nothing, rather than failing the form, when Square refuses or is down", async () => {
+  test("answers null, rather than failing the form, when Square refuses or is down", async () => {
     mock.method(console, "error", () => {});
     square({ errors: [{ code: "UNAUTHORIZED" }] }, 401);
-    assert.deepEqual(await openTickets("token", "LOCATION", PACIFIC), []);
+    assert.equal(await openTickets("token", "LOCATION", PACIFIC), null);
 
     mock.method(globalThis, "fetch", async () => {
       throw new Error("network down");
     });
-    assert.deepEqual(await openTickets("token", "LOCATION", PACIFIC), []);
+    assert.equal(await openTickets("token", "LOCATION", PACIFIC), null);
   });
 });

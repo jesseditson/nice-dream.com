@@ -10,18 +10,18 @@ const TIMEOUT_MS = 4000;
 /** A check older than this was left open by mistake; nobody is still at the table. */
 const LOOKBACK_MS = 12 * 60 * 60 * 1000;
 
-type SquareOrder = { ticket_name?: string; created_at?: string };
+type SquareOrder = { id?: string; ticket_name?: string; created_at?: string };
 
 /**
  * Every named check opened in the last few hours and not yet closed, oldest
- * first. Never rejects: when Square can't be reached the form carries on from
- * the Tracker alone.
+ * first. Never rejects: it answers null when Square can't be reached, and the
+ * form carries on from the Tracker alone.
  */
 export const openTickets = async (
   token: string,
   locationId: string,
   timezone: string,
-): Promise<OpenTicket[]> => {
+): Promise<OpenTicket[] | null> => {
   try {
     const response = await fetch(SEARCH_URL, {
       method: "POST",
@@ -48,9 +48,10 @@ export const openTickets = async (
     const payload = (await response.json()) as { orders?: SquareOrder[] };
     return (payload.orders ?? []).flatMap((order) => {
       const opened = new Date(order.created_at ?? "");
-      if (!order.ticket_name || Number.isNaN(opened.getTime())) return [];
+      if (!order.id || !order.ticket_name || Number.isNaN(opened.getTime())) return [];
       return [
         {
+          id: order.id,
           name: order.ticket_name,
           date: todayIn(timezone, opened),
           start: nowMinutesIn(timezone, opened),
@@ -59,6 +60,6 @@ export const openTickets = async (
     });
   } catch (error) {
     console.error("Could not read open checks from Square:", error);
-    return [];
+    return null;
   }
 };

@@ -1,21 +1,23 @@
 /**
- * Reading and writing the Tracker tab. Bookings are only ever appended; staff
- * cancel by setting Status, and the Tables and Host Sheet tabs derive from here
- * by formula (see setup.ts).
+ * Reading and writing the Tracker tab. Bookings are only ever appended; a
+ * table is given back by setting Status, and the Tables and Host Sheet tabs
+ * derive from here by formula (see setup.ts).
  */
 import type { SheetsClient } from "./google";
 import {
   type Booking,
+  type OpenTicket,
   type Rules,
   assignTables,
   holdFor,
   isIsoDate,
   occupiedAt,
   parseHHMM,
+  reconcileWalkIns,
   seatingFor,
   timestampIn,
   turningAt,
-} from "./room";
+} from "./room.ts";
 
 export const TRACKER = "Tracker";
 export const TABLES = "Tables";
@@ -54,6 +56,15 @@ export const COL = {
   newsletter: 11,
   bookedAt: 12,
 } as const;
+
+/** Contact Method on a walk-in's row; its Contact is the Square order the check is on. */
+const SQUARE = "Square";
+
+/** Statuses that give a table back: staff cancel a booking, and a walk-in has left once its check closes. */
+const RELEASED = ["cancelled", "left"];
+
+/** A booking read from the Tracker, with the sheet row it is on. */
+export type TrackerBooking = Booking & { row: number };
 
 export const columnLetter = (index: number): string => String.fromCharCode(65 + index);
 
@@ -114,7 +125,7 @@ type Unassigned = { row: number; date: string; start: number; party: number };
  */
 const assignUnassigned = async (
   client: SheetsClient,
-  bookings: Booking[],
+  bookings: TrackerBooking[],
   unassigned: Unassigned[],
   rules: Rules,
 ): Promise<void> => {
@@ -126,7 +137,7 @@ const assignUnassigned = async (
     const turning = turningAt(bookings, entry.date, entry.start, hold, rules);
     const tables = assignTables(seatingFor(entry.party), taken, rules, turning);
     if (!tables) continue;
-    bookings.push({ date: entry.date, start: entry.start, party: entry.party, tables });
+    bookings.push({ date: entry.date, start: entry.start, party: entry.party, tables, row: entry.row });
     updates.push({
       range: `${TRACKER}!${columnLetter(COL.tables)}${entry.row}`,
       values: [[tables.join(", ")]],
@@ -145,24 +156,26 @@ export const readBookings = async (
   client: SheetsClient,
   rules: Rules,
   today: string,
-): Promise<Booking[]> => {
+): Promise<TrackerBooking[]> => {
   const response = await client<{ values?: Cell[][] }>(
     "GET",
     `/values/${range(TRACKER, `A2:${LAST_COLUMN}`)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`,
   );
-  const bookings: Booking[] = [];
+  const bookings: TrackerBooking[] = [];
   const unassigned: Unassigned[] = [];
   (response.values ?? []).forEach((cells, index) => {
+    const row = index + 2;
     const date = cellDate(cells[COL.date]);
     const start = cellTime(cells[COL.time]);
     if (!date || start == null || date < today) return;
-    if (cellText(cells[COL.status]).toLowerCase() === "cancelled") return;
+    if (RELEASED.includes(cellText(cells[COL.status]).toLowerCase())) return;
     const tables = cellTables(cells[COL.tables]);
     const party = cellNumber(cells[COL.party]) || 2;
+    const check = cellText(cells[COL.method]) === SQUARE ? cellText(cells[COL.contact]) : "";
     if (tables.length) {
-      bookings.push({ date, start, party, tables });
+      bookings.push({ date, start, party, tables, row, ...(check ? { check } : {}) });
     } else {
-      unassigned.push({ row: index + 2, date, start, party });
+      unassigned.push({ row, date, start, party });
     }
   });
   if (unassigned.length) await assignUnassigned(client, bookings, unassigned, rules);
@@ -183,8 +196,8 @@ const trackerId = async (client: SheetsClient): Promise<number> => {
   return trackerSheetId;
 };
 
-/** Checkboxes for Arrived and Newsletter on one booking row. */
-const addCheckboxes = async (client: SheetsClient, row: number): Promise<void> => {
+/** Checkboxes for Arrived and Newsletter on `count` booking rows starting at `row`. */
+const addCheckboxes = async (client: SheetsClient, row: number, count: number): Promise<void> => {
   const sheetId = await trackerId(client);
   await client("POST", ":batchUpdate", {
     requests: [COL.arrived, COL.newsletter].map((column) => ({
@@ -192,7 +205,7 @@ const addCheckboxes = async (client: SheetsClient, row: number): Promise<void> =
         range: {
           sheetId,
           startRowIndex: row - 1,
-          endRowIndex: row,
+          endRowIndex: row - 1 + count,
           startColumnIndex: column,
           endColumnIndex: column + 1,
         },
@@ -217,35 +230,86 @@ export type NewBooking = Booking & {
  * formats display them), and guest text is stored verbatim — never parsed as a
  * number, a date or a formula.
  */
-export const appendBooking = async (
+export const appendBookings = async (
   client: SheetsClient,
-  booking: NewBooking,
+  bookings: NewBooking[],
   rules: Rules,
 ): Promise<void> => {
+  if (!bookings.length) return;
   const cells = `A:${LAST_COLUMN}`;
-  const row: Cell[] = [];
-  row[COL.date] = dateSerial(booking.date);
-  row[COL.name] = booking.name;
-  row[COL.time] = booking.start / 1440;
-  row[COL.party] = booking.party;
-  row[COL.method] = booking.method;
-  row[COL.contact] = booking.contact;
-  row[COL.notes] = booking.notes;
-  row[COL.tables] = booking.tables.join(", ");
-  row[COL.server] = "";
-  row[COL.arrived] = booking.arrived ?? false;
-  row[COL.status] = "booked";
-  row[COL.newsletter] = booking.newsletter;
-  row[COL.bookedAt] = timestampIn(rules.timezone);
+  const bookedAt = timestampIn(rules.timezone);
+  const values = bookings.map((booking) => {
+    const row: Cell[] = [];
+    row[COL.date] = dateSerial(booking.date);
+    row[COL.name] = booking.name;
+    row[COL.time] = booking.start / 1440;
+    row[COL.party] = booking.party;
+    row[COL.method] = booking.method;
+    row[COL.contact] = booking.contact;
+    row[COL.notes] = booking.notes;
+    row[COL.tables] = booking.tables.join(", ");
+    row[COL.server] = "";
+    row[COL.arrived] = booking.arrived ?? false;
+    row[COL.status] = "booked";
+    row[COL.newsletter] = booking.newsletter;
+    row[COL.bookedAt] = bookedAt;
+    return row;
+  });
   const response = await client<{ updates?: { updatedRange?: string } }>(
     "POST",
     `/values/${range(TRACKER, cells)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
-    { range: `${TRACKER}!${cells}`, majorDimension: "ROWS", values: [row] },
+    { range: `${TRACKER}!${cells}`, majorDimension: "ROWS", values },
   );
   const written = Number(response.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1]);
   if (written) {
-    await addCheckboxes(client, written).catch((error) => {
-      console.error("Could not add checkboxes to the new booking row:", error);
+    await addCheckboxes(client, written, values.length).catch((error) => {
+      console.error("Could not add checkboxes to the new booking rows:", error);
     });
   }
+};
+
+export const appendBooking = (client: SheetsClient, booking: NewBooking, rules: Rules): Promise<void> =>
+  appendBookings(client, [booking], rules);
+
+/** The Tracker row for a party seated without a booking. */
+export const walkInRow = (walkIn: Booking): NewBooking => ({
+  ...walkIn,
+  name: "Walk-in",
+  method: SQUARE,
+  contact: walkIn.check ?? "",
+  notes: "",
+  newsletter: false,
+  arrived: true,
+});
+
+/**
+ * Brings the Tracker in line with the checks open in Square, and answers with
+ * everything that now holds a table: a walk-in with no row gets one, and a
+ * walk-in's row is marked `left` once its check has closed. With `tickets`
+ * null — Square wasn't asked, or didn't answer — the Tracker stands as it is.
+ * Never rejects: a walk-in still holds its table when its row can't be written.
+ */
+export const syncWalkIns = async (
+  client: SheetsClient,
+  bookings: TrackerBooking[],
+  tickets: OpenTicket[] | null,
+  rules: Rules,
+): Promise<Booking[]> => {
+  if (!tickets) return bookings;
+  const { left, seated } = reconcileWalkIns(bookings, tickets, rules);
+  try {
+    if (left.length) {
+      await client("POST", "/values:batchUpdate", {
+        valueInputOption: "RAW",
+        data: left.map(({ row }) => ({
+          range: `${TRACKER}!${columnLetter(COL.status)}${row}`,
+          values: [["left"]],
+        })),
+      });
+    }
+    await appendBookings(client, seated.map(walkInRow), rules);
+  } catch (error) {
+    console.error("Could not bring the Tracker's walk-ins in line with Square:", error);
+  }
+  return [...bookings.filter((booking) => !left.includes(booking)), ...seated];
 };

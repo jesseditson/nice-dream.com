@@ -44,6 +44,8 @@ export type Booking = {
   start: number;
   party: number;
   tables: string[];
+  /** The Square order a walk-in's check is on. */
+  check?: string;
 };
 
 /** The party sizes each area can still seat. */
@@ -405,30 +407,59 @@ export const walkInAt = (ticket: string, date: string, start: number, rules: Rul
   return seatedIntoService ? { date, start, party, tables: [table] } : null;
 };
 
-/** A check open in Square: its ticket name, and when it was opened in the restaurant's time. */
-export type OpenTicket = { name: string; date: string; start: number };
+/** A check open in Square: its order, its ticket name, and when it was opened in the restaurant's time. */
+export type OpenTicket = { id: string; name: string; date: string; start: number };
 
 /**
- * `bookings`, plus a hold for each walk-in Square has a check open for. A
- * check opened within one seating of a booking on its table is that booked
- * party sitting down, so it adds nothing; any other holds the table from when
- * it was opened.
+ * Squares `bookings` with the checks open in Square. `left` are the walk-ins
+ * among them whose check has closed or moved to another table, and `seated`
+ * are walk-ins that have no booking yet, each holding its table from when its
+ * check was opened. A check opened within one seating of a booking on its
+ * table is that booked party sitting down, so it seats nobody new.
  */
-export const withWalkIns = (bookings: Booking[], tickets: OpenTicket[], rules: Rules): Booking[] => {
-  const held = [...bookings];
+export const reconcileWalkIns = <Held extends Booking>(
+  bookings: Held[],
+  tickets: OpenTicket[],
+  rules: Rules,
+): { left: Held[]; seated: Booking[] } => {
+  const open = new Map<string, Booking>();
   for (const ticket of tickets) {
     const walkIn = walkInAt(ticket.name, ticket.date, ticket.start, rules);
-    if (!walkIn) continue;
-    const [table] = walkIn.tables;
+    if (walkIn) open.set(ticket.id, { ...walkIn, check: ticket.id });
+  }
+
+  const tracked = new Set<string>();
+  const left: Held[] = [];
+  const held: Booking[] = [];
+  for (const booking of bookings) {
+    if (!booking.check) {
+      held.push(booking);
+      continue;
+    }
+    const table = open.get(booking.check)?.tables[0];
+    // Two requests arriving together can each write the same check down; the second copy is let go.
+    if (table && booking.tables.includes(table) && !tracked.has(booking.check)) {
+      tracked.add(booking.check);
+      held.push(booking);
+    } else {
+      left.push(booking);
+    }
+  }
+
+  const seated: Booking[] = [];
+  for (const [check, walkIn] of open) {
+    if (tracked.has(check)) continue;
     const alreadySeated = held.some(
       (booking) =>
         booking.date === walkIn.date &&
-        booking.tables.includes(table) &&
+        booking.tables.includes(walkIn.tables[0]) &&
         Math.abs(booking.start - walkIn.start) < rules.slotMinutes,
     );
-    if (!alreadySeated) held.push(walkIn);
+    if (alreadySeated) continue;
+    seated.push(walkIn);
+    held.push(walkIn);
   }
-  return held;
+  return { left, seated };
 };
 
 /**

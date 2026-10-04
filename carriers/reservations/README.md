@@ -9,6 +9,9 @@ site and reachable at `/carriers/reservations`.
 | `POST` | takes a booking — JSON or a form post |
 | `POST` with `walk_in` | holds the table a [walk-in](#walk-ins) was just seated at — sent by the Square order webhook |
 
+Every request also brings the Tracker in line with the checks open in Square,
+so [walk-ins](#walk-ins) show up on the sheet and drop off it when they leave.
+
 A `GET` answers with one entry per service night:
 
 ```json
@@ -134,7 +137,7 @@ party's own hold. With 90-minute holds and seatings every 30 minutes, a 6:30
 booking blocks its table for the 5:30, 6:00, 6:30, 7:00 and 7:30 seatings and
 leaves it free at 8:00.
 
-Rows whose Status is `cancelled` hold nothing.
+Rows whose Status is `cancelled` or `left` hold nothing.
 
 A table with an open check in Square is held as well, booked or not — see
 [Walk-ins](#walk-ins).
@@ -236,47 +239,67 @@ the most its table takes — 2 at a 2-top, 4 at a 4-top, `max_party` at a
 communal table, 1 at a bar seat — and holds the table for that party's
 [hold](#hold-length-by-party-size), counted from when the check was opened.
 
-Square has no event for a table being seated or given a server; the check is
-the only signal, and Square has it once it is first saved. To hold a table
-before anything is ordered, open it in Square and save the empty check.
+Square has no event of its own for a table being seated; the check is the
+signal. Giving a table a server in Square opens an empty check, which is
+enough to hold it before anything is ordered.
 
 ### Open checks
 
 Every time the form loads or a booking is taken, the carrier asks Square for
-the checks opened in the last 12 hours that are still open, and counts each
-one's table as taken. Closing the check gives the table back. Nothing is
-written to the Tracker, so these walk-ins don't appear on the Tables tab.
+the checks opened in the last 12 hours that are still open, and brings the
+Tracker in line with them before working out what is free:
+
+- A walk-in with no row gets one: Name `Walk-in`, the time its check was
+  opened, its table, Arrived ticked, Contact Method `Square` and the Square
+  order id as its Contact. From then on it holds its table, and shows on the
+  Tables and Host Sheet tabs, like any booking.
+- A walk-in's row is set to Status `left` when its check has closed, which
+  gives the table back. A check moved to another table in Square leaves the
+  old row and starts a new one.
 
 A check opened within `slot_minutes` of a booking on the same table is that
-booked party sitting down, and adds nothing to the booking's own hold. Any
-other check holds the table in its own right — a party seated early at a table
-booked for later, or one seated after the booked party has left.
+booked party sitting down; it gets no row, and the booking's own hold stands.
+Any other check is a walk-in — a party seated early at a table booked for
+later, or one seated after the booked party has left. A check opened too early
+in the day to still be there at a seating gets no row either, so lunch never
+reaches the Tracker.
+
+The sheet is only as fresh as the last request. Nothing runs in the background:
+a walk-in seated while nobody is looking at the form appears the next time
+someone loads it, or straight away if [the webhook](#the-webhook) is running.
+
+The Contact column is how the carrier knows which check a row belongs to, so
+leave it alone on walk-in rows. Party Size and Server are yours to edit, and a
+table can be added to Table(s) for a party spread over two. To move a walk-in,
+move its check in Square: a row whose Table(s) no longer includes the check's
+table is treated as left.
 
 This needs two more `secret` fields on the dinner object: `square_access_token`,
 a Square access token that can read orders, and `square_location_id`. While
 either is blank Square isn't asked. If Square doesn't answer within a few
-seconds the failure is logged and the form carries on from the Tracker alone.
+seconds the failure is logged, the Tracker is left as it is, and the form
+carries on from it.
 
 ### The webhook
 
 Square's order webhook
 ([nice-dream-kds-ingest](https://github.com/trevorsimpkin/nice-dream-kds-ingest))
-can also post `{ walk_in, key }` here the first time it sees an open ticket,
-where `walk_in` is the ticket's name and `key` is the dinner object's
-`walk_in_key`. The carrier then appends a Tracker row named `Walk-in`, seated
-now and already marked Arrived, which holds the table like any booking until
-its hold is up or its Status is set to `cancelled`. Fix the Party Size on the
-row if it matters.
+posts `{ walk_in, check, key }` here the first time it sees an open ticket:
+the ticket's name, the Square order id, and the dinner object's `walk_in_key`.
+That makes the carrier look at Square the moment a table is seated instead of
+the next time a guest loads the form, so the walk-in's row is on the sheet
+straight away.
 
-The reply is `{ ok: true, held, table }`. Nothing is held, and no row is
-written, when:
+The reply is `{ ok: true, held, table }`. `held` is false when the ticket
+isn't named for a table, when the party will be gone before the next seating,
+or when the table is already held — usually by the row the carrier wrote a
+moment earlier from the open check. If Square's search hasn't caught up with
+the new order yet, the webhook writes the row itself, with the same order id,
+and the open-checks pass takes it from there.
 
-- the ticket isn't named for a table;
-- the table is already held for those hours — by the booked party sitting
-  down, or by the open check itself when the Square fields above are set, in
-  which case the webhook has nothing left to do;
-- the party will be gone before the next seating that night — lunch, a night
-  without dinner service, or anything after the last seating.
+Without the Square fields above the webhook still writes the walk-in's row,
+but nothing marks it `left`: it holds the table until its hold is up or its
+Status is changed by hand.
 
 A missing or wrong `key` gets `{ ok: false, error }`, and so does every
 walk-in while `walk_in_key` is blank. `walk_in_key` is a `secret` field like
@@ -327,8 +350,12 @@ The source of truth. Row 1 is a header; bookings are appended from row 2.
 - **Table(s)** is what the carrier assigned — `5`, `5, 6`, `13`, `C1`, or `B1, B2`. Change it
   to move a party; the Tables and Host Sheet tabs follow.
 - **Server** and **Arrived** are for the host to fill in on the night.
-- **Status** is `booked` or `cancelled`. Cancelling gives the table back and the
-  slot reopens on the form.
+- **Status** is `booked`, `cancelled` or `left`. Cancelling gives the table back
+  and the slot reopens on the form; `left` does the same for a party that has
+  gone, and is what the carrier sets on a [walk-in](#walk-ins) whose check has
+  closed.
+- Rows whose Contact Method is `Square` are walk-ins the carrier wrote from
+  open checks.
 - Rows typed in by hand (a phone booking, say) count against availability like
   any other. Fill in at least Date, Time and Party Size; leave Table(s) blank
   and the carrier picks tables for it the next time anyone looks at the form.
@@ -370,6 +397,7 @@ size gets, how long a table is held, the spacing order, 4-tops, and the
 open/closed flags the form reads — and which table a [walk-in](#walk-ins)
 holds, against a room defined in the test file.
 `notify.test.ts` covers the [booking email](#booking-emails) against a stand-in
-for `objects.EMAIL`, and `square.test.ts` the [open checks](#open-checks) lookup
-against a stand-in for `fetch`. None depends on `objects/dinner.toml`, touches
-the spreadsheet, calls Square, or sends mail.
+for `objects.EMAIL`, `square.test.ts` the [open checks](#open-checks) lookup
+against a stand-in for `fetch`, and `sheet.test.ts` what that pass writes to the
+Tracker against a stand-in for the spreadsheet. None depends on
+`objects/dinner.toml`, touches the spreadsheet, calls Square, or sends mail.

@@ -7,10 +7,11 @@
  *                    phone?, notes?, newsletter?, area? } — takes a booking,
  *                    in the dining room unless `area` is "bar", and emails a
  *                    summary to each of `dinner.reservation_emails`
- *   POST (JSON)    { walk_in, key } — sent by the Square order webhook when a
- *                    ticket opens; holds the table the ticket is named for
+ *   POST (JSON)    { walk_in, key, check? } — sent by the Square order webhook
+ *                    when a ticket opens; holds the table the ticket is named for
  *
- * Both count a table as taken while Square has a check open on it.
+ * Every request also brings the Tracker in line with the checks open in Square:
+ * a walk-in gets a row, and the row is marked `left` when its check closes.
  *
  * The rules (nights, seating times, table counts) and the Google credentials
  * all live on the dinner object, so the room is edited as content.
@@ -39,10 +40,15 @@ import {
   todayIn,
   turningAt,
   walkInAt,
-  withWalkIns,
 } from "./room";
 import { notifyStaff } from "./notify";
-import { type NewBooking, appendBooking, readBookings } from "./sheet";
+import {
+  type NewBooking,
+  appendBooking,
+  readBookings,
+  syncWalkIns,
+  walkInRow,
+} from "./sheet";
 import { ensureSheet } from "./setup";
 import { openTickets } from "./square";
 
@@ -87,18 +93,19 @@ const carrier: Carrier = async (_params, body, objects) => {
     }
     walkIn = walkInAt(text(fields.walk_in), today, now, rules);
     if (!walkIn) return reply({ ok: true, held: false });
+    if (text(fields.check)) walkIn.check = text(fields.check);
   }
 
-  const seated =
+  const checks =
     dinner.square_access_token && dinner.square_location_id
       ? openTickets(dinner.square_access_token, dinner.square_location_id, rules.timezone)
-      : [];
+      : null;
   const client = sheetsClient(
     await accessToken(dinner.google_service_account),
     dinner.reservations_sheet_id,
   );
   await ensureSheet(client, rules);
-  const bookings = withWalkIns(await readBookings(client, rules, today), await seated, rules);
+  const bookings = await syncWalkIns(client, await readBookings(client, rules, today), await checks, rules);
 
   // ---- POST: hold a walk-in's table -----------------------------------------
   if (walkIn) {
@@ -106,21 +113,7 @@ const carrier: Carrier = async (_params, body, objects) => {
     const hold = holdFor(walkIn.party, rules);
     // A table already held for these hours is the booked party sitting down.
     const booked = occupiedAt(bookings, walkIn.date, walkIn.start, hold, rules).has(table);
-    if (!booked) {
-      await appendBooking(
-        client,
-        {
-          ...walkIn,
-          name: "Walk-in",
-          method: "",
-          contact: "",
-          notes: "Added when Square opened the table",
-          newsletter: false,
-          arrived: true,
-        },
-        rules,
-      );
-    }
+    if (!booked) await appendBooking(client, walkInRow(walkIn), rules);
     return reply({ ok: true, held: !booked, table });
   }
 
