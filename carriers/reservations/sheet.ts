@@ -209,6 +209,7 @@ export type NewBooking = Booking & {
   contact: string;
   notes: string;
   newsletter: boolean;
+  arrived?: boolean;
 };
 
 /**
@@ -232,7 +233,7 @@ export const appendBooking = async (
   row[COL.notes] = booking.notes;
   row[COL.tables] = booking.tables.join(", ");
   row[COL.server] = "";
-  row[COL.arrived] = false;
+  row[COL.arrived] = booking.arrived ?? false;
   row[COL.status] = "booked";
   row[COL.newsletter] = booking.newsletter;
   row[COL.bookedAt] = timestampIn(rules.timezone);

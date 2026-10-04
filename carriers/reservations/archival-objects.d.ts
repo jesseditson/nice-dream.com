@@ -74,6 +74,8 @@ export interface DinnerObject {
   google_service_account: string | null;
   /** the id from the spreadsheet's URL: docs.google.com/spreadsheets/d/<id>/edit */
   reservations_sheet_id: string | null;
+  /** shared with the Square order webhook (nice-dream-kds-ingest), which sends it to hold a table the moment a walk-in is seated; walk-ins are refused while this is blank */
+  walk_in_key: string | null;
   /** seating windows; days uses the same shorthand as business.hours, first/last are the first and last seating as 24h HH:MM */
   seatings: DinnerSeatingsObject[];
   /** booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins */

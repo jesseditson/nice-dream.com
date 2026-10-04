@@ -7,6 +7,7 @@ site and reachable at `/carriers/reservations`.
 | --- | --- |
 | `GET` | every seating in the booking window, and which party sizes each can still take |
 | `POST` | takes a booking — JSON or a form post |
+| `POST` with `walk_in` | holds the table a [walk-in](#walk-ins) was just seated at — sent by the Square order webhook |
 
 A `GET` answers with one entry per service night:
 
@@ -213,6 +214,49 @@ party of 3–4 is then turned away for that seating and the ones that overlap it
 even though five 2-tops are empty. Once the room has 4-tops, those parties go
 to 13 and 14 first and this matters less.
 
+## Walk-ins
+
+A party seated without a booking has to hold its table too, or the form would
+offer it to someone else. Square tells us when that happens: its order webhook
+([nice-dream-kds-ingest](https://github.com/trevorsimpkin/nice-dream-kds-ingest))
+posts `{ walk_in, key }` here the first time it sees an open ticket, where
+`walk_in` is the ticket's name and `key` is the dinner object's `walk_in_key`.
+
+Square has no event for a table being seated or given a server; the ticket is
+the only signal, and it reaches the webhook when the check is first saved. To
+hold a table before anything is ordered, open it in Square and save the empty
+check.
+
+The carrier appends a Tracker row named `Walk-in`, seated now and already
+marked Arrived, on the table the ticket is named for:
+
+| Square ticket | Table |
+| --- | --- |
+| `* 1`–`* 10` | the 2-tops, `1`–`10` |
+| `11`, `12` | `C1`, `C2` — communal tables take the numbers after the last 2-top |
+| `13`, `14` | the 4-tops, once `four_tops` is set |
+| `Bar 1`–`Bar 4` | `B1`–`B4` |
+
+Square doesn't say how many sat down, so the row's Party Size is the most the
+table takes — 2 at a 2-top, 4 at a 4-top, `max_party` at a communal table, 1 at
+a bar seat — and the table is held for that party's
+[hold](#hold-length-by-party-size). Fix the Party Size on the row if it
+matters, and set Status to `cancelled` to give the table back early.
+
+The reply is `{ ok: true, held, table }`. Nothing is held, and no row is
+written, when:
+
+- the ticket isn't named for a table (`Togo`, a guest's name);
+- the table is already held for those hours, which is the booked party sitting
+  down;
+- the party will be gone before the next seating that night — lunch, a night
+  without dinner service, or anything after the last seating.
+
+A missing or wrong `key` gets `{ ok: false, error }`, and so does every
+walk-in while `walk_in_key` is blank. `walk_in_key` is a `secret` field like
+the Google credentials below; the webhook reads the same value from the
+`ReservationsWalkInKey` secret in Google Secret Manager.
+
 ## Google credentials
 
 Both live on the `dinner` object as `secret` fields, which archival strips from
@@ -297,7 +341,8 @@ it holds the schema, never any values.
 executes the TypeScript directly and so needs Node 22.18 or newer. `room.test.ts`
 covers everything under [Table assignment](#table-assignment) — what each party
 size gets, how long a table is held, the spacing order, 4-tops, and the
-open/closed flags the form reads — against a room defined in the test file.
+open/closed flags the form reads — and which table a [walk-in](#walk-ins)
+holds, against a room defined in the test file.
 `notify.test.ts` covers the [booking email](#booking-emails) against a stand-in
 for `objects.EMAIL`. Neither depends on `objects/dinner.toml`, touches the
 spreadsheet, or sends mail.

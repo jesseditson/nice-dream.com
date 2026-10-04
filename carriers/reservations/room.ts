@@ -366,6 +366,46 @@ export const seatParty = (
     : assignTables(seatingFor(party), taken, rules, turning);
 
 /**
+ * The table a Square ticket is named for, or null when it isn't one of ours.
+ * Square names the 2-tops "* 5", the bar seats "Bar 2", and the communal
+ * tables by the numbers that follow the last 2-top: "11" is C1.
+ */
+export const tableForTicket = (ticket: string, rules: Rules): string | null => {
+  const match = ticket.toUpperCase().replace(/[^A-Z0-9]/g, "").match(/^(BAR|B|C)?(\d+)$/);
+  if (!match) return null;
+  const area = match[1];
+  const number = Number(match[2]);
+  const within = (count: number): boolean => number >= 1 && number <= count;
+  if (area === "C") return within(rules.communalTables) ? `C${number}` : null;
+  if (area) return within(rules.barSeats) ? `B${number}` : null;
+  if (within(rules.twoTops)) return String(number);
+  if (number >= rules.fourTopStart && number < rules.fourTopStart + rules.fourTops) return String(number);
+  return within(rules.twoTops + rules.communalTables) ? `C${number - rules.twoTops}` : null;
+};
+
+/** The largest party a table or bar seat takes. */
+const seatsAt = (table: string, rules: Rules): number => {
+  if (table.startsWith("B")) return 1;
+  if (table.startsWith("C")) return rules.maxParty;
+  return Number(table) <= rules.twoTops ? 2 : PAIR_SEATS;
+};
+
+/**
+ * The hold a walk-in takes when Square opens `ticket` at `start`, or null when
+ * the ticket isn't a table or the party will be gone before the next seating
+ * on `date`. Square doesn't say how many sat down, so the table is held as if
+ * it were full.
+ */
+export const walkInAt = (ticket: string, date: string, start: number, rules: Rules): Booking | null => {
+  const table = tableForTicket(ticket, rules);
+  if (!table) return null;
+  const party = seatsAt(table, rules);
+  const end = start + holdFor(party, rules);
+  const seatedIntoService = slotsOn(date, rules).some((slot) => slot >= start && slot < end);
+  return seatedIntoService ? { date, start, party, tables: [table] } : null;
+};
+
+/**
  * What each seating on `date` can still take. Seatings at or before
  * `earliest` are closed — pass the current time for today, -1 otherwise.
  */

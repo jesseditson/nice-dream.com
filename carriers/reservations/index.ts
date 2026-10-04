@@ -7,6 +7,8 @@
  *                    phone?, notes?, newsletter?, area? } — takes a booking,
  *                    in the dining room unless `area` is "bar", and emails a
  *                    summary to each of `dinner.reservation_emails`
+ *   POST (JSON)    { walk_in, key } — sent by the Square order webhook when a
+ *                    ticket opens; holds the table the ticket is named for
  *
  * The rules (nights, seating times, table counts) and the Google credentials
  * all live on the dinner object, so the room is edited as content.
@@ -18,6 +20,7 @@ import type { Carrier, CarrierJsonValue } from "@archival/carrier";
 import { accessToken, sheetsClient } from "./google";
 import {
   type Area,
+  type Booking,
   availabilityOn,
   formatClock,
   formatDateLabel,
@@ -33,6 +36,7 @@ import {
   slotsOn,
   todayIn,
   turningAt,
+  walkInAt,
 } from "./room";
 import { notifyStaff } from "./notify";
 import { type NewBooking, appendBooking, readBookings } from "./sheet";
@@ -69,6 +73,17 @@ const carrier: Carrier = async (_params, body, objects) => {
   const now = nowMinutesIn(rules.timezone);
   const dates = serviceDates(today, rules);
   const earliest = (date: string): number => (date === today ? now : -1);
+  const fields =
+    body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
+
+  let walkIn: Booking | null = null;
+  if (fields && "walk_in" in fields) {
+    if (!dinner.walk_in_key || text(fields.key) !== dinner.walk_in_key) {
+      return refuse("Walk-ins need the walk-in key.");
+    }
+    walkIn = walkInAt(text(fields.walk_in), today, now, rules);
+    if (!walkIn) return reply({ ok: true, held: false });
+  }
 
   const client = sheetsClient(
     await accessToken(dinner.google_service_account),
@@ -77,12 +92,33 @@ const carrier: Carrier = async (_params, body, objects) => {
   await ensureSheet(client, rules);
   const bookings = await readBookings(client, rules, today);
 
+  // ---- POST: hold a walk-in's table -----------------------------------------
+  if (walkIn) {
+    const [table] = walkIn.tables;
+    const hold = holdFor(walkIn.party, rules);
+    // A table already held for these hours is the booked party sitting down.
+    const booked = occupiedAt(bookings, walkIn.date, walkIn.start, hold, rules).has(table);
+    if (!booked) {
+      await appendBooking(
+        client,
+        {
+          ...walkIn,
+          name: "Walk-in",
+          method: "",
+          contact: "",
+          notes: "Added when Square opened the table",
+          newsletter: false,
+          arrived: true,
+        },
+        rules,
+      );
+    }
+    return reply({ ok: true, held: !booked, table });
+  }
+
   // ---- POST: take a booking -------------------------------------------------
   if (body) {
-    if (typeof body !== "object" || Array.isArray(body)) {
-      return refuse("Send the booking as a JSON object or a form post.");
-    }
-    const fields = body as Record<string, unknown>;
+    if (!fields) return refuse("Send the booking as a JSON object or a form post.");
     const area: Area = text(fields.area).toLowerCase() === "bar" ? "bar" : "dining";
     const party = integer(fields.party_size);
     const date = text(fields.date);

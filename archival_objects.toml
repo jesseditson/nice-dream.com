@@ -38,6 +38,8 @@ large_party_notice = "markdown"
 google_service_account = "secret"
 # the id from the spreadsheet's URL: docs.google.com/spreadsheets/d/<id>/edit
 reservations_sheet_id = "secret"
+# shared with the Square order webhook (nice-dream-kds-ingest), which sends it to hold a table the moment a walk-in is seated; walk-ins are refused while this is blank
+walk_in_key = "secret"
 
 # seating windows; days uses the same shorthand as business.hours, first/last are the first and last seating as 24h HH:MM
 [dinner.seatings]

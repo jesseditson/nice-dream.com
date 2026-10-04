@@ -15,7 +15,9 @@ import {
   readRules,
   seatParty,
   seatingFor,
+  tableForTicket,
   turningAt,
+  walkInAt,
 } from "./room.ts";
 
 const THURSDAY = "2026-10-08";
@@ -601,6 +603,85 @@ describe("availabilityOn", () => {
 
   test("there is no bar room while bar_seats is 0", () => {
     assert.deepEqual(barRoom([], room({ bar_seats: 0 })), [0, 0, 0, 0, 0, 0]);
+  });
+});
+
+describe("tableForTicket", () => {
+  test("reads the names Square gives the 2-tops and bar seats", () => {
+    assert.equal(tableForTicket("* 5", room()), "5");
+    assert.equal(tableForTicket("* 10", room()), "10");
+    assert.equal(tableForTicket("Bar 1", room()), "B1");
+    assert.equal(tableForTicket("bar4", room()), "B4");
+  });
+
+  test("the numbers after the last 2-top are the communal tables", () => {
+    assert.equal(tableForTicket("11", room()), "C1");
+    assert.equal(tableForTicket("12", room()), "C2");
+    assert.equal(tableForTicket("13", room()), null);
+  });
+
+  test("a 4-top keeps its own number", () => {
+    assert.equal(tableForTicket("13", withFourTops()), "13");
+    assert.equal(tableForTicket("14", withFourTops()), "14");
+    assert.equal(tableForTicket("11", room({ four_tops: 2, four_top_start: 11 })), "11");
+  });
+
+  test("takes the Tracker's own names too", () => {
+    assert.equal(tableForTicket("7", room()), "7");
+    assert.equal(tableForTicket("C2", room()), "C2");
+    assert.equal(tableForTicket("B3", room()), "B3");
+  });
+
+  test("anything else isn't a table", () => {
+    for (const ticket of ["", "Togo", "Front", "Danielle", "0", "* 15", "Bar 5", "C3", "5 6"]) {
+      assert.equal(tableForTicket(ticket, room()), null, ticket);
+    }
+  });
+});
+
+describe("walkInAt", () => {
+  const walkIn = (ticket: string, clock: string, rules: Rules = room(), date = THURSDAY): Booking | null =>
+    walkInAt(ticket, date, at(clock), rules);
+
+  test("holds the table from the minute the ticket opens", () => {
+    assert.deepEqual(walkIn("* 5", "18:42"), { date: THURSDAY, start: at("18:42"), party: 2, tables: ["5"] });
+  });
+
+  test("assumes the table is full", () => {
+    assert.equal(walkIn("* 5", "18:00")?.party, 2);
+    assert.equal(walkIn("13", "18:00", withFourTops())?.party, 4);
+    assert.equal(walkIn("11", "18:00")?.party, 8);
+    assert.equal(walkIn("Bar 2", "18:00")?.party, 1);
+  });
+
+  test("a walk-in blocks the seatings its hold runs into", () => {
+    const seated = walkIn("* 5", "18:42") ?? assert.fail("not held");
+    assert.deepEqual(heldAt("18:30", [seated]), ["5"]);
+    assert.deepEqual(heldAt("20:00", [seated]), ["5"]);
+    assert.deepEqual(heldAt("17:00", [seated]), []);
+    assert.deepEqual(heldAt("20:12", [seated]), []);
+  });
+
+  test("a party seated before service is held only if it will still be there at the first seating", () => {
+    assert.equal(walkIn("* 5", "16:00"), null);
+    assert.deepEqual(walkIn("* 5", "16:01")?.tables, ["5"]);
+    assert.deepEqual(walkIn("* 5", "17:30")?.tables, ["5"]);
+  });
+
+  test("the hold follows the party-size overrides", () => {
+    const rules = room({ hold_overrides: [{ parties: "6+", hold_minutes: 150 }] });
+    assert.equal(walkIn("* 5", "15:30", rules), null);
+    assert.deepEqual(walkIn("11", "15:30", rules)?.tables, ["C1"]);
+  });
+
+  test("nothing is held after the last seating or on a night without service", () => {
+    assert.deepEqual(walkIn("* 5", "20:00")?.tables, ["5"]);
+    assert.equal(walkIn("* 5", "20:01"), null);
+    assert.equal(walkIn("* 5", "18:00", room(), WEDNESDAY), null);
+  });
+
+  test("a ticket that isn't a table holds nothing", () => {
+    assert.equal(walkIn("Togo", "18:00"), null);
   });
 });
 
