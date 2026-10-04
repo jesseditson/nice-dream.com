@@ -218,6 +218,29 @@ export const occupiedAt = (
   return taken;
 };
 
+/**
+ * Tables free for a seating starting at `start` but booked back-to-back with
+ * it: a booking ends less than one slot before it, or starts less than one
+ * slot after its hold is up, so staff would have to turn the table.
+ */
+export const turningAt = (
+  bookings: Booking[],
+  date: string,
+  start: number,
+  rules: Rules,
+): Set<string> => {
+  const end = start + rules.holdMinutes;
+  const turning = new Set<string>();
+  for (const booking of bookings) {
+    if (booking.date !== date) continue;
+    const bookingEnd = booking.start + rules.holdMinutes;
+    const endsJustBefore = bookingEnd <= start && start - bookingEnd < rules.slotMinutes;
+    const startsJustAfter = booking.start >= end && booking.start - end < rules.slotMinutes;
+    if (endsJustBefore || startsJustAfter) for (const table of booking.tables) turning.add(table);
+  }
+  return turning;
+};
+
 // 4-top numbers aren't positions in the row of 2-tops, so only 2-tops count as neighbours.
 const distanceFrom = (table: number, taken: Set<string>, rules: Rules): number => {
   let nearest = Infinity;
@@ -234,12 +257,28 @@ const distanceFrom = (table: number, taken: Set<string>, rules: Rules): number =
  * that. 2-tops and pairs go to whichever free spot is furthest from anyone
  * already seated, ties broken toward `firstTable`, so an empty room fills from
  * the middle outward and neighbours stay as far apart as the night allows.
+ * Tables in `turning` are only used when nothing else fits.
  */
-export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules): string[] | null => {
+export const assignTables = (
+  seating: Seating,
+  taken: Set<string>,
+  rules: Rules,
+  turning: Set<string> = new Set(),
+): string[] | null =>
+  (turning.size ? pickTables(seating, new Set([...taken, ...turning]), taken, rules) : null) ??
+  pickTables(seating, taken, taken, rules);
+
+/** `blocked` tables can't be chosen; `taken` ones are the neighbours spacing keeps away from. */
+const pickTables = (
+  seating: Seating,
+  blocked: Set<string>,
+  taken: Set<string>,
+  rules: Rules,
+): string[] | null => {
   if (seating === "communal") {
     for (let index = 1; index <= rules.communalTables; index += 1) {
       const id = `C${index}`;
-      if (!taken.has(id)) return [id];
+      if (!blocked.has(id)) return [id];
     }
     return null;
   }
@@ -247,7 +286,7 @@ export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules)
   if (seating === "four") {
     for (let index = 0; index < rules.fourTops; index += 1) {
       const id = String(rules.fourTopStart + index);
-      if (!taken.has(id)) return [id];
+      if (!blocked.has(id)) return [id];
     }
   }
 
@@ -262,7 +301,7 @@ export const assignTables = (seating: Seating, taken: Set<string>, rules: Rules)
   let bestSpread = -Infinity;
   let bestCentre = Infinity;
   for (const tables of candidates) {
-    if (tables.some((table) => taken.has(String(table)))) continue;
+    if (tables.some((table) => blocked.has(String(table)))) continue;
     const spread = Math.min(...tables.map((table) => distanceFrom(table, taken, rules)));
     const centre = Math.min(...tables.map((table) => Math.abs(table - rules.firstTable)));
     if (spread > bestSpread || (spread === bestSpread && centre < bestCentre)) {
@@ -310,10 +349,11 @@ export const seatParty = (
   party: number,
   taken: Set<string>,
   rules: Rules,
+  turning: Set<string> = new Set(),
 ): string[] | null =>
   area === "bar"
     ? assignBarSeats(party, taken, rules)
-    : assignTables(seatingFor(party), taken, rules);
+    : assignTables(seatingFor(party), taken, rules, turning);
 
 /**
  * What each seating on `date` can still take. Seatings at or before

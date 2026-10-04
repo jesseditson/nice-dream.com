@@ -13,6 +13,7 @@ import {
   parseHHMM,
   seatingFor,
   timestampIn,
+  turningAt,
 } from "./room";
 
 export const TRACKER = "Tracker";
@@ -120,7 +121,8 @@ const assignUnassigned = async (
   unassigned.sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start || a.row - b.row);
   for (const entry of unassigned) {
     const taken = occupiedAt(bookings, entry.date, entry.start, rules);
-    const tables = assignTables(seatingFor(entry.party), taken, rules);
+    const turning = turningAt(bookings, entry.date, entry.start, rules);
+    const tables = assignTables(seatingFor(entry.party), taken, rules, turning);
     if (!tables) continue;
     bookings.push({ date: entry.date, start: entry.start, tables });
     updates.push({

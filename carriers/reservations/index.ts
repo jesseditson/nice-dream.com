@@ -31,6 +31,7 @@ import {
   serviceDates,
   slotsOn,
   todayIn,
+  turningAt,
 } from "./room";
 import { notifyStaff } from "./notify";
 import { type NewBooking, appendBooking, readBookings } from "./sheet";
@@ -117,7 +118,13 @@ const carrier: Carrier = async (_params, body, objects) => {
 
     // Availability is decided here, from a fresh read, so a form left open can't
     // take a table that filled up in the meantime.
-    const tables = seatParty(area, party, occupiedAt(bookings, date, start, rules), rules);
+    const tables = seatParty(
+      area,
+      party,
+      occupiedAt(bookings, date, start, rules),
+      rules,
+      turningAt(bookings, date, start, rules),
+    );
     if (!tables) return refuse("Sorry — that time just filled up. Pick another and we'll hold it for you.");
 
     const booking: NewBooking = {

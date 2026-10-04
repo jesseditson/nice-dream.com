@@ -134,6 +134,18 @@ leaves it free at 8:00.
 
 Rows whose Status is `cancelled` hold nothing.
 
+### Back-to-back bookings
+
+A table is *turning* for a seating when it's free but booked right up against
+it — a booking on it ends less than `slot_minutes` before the seating starts,
+or starts less than `slot_minutes` after its hold is up. With 90-minute holds,
+a 6:00 booking on 13 makes 13 turning for 7:30, but not for 8:00.
+
+A turning table is only used when nothing else can seat the party. A party of
+four at 7:30 gets 14 rather than 13, and if both 4-tops are turning it gets a
+free pair of 2-tops before either of them. Turning tables still count as free
+for spacing and for what the form shows as open.
+
 ### Spacing
 
 2-tops and pairs are chosen to keep parties as far apart as the night allows:

@@ -13,6 +13,7 @@ import {
   readRules,
   seatParty,
   seatingFor,
+  turningAt,
 } from "./room.ts";
 
 const THURSDAY = "2026-10-08";
@@ -130,6 +131,73 @@ describe("occupiedAt", () => {
   test("collects every table held across overlapping bookings", () => {
     const bookings = [booking("18:00", 5), booking("19:00", 1), booking("20:00", 3)];
     assert.deepEqual(heldAt("18:30", bookings), ["1", "5"]);
+  });
+});
+
+describe("turningAt", () => {
+  const turningAtClock = (clock: string, bookings: Booking[], rules: Rules = room()): string[] =>
+    [...turningAt(bookings, THURSDAY, at(clock), rules)].sort();
+
+  test("a table whose booking ends as the seating starts is turning", () => {
+    assert.deepEqual(turningAtClock("19:30", [booking("18:00", 13)]), ["13"]);
+  });
+
+  test("a table booked as the seating's hold ends is turning", () => {
+    assert.deepEqual(turningAtClock("18:00", [booking("19:30", 5, 6)]), ["5", "6"]);
+  });
+
+  test("a free slot between bookings is enough", () => {
+    assert.deepEqual(turningAtClock("20:00", [booking("18:00", 13)]), []);
+    assert.deepEqual(turningAtClock("17:30", [booking("19:30", 13)]), []);
+  });
+
+  test("overlapping bookings are held, not turning", () => {
+    assert.deepEqual(turningAtClock("19:00", [booking("18:00", 13)]), []);
+  });
+
+  test("bookings on another date don't turn anything", () => {
+    assert.deepEqual(turningAtClock("19:30", [{ ...booking("18:00", 13), date: WEDNESDAY }]), []);
+  });
+});
+
+describe("assignTables avoiding back-to-back bookings", () => {
+  test("a party of 3–4 takes the other 4-top rather than turning one", () => {
+    assert.deepEqual(assignTables("four", taken(), withFourTops(), taken(13)), ["14"]);
+  });
+
+  test("prefers a pair of 2-tops to turning a 4-top", () => {
+    assert.deepEqual(assignTables("four", taken(), withFourTops(), taken(13, 14)), ["5", "6"]);
+  });
+
+  test("turns a table when nothing else is free", () => {
+    assert.deepEqual(assignTables("four", taken(14, 1, 3, 5, 7, 9), withFourTops(), taken(13)), ["13"]);
+    assert.deepEqual(assignTables("two", taken(1, 2, 3, 4, 6, 7, 8, 9, 10), room(), taken(5)), ["5"]);
+  });
+
+  test("a party of two skips a turning 2-top", () => {
+    assert.deepEqual(assignTables("two", taken(), room(), taken(5)), ["4"]);
+  });
+
+  test("turning tables don't push neighbours away", () => {
+    assert.deepEqual(assignTables("two", taken(1), room(), taken(10)), ["9"]);
+  });
+
+  test("communal parties take the other communal table", () => {
+    assert.deepEqual(assignTables("communal", taken(), room(), taken("C1")), ["C2"]);
+  });
+
+  test("seatParty steers a later dining party off the earlier one's table", () => {
+    const bookings = [booking("18:00", 13)];
+    const rules = withFourTops();
+    const at730 = at("19:30");
+    const tables = seatParty(
+      "dining",
+      4,
+      occupiedAt(bookings, THURSDAY, at730, rules),
+      rules,
+      turningAt(bookings, THURSDAY, at730, rules),
+    );
+    assert.deepEqual(tables, ["14"]);
   });
 });
 
