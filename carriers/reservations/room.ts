@@ -366,8 +366,8 @@ export const seatParty = (
     : assignTables(seatingFor(party), taken, rules, turning);
 
 /**
- * What each seating on `date` can still take. Seatings at or before
- * `earliest` are closed — pass the current time for today, -1 otherwise.
+ * What each seating on `date` can still take. Seatings before `earliest` are
+ * closed — pass the first bookable minute for today, -1 otherwise.
  */
 export const availabilityOn = (
   date: string,
@@ -378,7 +378,7 @@ export const availabilityOn = (
   slotsOn(date, rules).map((time) => {
     const open = (area: Area, largest: number): number[] => {
       const parties: number[] = [];
-      if (time <= earliest) return parties;
+      if (time < earliest) return parties;
       for (let party = 1; party <= largest; party += 1) {
         const taken = occupiedAt(bookings, date, time, holdFor(party, rules), rules);
         if (seatParty(area, party, taken, rules)) parties.push(party);

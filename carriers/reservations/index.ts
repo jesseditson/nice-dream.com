@@ -38,6 +38,7 @@ import { notifyStaff } from "./notify";
 import { type NewBooking, appendBooking, readBookings } from "./sheet";
 import { ensureSheet } from "./setup";
 
+const MIN_LEAD_MINUTES = 15;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const text = (value: unknown): string =>
@@ -68,7 +69,7 @@ const carrier: Carrier = async (_params, body, objects) => {
   const today = todayIn(rules.timezone);
   const now = nowMinutesIn(rules.timezone);
   const dates = serviceDates(today, rules);
-  const earliest = (date: string): number => (date === today ? now : -1);
+  const earliest = (date: string): number => (date === today ? now + MIN_LEAD_MINUTES : -1);
 
   const client = sheetsClient(
     await accessToken(dinner.google_service_account),
@@ -115,7 +116,7 @@ const carrier: Carrier = async (_params, body, objects) => {
     if (start == null || !slotsOn(date, rules).includes(start)) {
       return refuse("Please pick one of the seating times offered.");
     }
-    if (start <= earliest(date)) return refuse("That seating has already passed — pick a later one.");
+    if (start < earliest(date)) return refuse("That seating is too soon to book — pick a later one.");
 
     // Availability is decided here, from a fresh read, so a form left open can't
     // take a table that filled up in the meantime.

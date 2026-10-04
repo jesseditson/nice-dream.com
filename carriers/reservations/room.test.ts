@@ -569,11 +569,15 @@ describe("availabilityOn", () => {
     assert.deepEqual(openSeatings("communal", busyNight), ["17:30"]);
   });
 
-  test("seatings at or before the cutoff are closed to everyone", () => {
+  test("seatings before the cutoff are closed to everyone", () => {
     const afterSix = ["18:30", "19:00", "19:30", "20:00"];
     for (const kind of ["two", "four", "communal"] as const) {
-      assert.deepEqual(openSeatings(kind, [], room(), at("18:00")), afterSix, kind);
+      assert.deepEqual(openSeatings(kind, [], room(), at("18:01")), afterSix, kind);
     }
+  });
+
+  test("a seating right at the cutoff is still open", () => {
+    assert.deepEqual(openSeatings("two", [], room(), at("18:00"))[0], "18:00");
   });
 
   const barRoom = (bookings: Booking[], rules: Rules = room(), earliest = -1): number[] =>
@@ -595,8 +599,8 @@ describe("availabilityOn", () => {
     assert.deepEqual(openSeatings("two", fullBar), everySeating);
   });
 
-  test("the bar is closed at seatings at or before the cutoff", () => {
-    assert.deepEqual(barRoom([], room(), at("18:00")), [0, 0, 4, 4, 4, 4]);
+  test("the bar is closed at seatings before the cutoff", () => {
+    assert.deepEqual(barRoom([], room(), at("18:01")), [0, 0, 4, 4, 4, 4]);
   });
 
   test("there is no bar room while bar_seats is 0", () => {

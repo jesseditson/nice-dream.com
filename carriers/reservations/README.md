@@ -54,7 +54,8 @@ Everything the carrier decides with lives on the `dinner` object
   block, and a booking holds its table for `hold_minutes`, unless a
   `[[hold_overrides]]` row covers its party size.
 - The form offers `weekends_ahead` service weeks, counting the current week
-  only if it still has a night left. Tonight is offered until the last seating.
+  only if it still has a night left. Tonight is offered until the last seating,
+  and a seating can't be booked less than 15 minutes before it starts.
 - The dining room is `two_tops` 2-tops, `four_tops` 4-tops and
   `communal_tables` communal tables, and takes parties up to `max_party`. The
   bar is `bar_seats` seats, booked only by guests who choose it. Which table or
