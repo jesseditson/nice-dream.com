@@ -70,6 +70,10 @@ export const columnLetter = (index: number): string => String.fromCharCode(65 + 
 
 const LAST_COLUMN = columnLetter(TRACKER_COLUMNS.length - 1);
 
+// Sheets appends below the last block of data its range touches, so anchoring
+// on the header keeps new rows under the bookings even when something sits far below them.
+const HEADER = `A1:${LAST_COLUMN}1`;
+
 const range = (tab: string, cells: string): string => encodeURIComponent(`${tab}!${cells}`);
 
 type Cell = string | number | boolean | undefined;
@@ -225,10 +229,18 @@ export type NewBooking = Booking & {
   arrived?: boolean;
 };
 
+/** The first and last row of an append's `updatedRange`, like `Tracker!A33:M34`. */
+const writtenRows = (updatedRange = ""): [number, number] | null => {
+  const match = updatedRange.match(/![A-Z]+(\d+)(?::[A-Z]+(\d+))?$/);
+  if (!match) return null;
+  const first = Number(match[1]);
+  return [first, Number(match[2] ?? first)];
+};
+
 /**
  * Written RAW: dates and times go in as the numbers Sheets stores (the column
  * formats display them), and guest text is stored verbatim — never parsed as a
- * number, a date or a formula.
+ * number, a date or a formula. Rejects unless Sheets confirms writing every row.
  */
 export const appendBookings = async (
   client: SheetsClient,
@@ -236,7 +248,6 @@ export const appendBookings = async (
   rules: Rules,
 ): Promise<void> => {
   if (!bookings.length) return;
-  const cells = `A:${LAST_COLUMN}`;
   const bookedAt = timestampIn(rules.timezone);
   const values = bookings.map((booking) => {
     const row: Cell[] = [];
@@ -257,15 +268,18 @@ export const appendBookings = async (
   });
   const response = await client<{ updates?: { updatedRange?: string } }>(
     "POST",
-    `/values/${range(TRACKER, cells)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
-    { range: `${TRACKER}!${cells}`, majorDimension: "ROWS", values },
+    `/values/${range(TRACKER, HEADER)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
+    { range: `${TRACKER}!${HEADER}`, majorDimension: "ROWS", values },
   );
-  const written = Number(response.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1]);
-  if (written) {
-    await addCheckboxes(client, written, values.length).catch((error) => {
-      console.error("Could not add checkboxes to the new booking rows:", error);
-    });
+  const rows = writtenRows(response.updates?.updatedRange);
+  if (!rows || rows[1] - rows[0] + 1 !== values.length) {
+    throw new Error(
+      `Sheets didn't confirm writing ${values.length} row(s) to the ${TRACKER}: ${JSON.stringify(response.updates ?? null)}`,
+    );
   }
+  await addCheckboxes(client, rows[0], values.length).catch((error) => {
+    console.error("Could not add checkboxes to the new booking rows:", error);
+  });
 };
 
 export const appendBooking = (client: SheetsClient, booking: NewBooking, rules: Rules): Promise<void> =>

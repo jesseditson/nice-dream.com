@@ -6,7 +6,8 @@
  *   POST (JSON)    { party_size, date, time, name, contact_method, email?,
  *                    phone?, notes?, newsletter?, area? } — takes a booking,
  *                    in the dining room unless `area` is "bar", and emails a
- *                    summary to each of `dinner.reservation_emails`
+ *                    summary to each of `dinner.reservation_emails` (or, if
+ *                    the Tracker can't be written, an alert to add it by hand)
  *   POST (JSON)    { walk_in, key, check? } — sent by the Square order webhook
  *                    when a ticket opens; holds the table the ticket is named for
  *
@@ -41,7 +42,7 @@ import {
   turningAt,
   walkInAt,
 } from "./room";
-import { notifyStaff } from "./notify";
+import { alertUnsaved, notifyStaff } from "./notify";
 import {
   type NewBooking,
   appendBooking,
@@ -178,13 +179,16 @@ const carrier: Carrier = async (_params, body, objects) => {
       newsletter: truthy(fields.newsletter),
     };
     const largeParty = area === "dining" && party >= rules.largePartyMin;
-    await appendBooking(client, booking, rules);
-    await notifyStaff(
-      objects.EMAIL,
-      dinner.reservation_emails.map((recipient) => recipient.email ?? ""),
-      { ...booking, area, largeParty, sheetId: dinner.reservations_sheet_id },
-      sms ? undefined : contact,
-    );
+    const staff = dinner.reservation_emails.map((recipient) => recipient.email ?? "");
+    const notice = { ...booking, area, largeParty, sheetId: dinner.reservations_sheet_id };
+    const replyTo = sms ? undefined : contact;
+    try {
+      await appendBooking(client, booking, rules);
+    } catch (error) {
+      await alertUnsaved(objects.EMAIL, staff, notice, error, replyTo);
+      throw error;
+    }
+    await notifyStaff(objects.EMAIL, staff, notice, replyTo);
 
     return reply({
       ok: true,

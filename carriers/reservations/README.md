@@ -333,6 +333,13 @@ booking is on the sheet before the email goes out, so a failed send never turns
 a guest away. It is logged instead, and archival emails the site's owner if
 delivery fails later. Rows typed into the Tracker by hand aren't emailed.
 
+If the booking can't be written to the Tracker — Sheets errors, or doesn't
+confirm where the row went — the same recipients get an email headed **NOT ON THE
+SHEET** instead, with everything needed to add the row by hand and the error
+Sheets gave. That booking holds no table until someone adds it. The guest is told
+something went wrong and to email us, so check for a second booking or an email
+from them before adding it.
+
 ## The spreadsheet
 
 The carrier builds the tabs it needs the first time it sees a spreadsheet
@@ -341,7 +348,11 @@ without them, and rebuilds the derived tabs whenever the room's shape in
 
 ### Tracker
 
-The source of truth. Row 1 is a header; bookings are appended from row 2.
+The source of truth. Row 1 is a header; bookings are appended from row 2, each
+directly under the last row of the block of bookings that starts at the header. A
+row typed further down, past blank rows, isn't part of that block: it still
+counts against availability, but new bookings won't follow it, and it's easy to
+miss. Keep bookings in one unbroken block.
 
 | A | B | C | D | E | F | G | H | I | J | K | L | M |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, describe, mock, test } from "node:test";
 import type { SheetsClient } from "./google.ts";
 import { type OpenTicket, type Rules, readRules } from "./room.ts";
-import { type TrackerBooking, readBookings, syncWalkIns } from "./sheet.ts";
+import { type NewBooking, type TrackerBooking, appendBooking, readBookings, syncWalkIns } from "./sheet.ts";
 
 const THURSDAY = "2026-10-08";
 const SERIAL = (Date.UTC(2026, 9, 8) - Date.UTC(1899, 11, 30)) / 86_400_000;
@@ -26,14 +26,18 @@ const rules: Rules = readRules({
 type Call = { method: string; path: string; body: any };
 
 /** Stands in for the spreadsheet: serves `rows` as the Tracker and records every call. */
-const sheet = (rows: unknown[][] = [], failWrites = false): { client: SheetsClient; writes: () => Call[] } => {
+const sheet = (
+  rows: unknown[][] = [],
+  failWrites = false,
+  appended = (count: number) => `Tracker!A9:M${8 + count}`,
+): { client: SheetsClient; writes: () => Call[] } => {
   const calls: Call[] = [];
   const client = (async (method: string, path: string, body?: unknown) => {
     calls.push({ method, path: decodeURIComponent(path), body });
     if (method === "GET" && path.startsWith("/values/")) return { values: rows };
     if (method === "GET") return { sheets: [{ properties: { sheetId: 7, title: "Tracker" } }] };
     if (failWrites) throw new Error("Sheets is down");
-    if (path.includes(":append")) return { updates: { updatedRange: `Tracker!A9:M${8 + (body as any).values.length}` } };
+    if (path.includes(":append")) return { updates: { updatedRange: appended((body as any).values.length) } };
     return {};
   }) as SheetsClient;
   return { client, writes: () => calls.filter((call) => call.method !== "GET") };
@@ -59,7 +63,7 @@ describe("syncWalkIns", () => {
 
     assert.deepEqual(held.map((booking) => booking.tables), [["5"], ["B2"]]);
     const [append, checkboxes] = writes();
-    assert.match(append.path, /^\/values\/Tracker!A:M:append/);
+    assert.match(append.path, /^\/values\/Tracker!A1:M1:append/);
     assert.deepEqual(
       append.body.values.map((row: unknown[]) => row.slice(0, 12)),
       [
@@ -120,5 +124,45 @@ describe("readBookings", () => {
   test("rows that are cancelled or have left hold nothing", async () => {
     const { client } = sheet([row({ 10: "cancelled" }), row({ 10: "left" }), row({ 10: "Left" })]);
     assert.deepEqual(await readBookings(client, rules, THURSDAY), []);
+  });
+});
+
+describe("appendBooking", () => {
+  const booking: NewBooking = {
+    date: THURSDAY,
+    start: 19 * 60,
+    party: 4,
+    tables: ["7", "8"],
+    name: "Ada",
+    method: "Text (SMS)",
+    contact: "5550100",
+    notes: "",
+    newsletter: false,
+  };
+
+  test("appends under the table the header heads, then checkboxes the row it wrote", async () => {
+    const { client, writes } = sheet([], false, () => "Tracker!A33:M33");
+    await appendBooking(client, booking, rules);
+    const [append, checkboxes] = writes();
+    assert.match(append.path, /^\/values\/Tracker!A1:M1:append\?/);
+    assert.equal(append.body.range, "Tracker!A1:M1");
+    const { startRowIndex, endRowIndex } = checkboxes.body.requests[0].setDataValidation.range;
+    assert.deepEqual([startRowIndex, endRowIndex], [32, 33]);
+  });
+
+  test("rejects when Sheets doesn't say where the row went", async () => {
+    const { client, writes } = sheet([], false, () => "");
+    await assert.rejects(appendBooking(client, booking, rules), /didn't confirm writing 1 row/);
+    assert.equal(writes().length, 1);
+  });
+
+  test("rejects when Sheets reports writing a different number of rows", async () => {
+    const { client } = sheet([], false, () => "Tracker!A33:M34");
+    await assert.rejects(appendBooking(client, booking, rules), /didn't confirm writing 1 row/);
+  });
+
+  test("rejects when the write itself fails", async () => {
+    const { client } = sheet([], true);
+    await assert.rejects(appendBooking(client, booking, rules), /Sheets is down/);
   });
 });

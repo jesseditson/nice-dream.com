@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import type { CarrierEmail, CarrierEmailMessage } from "@archival/carrier";
-import { NOTIFY_FROM, type Notice, bookingEmail, notifyStaff } from "./notify.ts";
+import { NOTIFY_FROM, type Notice, alertUnsaved, bookingEmail, notifyStaff, unsavedEmail } from "./notify.ts";
 
 const notice = (overrides: Partial<Notice> = {}): Notice => ({
   date: "2026-10-08",
@@ -103,6 +103,43 @@ describe("notifyStaff", () => {
     console.error = () => {};
     try {
       await assert.doesNotReject(notifyStaff(email, ["jesse@nice-dream.com"], notice()));
+    } finally {
+      console.error = logged;
+    }
+  });
+});
+
+describe("unsavedEmail", () => {
+  test("flags the booking as missing from the sheet and carries everything needed to add it", () => {
+    const { subject, text } = unsavedEmail(notice({ notes: "No shellfish" }), new Error("Sheets POST → 503: backend"));
+    assert.equal(
+      subject,
+      "NOT ON THE SHEET — Reservation: Ada Lovelace, party of 4 — Thursday, October 8th at 6:30 PM",
+    );
+    assert.match(text, /^This booking couldn't be written to the Tracker/);
+    assert.ok(text.includes(bookingEmail(notice({ notes: "No shellfish" })).text));
+    assert.match(text, /^Error: Sheets POST → 503: backend$/m);
+  });
+});
+
+describe("alertUnsaved", () => {
+  test("sends the alert from the reservations address to every recipient", async () => {
+    const { email, sent } = recorder();
+    await alertUnsaved(email, ["jesse@nice-dream.com", "ren@nice-dream.com"], notice(), "boom", "ada@example.com");
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].from, NOTIFY_FROM);
+    assert.deepEqual(sent[0].to, ["jesse@nice-dream.com", "ren@nice-dream.com"]);
+    assert.equal(sent[0].replyTo, "ada@example.com");
+    assert.match(sent[0].subject ?? "", /^NOT ON THE SHEET — /);
+    assert.match(sent[0].text ?? "", /^Error: boom$/m);
+  });
+
+  test("resolves even when sending fails", async () => {
+    const { email } = recorder(true);
+    const logged = console.error;
+    console.error = () => {};
+    try {
+      await assert.doesNotReject(alertUnsaved(email, ["jesse@nice-dream.com"], notice(), "boom"));
     } finally {
       console.error = logged;
     }

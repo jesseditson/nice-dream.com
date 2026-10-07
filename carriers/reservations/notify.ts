@@ -1,6 +1,7 @@
 /**
  * The email staff get for every booking the form takes, sent to each address in
- * `dinner.reservation_emails`.
+ * `dinner.reservation_emails` — and the louder one they get when a booking
+ * couldn't be written to the Tracker.
  */
 import type { CarrierEmail } from "@archival/carrier";
 import { type Area, formatClock, formatDateLabel } from "./room.ts";
@@ -45,21 +46,51 @@ export const bookingEmail = (booking: Notice): { subject: string; text: string }
   };
 };
 
-/** Never rejects: the booking is already on the sheet, so a failed send is only logged. */
-export const notifyStaff = async (
+/** The email staff get instead when a booking couldn't be written to the Tracker. */
+export const unsavedEmail = (booking: Notice, error: unknown): { subject: string; text: string } => {
+  const message = bookingEmail(booking);
+  return {
+    subject: oneLine(`NOT ON THE SHEET — ${message.subject}`),
+    text: [
+      "This booking couldn't be written to the Tracker, so it isn't holding a table. Add it by hand.",
+      "The guest was told something went wrong and to email hello@nice-dream.com, so check for a",
+      "second booking or an email from them before adding it.",
+      "",
+      message.text,
+      "",
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    ].join("\n"),
+  };
+};
+
+/** Never rejects: a failed send is only logged, so it can't change what the guest is told. */
+const sendToStaff = async (
   email: CarrierEmail,
   recipients: string[],
-  booking: Notice,
+  message: { subject: string; text: string },
   replyTo?: string,
 ): Promise<void> => {
   const to = recipients.map((address) => address.trim()).filter(Boolean);
-  if (!to.length) return;
-  const message = bookingEmail(booking);
   for (let i = 0; i < to.length; i += MAX_RECIPIENTS) {
     try {
       await email.send({ from: NOTIFY_FROM, to: to.slice(i, i + MAX_RECIPIENTS), replyTo, ...message });
     } catch (error) {
-      console.error("Could not email the booking to staff:", error);
+      console.error(`Could not email "${message.subject}" to staff:`, error);
     }
   }
 };
+
+export const notifyStaff = (
+  email: CarrierEmail,
+  recipients: string[],
+  booking: Notice,
+  replyTo?: string,
+): Promise<void> => sendToStaff(email, recipients, bookingEmail(booking), replyTo);
+
+export const alertUnsaved = (
+  email: CarrierEmail,
+  recipients: string[],
+  booking: Notice,
+  error: unknown,
+  replyTo?: string,
+): Promise<void> => sendToStaff(email, recipients, unsavedEmail(booking, error), replyTo);
