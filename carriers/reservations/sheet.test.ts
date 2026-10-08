@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, describe, mock, test } from "node:test";
 import type { SheetsClient } from "./google.ts";
 import { type OpenTicket, type Rules, readRules } from "./room.ts";
-import { type NewBooking, type TrackerBooking, appendBooking, readBookings, syncWalkIns } from "./sheet.ts";
+import { COL, type NewBooking, type TrackerBooking, appendBooking, readBookings, syncWalkIns } from "./sheet.ts";
 
 const THURSDAY = "2026-10-08";
 const SERIAL = (Date.UTC(2026, 9, 8) - Date.UTC(1899, 11, 30)) / 86_400_000;
@@ -67,8 +67,8 @@ describe("syncWalkIns", () => {
     assert.deepEqual(
       append.body.values.map((row: unknown[]) => row.slice(0, 12)),
       [
-        [SERIAL, "Walk-in", SIX_FORTY_TWO / 1440, 2, "Square", "A", "", "5", "", true, "booked", false],
-        [SERIAL, "Walk-in", SIX_FORTY_TWO / 1440, 1, "Square", "B", "", "B2", "", true, "booked", false],
+        [SERIAL, "Walk-in", SIX_FORTY_TWO / 1440, 2, "", "5", "Square", "", "A", true, "booked", false],
+        [SERIAL, "Walk-in", SIX_FORTY_TWO / 1440, 1, "", "B2", "Square", "", "B", true, "booked", false],
       ],
     );
     const { startRowIndex, endRowIndex } = checkboxes.body.requests[0].setDataValidation.range;
@@ -111,10 +111,10 @@ describe("syncWalkIns", () => {
 
 describe("readBookings", () => {
   const row = (overrides: Record<number, unknown> = {}): unknown[] =>
-    Object.assign([SERIAL, "Ada", 18.5 / 24, 2, "Email", "ada@example.com", "", "5", "", false, "booked", false, ""], overrides);
+    Object.assign([SERIAL, "Ada", 18.5 / 24, 2, "", "5", "Email", "", "ada@example.com", false, "booked", false, ""], overrides);
 
   test("reads a walk-in's check off its row, and the row each booking is on", async () => {
-    const { client } = sheet([row(), row({ 1: "Walk-in", 4: "Square", 5: "ORDER", 7: "7" })]);
+    const { client } = sheet([row(), row({ [COL.name]: "Walk-in", [COL.method]: "Square", [COL.contact]: "ORDER", [COL.tables]: "7" })]);
     assert.deepEqual(await readBookings(client, rules, THURSDAY), [
       { date: THURSDAY, start: 18 * 60 + 30, party: 2, tables: ["5"], row: 2 },
       { date: THURSDAY, start: 18 * 60 + 30, party: 2, tables: ["7"], row: 3, check: "ORDER" },
@@ -122,7 +122,7 @@ describe("readBookings", () => {
   });
 
   test("rows that are cancelled or have left hold nothing", async () => {
-    const { client } = sheet([row({ 10: "cancelled" }), row({ 10: "left" }), row({ 10: "Left" })]);
+    const { client } = sheet([row({ [COL.status]: "cancelled" }), row({ [COL.status]: "left" }), row({ [COL.status]: "Left" })]);
     assert.deepEqual(await readBookings(client, rules, THURSDAY), []);
   });
 });

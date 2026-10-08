@@ -275,7 +275,7 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
         },
       },
     },
-    ...columnWidths(trackerId, [140, 180, 90, 80, 120, 200, 280, 90, 110, 70, 100, 90, 150]),
+    ...columnWidths(trackerId, [140, 180, 90, 80, 280, 90, 120, 110, 200, 70, 100, 90, 150]),
 
     // Tables
     {

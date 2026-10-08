@@ -356,7 +356,10 @@ miss. Keep bookings in one unbroken block.
 
 | A | B | C | D | E | F | G | H | I | J | K | L | M |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Date | Name | Time | Party Size | Contact Method | Contact | Notes | Table(s) | Server | Arrived | Status | Newsletter | Booked At |
+| Date | Name | Time | Party Size | Notes | Table(s) | Contact Method | Server | Contact | Arrived | Status | Newsletter | Booked At |
+
+The carrier finds these columns by position, so moving one means changing
+`TRACKER_COLUMNS` and `COL` in `sheet.ts` to match.
 
 - **Table(s)** is what the carrier assigned — `5`, `5, 6`, `13`, `C1`, or `B1, B2`. Change it
   to move a party; the Tables and Host Sheet tabs follow.
