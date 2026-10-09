@@ -253,6 +253,7 @@ const carrier: Carrier = async (params, body, objects) => {
     area: areaOf(own.tables),
     largeParty: areaOf(own.tables) === "dining" && own.party >= rules.largePartyMin,
     sheetId: dinner.reservations_sheet_id ?? "",
+    siteUrl,
     manageUrl: manageUrl(token),
   });
   const replyToFor = (notice: Notice): string | undefined => (notice.method === EMAIL ? notice.contact : undefined);
@@ -372,6 +373,7 @@ const carrier: Carrier = async (params, body, objects) => {
       area,
       largeParty,
       sheetId: dinner.reservations_sheet_id,
+      siteUrl,
       manageUrl: manageUrl(token),
     };
     const replyTo = sms ? undefined : contact;

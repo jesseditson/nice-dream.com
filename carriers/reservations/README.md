@@ -391,7 +391,11 @@ changed) or **Reservation cancelled**.
 
 A guest who left an email also gets a confirmation from the same address, with
 replies going to `hello@nice-dream.com`: what's held and when, the large-party
-note if it applies, and their change-or-cancel link. They get another when they
+note if it applies, and their change-or-cancel link. It is sent as HTML styled
+like the form — the wordmark, the sleeping dog, the card and the black button —
+with a plain-text version alongside. The images and the Perrrot font are loaded
+from the site (`public/img/nice-dream-logo.png`, the two dog PNGs and
+`public/fonts/perrrot.otf`), so they only show once the site is deployed. They get another when they
 change the booking, and one without the link when they cancel. A guest who left a
 phone number gets nothing by email; their link is on the confirmation page and in
 the staff email.

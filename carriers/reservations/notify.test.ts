@@ -30,6 +30,7 @@ const notice = (overrides: Partial<Notice> = {}): Notice => ({
   area: "dining",
   largeParty: false,
   sheetId: "SHEET",
+  siteUrl: "https://nice-dream.com",
   manageUrl: "https://nice-dream.com/reservations.html?token=KEY",
   ...overrides,
 });
@@ -153,6 +154,40 @@ describe("guest emails", () => {
   });
 });
 
+describe("guest email html", () => {
+  test("is styled like the form, with the site's images and the edit button", () => {
+    const html = guestBookedEmail(notice()).html ?? "";
+    assert.match(html, /^<!doctype html>/);
+    assert.match(html, /src="https:\/\/nice-dream\.com\/img\/nice-dream-logo\.png"/);
+    assert.match(html, /src="https:\/\/nice-dream\.com\/img\/nd-confirm-dog\.png"/);
+    assert.match(html, /url\('https:\/\/nice-dream\.com\/fonts\/perrrot\.otf'\)/);
+    assert.match(html, /You're<br>booked\./);
+    assert.match(html, /<a href="https:\/\/nice-dream\.com\/reservations\.html\?token=KEY"[^>]*>Change or cancel<\/a>/);
+    assert.match(html, /Thursday, October 8th at 6:30 PM/);
+    assert.match(html, /The dining room/);
+    assert.match(guestBookedEmail(notice({ area: "bar", tables: ["B1"] })).html ?? "", /Sugar Water, our bar/);
+  });
+
+  test("escapes what the guest typed", () => {
+    const html = guestBookedEmail(notice({ name: "<b>Ada</b> & co" })).html ?? "";
+    assert.match(html, /&lt;b&gt;Ada&lt;\/b&gt;/);
+    assert.doesNotMatch(html, /<b>Ada/);
+  });
+
+  test("the cancellation uses the other dog, a book-again button and no edit link", () => {
+    const html = guestCancelledEmail(notice(), "https://nice-dream.com/reservations.html").html ?? "";
+    assert.match(html, /nd-hero-dog\.png/);
+    assert.match(html, /Reservation<br>cancelled\./);
+    assert.match(html, /<a href="https:\/\/nice-dream\.com\/reservations\.html"[^>]*>Book again<\/a>/);
+    assert.doesNotMatch(html, /token=KEY/);
+  });
+
+  test("staff emails stay plain text", () => {
+    assert.equal(bookingEmail(notice()).html, undefined);
+    assert.equal(changedEmail(notice(), "party 2 → 4").html, undefined);
+  });
+});
+
 describe("emailGuest", () => {
   test("sends to the guest's email, with replies going to the restaurant", async () => {
     const { email, sent } = recorder();
@@ -161,6 +196,8 @@ describe("emailGuest", () => {
     assert.equal(sent[0].from, NOTIFY_FROM);
     assert.equal(sent[0].to, "ada@example.com");
     assert.equal(sent[0].replyTo, CONTACT_EMAIL);
+    assert.match(sent[0].html ?? "", /^<!doctype html>/);
+    assert.match(sent[0].text ?? "", /^Hi Ada,/);
   });
 
   test("sends nothing to a guest who left a phone number", async () => {
