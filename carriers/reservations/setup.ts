@@ -8,7 +8,7 @@ import type { SheetsClient } from "./google";
 import { type Rules, holdFor } from "./room";
 import { COL, CONFIG, HOST, TABLES, TRACKER, TRACKER_COLUMNS, columnLetter } from "./sheet";
 
-const SETUP_VERSION = 4;
+const SETUP_VERSION = 5;
 
 type SheetInfo = {
   properties: { sheetId: number; title: string };
@@ -123,6 +123,10 @@ const hostFormula = (): string =>
   ].join(",") +
   `},${tracker(COL.date)}=$B$1,${tracker(COL.status)}<>"cancelled",${tracker(COL.status)}<>"left"),1,TRUE),"No reservations on this date")`;
 
+/** Total party size of the day's reservations, for the date in B1. */
+const totalGuestsFormula = (): string =>
+  `=SUMIFS(${tracker(COL.party)},${tracker(COL.date)},$B$1,${tracker(COL.status)},"<>cancelled",${tracker(COL.status)},"<>left")`;
+
 const gridRange = (
   sheetId: number,
   rows: [number, number?],
@@ -226,6 +230,7 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
           ["Date", "=TODAY()"],
           ["Read-only — mark Server and Arrived on the Tracker tab."],
           HOST_COLUMNS,
+          ["Total guests", totalGuestsFormula()],
           [hostFormula()],
         ],
       },
@@ -346,7 +351,7 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
     // Host Sheet
     {
       updateSheetProperties: {
-        properties: { sheetId: hostId, gridProperties: { frozenRowCount: 3 } },
+        properties: { sheetId: hostId, gridProperties: { frozenRowCount: 4 } },
         fields: "gridProperties.frozenRowCount",
       },
     },
@@ -355,10 +360,10 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
       textFormat: { italic: true, foregroundColor: { red: 0.45, green: 0.45, blue: 0.45 } },
     }),
     formatCells(gridRange(hostId, [2, 3]), { textFormat: { bold: true } }),
-    formatCells(gridRange(hostId, [3], [0, 1]), {
+    formatCells(gridRange(hostId, [3, 4]), { textFormat: { bold: true } }),
+    formatCells(gridRange(hostId, [4], [0, 1]), {
       numberFormat: { type: "TIME", pattern: "h:mm am/pm" },
     }),
-    ...columnWidths(hostId, [90, 180, 80, 90, 110, 320, 70]),
 
     // Config
     {

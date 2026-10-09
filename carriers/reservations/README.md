@@ -384,8 +384,10 @@ the full hold, and a cell with two names (shown red) is a double booking.
 ### Host Sheet
 
 The night's reservations for the date in `B1`, in seating order: time, name,
-table #, party size, server, notes, arrived. It is read-only — a formula over
-Tracker — so mark Server and Arrived on the Tracker row and they show up here.
+table #, party size, server, notes, arrived. A **Total guests** row above the
+list sums that day's party sizes (excluding cancelled and left), so a host can
+see the head count at a glance. It is read-only — a formula over Tracker — so
+mark Server and Arrived on the Tracker row and they show up here.
 
 ### Config
 
