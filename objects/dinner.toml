@@ -25,7 +25,6 @@ reservations_sheet_id = "archival-secret-v1:FCOdvZorOX0JOnBgtZjcjwDt9zMBhOFGyo5t
 walk_in_key = "archival-secret-v1:jm9DG8EcJafgRMhz3ZOUuEDU7Sn4JuNtu8lq4XsRvSkGRKlWLATKCOZKcsNGSNQ9sqI4B9ataiXro34aR7rXGlGkqgvVHIEiak2EoGxWKAqIYJxW2V8pHQmKAok"
 square_access_token = "archival-secret-v1:JBJrjyScN7kxNww7hizuSKzM43rUEqtmpDNH4fH8BXxz7tgqdanmGHtFKMFPXZcHcx5fWjiFohyjYNnXM0UeePzVBe6sqar_SgD6rCjMiUN5KVMePB7mpGw0_tM"
 square_location_id = "archival-secret-v1:5xzwplDsYBp353uSBk5ebQffZc44TpR_0HQ8at-e70o-qpMpA2qYb7A"
-hold_overrides = []
 
 [sample_menu]
 display_type = "upload"
@@ -38,6 +37,10 @@ name = "sample-menu.pdf"
 days = "Th-Sa"
 first = "17:30"
 last = "20:00"
+
+[[hold_overrides]]
+hold_minutes = 120.0
+parties = "4-8"
 
 [[reservation_emails]]
 email = "jesse@nice-dream.com"
