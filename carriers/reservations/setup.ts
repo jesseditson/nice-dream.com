@@ -8,7 +8,7 @@ import type { SheetsClient } from "./google";
 import { type Rules, holdFor } from "./room";
 import { COL, CONFIG, HOST, TABLES, TRACKER, TRACKER_COLUMNS, columnLetter } from "./sheet";
 
-const SETUP_VERSION = 5;
+const SETUP_VERSION = 6;
 
 type SheetInfo = {
   properties: { sheetId: number; title: string };
@@ -280,7 +280,7 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
         },
       },
     },
-    ...columnWidths(trackerId, [140, 180, 90, 80, 280, 90, 120, 110, 200, 70, 100, 90, 150]),
+    ...columnWidths(trackerId, [140, 180, 90, 80, 280, 90, 120, 110, 200, 70, 100, 90, 150, 120, 320]),
 
     // Tables
     {

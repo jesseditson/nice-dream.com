@@ -65,6 +65,12 @@
                             </svg>
 
                             <form id="nd-form" data-endpoint="/carriers/reservations" data-large-party-min="{{ large_party_min }}" data-max-party="{{ max_party }}" data-bar-seats="{{ bar_seats }}" novalidate>
+                              <!-- Shown when the page was opened from a guest's edit link -->
+                              <div class="nd-notice nd-editing" id="nd-editing" role="note">
+                                <p>You're changing your reservation for <strong id="nd-editing-when"></strong>. Update anything below and save, or cancel it at the bottom.</p>
+                              </div>
+                              <p class="nd-field-error nd-token-notice" id="nd-token-notice" role="alert"></p>
+
                               {% if bar_seats > 0 %}
                               <!-- Dining room or bar -->
                               <div class="nd-field">
@@ -181,6 +187,7 @@
 
                               <!-- Submit -->
                               <button class="nd-submit" type="submit">Book a table</button>
+                              <button class="nd-submit nd-submit--quiet" type="button" id="nd-cancel">Cancel reservation</button>
                               <p class="nd-field-error nd-refusal" id="nd-refusal" role="alert"></p>
                               <p class="nd-error" id="nd-error">
                                 Something went wrong &mdash; please email us directly at
@@ -199,7 +206,7 @@
                         <div id="nd-confirmation">
                           <div class="nd-sheet">
                             <img class="nd-confirm-dog" src="/img/nd-confirm-dog.png" alt="Karen curled up asleep" />
-                            <h2 class="nd-confirm-title">
+                            <h2 class="nd-confirm-title" id="nd-confirm-title">
                               You're<br>
                               booked.
                             </h2>
@@ -208,17 +215,23 @@
                               <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                             </svg>
 
-                            <p class="nd-confirm-body">
+                            <p class="nd-confirm-body" id="nd-confirm-body">
                               See you soon, <strong id="nd-confirm-name"></strong> — we're holding
                               <strong id="nd-confirm-party"></strong> on
                               <strong id="nd-confirm-when"></strong>.
+                            </p>
+                            <p class="nd-confirm-body" id="nd-cancelled-body" style="display:none;">
+                              Your reservation for <strong id="nd-cancelled-when"></strong> is cancelled.
+                              We hope to see you another time — <a href="/reservations.html">book again</a> whenever you like.
                             </p>
                             <p class="nd-confirm-body nd-confirm-large" id="nd-confirm-large">
                               Since you're a larger group, <strong>we'll reach out to confirm the details</strong>
                               using the contact information you provided.
                             </p>
-                            <p class="nd-confirm-note">
-                              Need to change or cancel? Email us at
+                            <p class="nd-confirm-note" id="nd-confirm-note">
+                              Need to change or cancel?
+                              <span id="nd-manage"><a id="nd-manage-link" href="#">Use this link</a> (<span id="nd-manage-hint"></span>), or email</span
+                              ><span id="nd-manage-fallback">Email</span> us at
                               <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
                               >.
                             </p>

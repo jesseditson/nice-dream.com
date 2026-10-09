@@ -11,7 +11,29 @@
   type Area = "dining" | "bar";
   type Slot = { time: string; label: string; dining: number[]; bar: number[] };
   type Night = { date: string; label: string; slots: Slot[] };
-  type Availability = { ok: boolean; error?: string; today: string; dates: Night[] };
+  type Existing = {
+    date: string;
+    time: string;
+    date_label: string;
+    time_label: string;
+    party_size: number;
+    name: string;
+    contact_method: "email" | "sms";
+    contact: string;
+    notes: string;
+    newsletter: boolean;
+    area: Area;
+    editable: boolean;
+    reason?: "cancelled" | "passed";
+  };
+  type Availability = {
+    ok: boolean;
+    error?: string;
+    today: string;
+    dates: Night[];
+    booking?: Existing | null;
+    booking_error?: string;
+  };
   type BookingResult = {
     ok: boolean;
     error?: string;
@@ -20,6 +42,9 @@
     party_size: number;
     area: Area;
     large_party: boolean;
+    manage_url?: string;
+    changed?: boolean;
+    cancelled?: boolean;
   };
 
   const form = byId<HTMLFormElement>("nd-form");
@@ -34,14 +59,23 @@
   const partyMore = byId<HTMLInputElement>("nd-party-more");
   const partyCount = byId<HTMLInputElement>("nd-party-count");
   const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  const cancelButton = byId<HTMLButtonElement>("nd-cancel");
 
   let availability: Availability | null = null;
+
+  // The key from the guest's edit link; cleared when it turns out not to open anything.
+  let token = new URLSearchParams(window.location.search).get("token") ?? "";
+  let editing: Existing | null = null;
+  // The night and seating to select once the form has something to offer, from the booking being edited.
+  let wantedDate = "";
+  let wantedTime = "";
 
   const area = (): Area =>
     form.querySelector<HTMLInputElement>('input[name="area"]:checked')?.value === "bar" ? "bar" : "dining";
 
   const partyLimit = (): number => (area() === "bar" ? barSeats : maxParty);
-  const submitLabel = (): string => (area() === "bar" ? "Book the bar" : "Book a table");
+  const submitLabel = (): string =>
+    editing ? "Save changes" : area() === "bar" ? "Book the bar" : "Book a table";
 
   // 5+ without a number yet still needs a communal table, so price it as the smallest such party.
   const partySize = (): number => {
@@ -75,7 +109,7 @@
     form.querySelector<HTMLInputElement>('input[name="time"]:checked')?.value ?? "";
 
   const renderTimes = () => {
-    const previous = selectedTime();
+    const previous = selectedTime() || wantedTime;
     timePills.textContent = "";
     const night = availability?.dates.find((entry) => entry.date === dateSelect.value);
     if (!night) {
@@ -107,7 +141,7 @@
 
   // Nights that can't seat the party stay listed but grayed; the first that can is selected.
   const renderDates = () => {
-    const previous = dateSelect.value;
+    const previous = dateSelect.value || wantedDate;
     dateSelect.textContent = "";
     if (!availability) {
       placeholder(dateSelect, "Checking what's open…");
@@ -168,28 +202,6 @@
     renderDates();
   };
 
-  const loadAvailability = async () => {
-    setStatus("Checking what's open…");
-    try {
-      const response = await fetch(endpoint, { headers: { accept: "application/json" } });
-      if (!response.ok) throw new Error(await response.text());
-      const result = (await response.json()) as Availability;
-      if (!result.ok) throw new Error(result.error);
-      availability = result;
-      setStatus("");
-    } catch {
-      availability = null;
-      setStatus("We couldn't load our reservations right now — please email us at hello@nice-dream.com to book.", true);
-    }
-    renderDates();
-  };
-
-  form.querySelectorAll<HTMLInputElement>('input[name="area"], input[name="party"]').forEach((radio) => {
-    radio.addEventListener("change", updateParty);
-  });
-  partyCount.addEventListener("input", updateParty);
-  dateSelect.addEventListener("change", renderTimes);
-
   const setContactVisible = (field: HTMLElement, input: HTMLInputElement, visible: boolean) => {
     field.classList.toggle("visible", visible);
     input.required = visible;
@@ -204,6 +216,75 @@
     setContactVisible(byId("nd-phone-field"), byId("nd-phone"), type === "phone");
   };
 
+  const showTokenNotice = (message: string) => {
+    const notice = byId("nd-token-notice");
+    notice.textContent = message;
+    setVisible(notice, message !== "");
+  };
+
+  /** Fills the form with the booking the guest's link opened, and switches it to saving changes. */
+  const startEditing = (booking: Existing) => {
+    if (!booking.editable) {
+      token = "";
+      showTokenNotice(
+        booking.reason === "cancelled"
+          ? "That reservation was cancelled. You're welcome to book a new one below."
+          : "That seating has already passed, so it can't be changed online — email us at hello@nice-dream.com if you need a hand.",
+      );
+      return;
+    }
+    editing = booking;
+    const areaRadio = form.querySelector<HTMLInputElement>(`input[name="area"][value="${booking.area}"]`);
+    if (areaRadio) areaRadio.checked = true;
+    const party = booking.party_size;
+    const partyRadio = partyRadios.find((radio) => radio.value === (party >= 5 ? "more" : String(party)));
+    if (partyRadio) partyRadio.checked = true;
+    if (party >= 5) partyCount.value = String(party);
+    wantedDate = booking.date;
+    wantedTime = booking.time;
+    byId<HTMLInputElement>("nd-name").value = booking.name;
+    const sms = booking.contact_method === "sms";
+    byId<HTMLInputElement>(sms ? "nd-pref-sms" : "nd-pref-email").checked = true;
+    showContact(sms ? "phone" : "email");
+    byId<HTMLInputElement>(sms ? "nd-phone" : "nd-email").value = booking.contact;
+    byId<HTMLTextAreaElement>("nd-notes").value = booking.notes;
+    byId<HTMLInputElement>("nd-newsletter").checked = booking.newsletter;
+    byId("nd-editing-when").textContent = `${booking.date_label} at ${booking.time_label}`;
+    setVisible(byId("nd-editing"), true);
+    setVisible(cancelButton, true);
+  };
+
+  const loadAvailability = async () => {
+    setStatus("Checking what's open…");
+    try {
+      const url = token ? `${endpoint}?token=${encodeURIComponent(token)}` : endpoint;
+      const response = await fetch(url, { headers: { accept: "application/json" } });
+      if (!response.ok) throw new Error(await response.text());
+      const result = (await response.json()) as Availability;
+      if (!result.ok) throw new Error(result.error);
+      availability = result;
+      setStatus("");
+      // Only the first load fills the form in; a reload after a refusal keeps what the guest typed.
+      if (token && !editing) {
+        if (result.booking) startEditing(result.booking);
+        else {
+          token = "";
+          showTokenNotice(result.booking_error ?? "We couldn't find that reservation. You can book a new one below.");
+        }
+      }
+    } catch {
+      availability = null;
+      setStatus("We couldn't load our reservations right now — please email us at hello@nice-dream.com to book.", true);
+    }
+    updateParty();
+  };
+
+  form.querySelectorAll<HTMLInputElement>('input[name="area"], input[name="party"]').forEach((radio) => {
+    radio.addEventListener("change", updateParty);
+  });
+  partyCount.addEventListener("input", updateParty);
+  dateSelect.addEventListener("change", renderTimes);
+
   // Listeners are attached here rather than inline so they survive script-rewriting proxies like Cloudflare Rocket Loader.
   form.querySelectorAll<HTMLInputElement>('input[name="contact_method"]').forEach((radio) => {
     radio.addEventListener("change", () => showContact(radio.value === "email" ? "email" : "phone"));
@@ -217,17 +298,61 @@
 
   const showConfirmation = (result: BookingResult) => {
     const name = byId<HTMLInputElement>("nd-name").value.trim().split(" ")[0];
+    const when = `${result.date_label} at ${result.time_label}`;
+    const cancelled = result.cancelled === true;
+    byId("nd-confirm-title").innerHTML = cancelled
+      ? "Reservation<br>cancelled."
+      : result.changed
+        ? "All<br>updated."
+        : "You're<br>booked.";
     byId("nd-confirm-name").textContent = name || "there";
-    byId("nd-confirm-when").textContent = `${result.date_label} at ${result.time_label}`;
+    byId("nd-confirm-when").textContent = when;
+    byId("nd-cancelled-when").textContent = when;
     const solo = result.party_size === 1;
     byId("nd-confirm-party").textContent =
       result.area === "bar"
         ? solo ? "a seat at the bar" : `${result.party_size} seats at the bar`
         : solo ? "a table for one" : `a table for ${result.party_size}`;
-    setVisible(byId("nd-confirm-large"), result.large_party);
+    byId("nd-confirm-body").style.display = cancelled ? "none" : "";
+    byId("nd-cancelled-body").style.display = cancelled ? "" : "none";
+    setVisible(byId("nd-confirm-large"), !cancelled && result.large_party);
+    const note = byId("nd-confirm-note");
+    note.style.display = cancelled ? "none" : "";
+    const manage = byId("nd-manage");
+    if (result.manage_url) {
+      byId<HTMLAnchorElement>("nd-manage-link").href = result.manage_url;
+      byId("nd-manage-hint").textContent = byId<HTMLInputElement>("nd-pref-sms").checked
+        ? "keep it somewhere safe, since we only have your number"
+        : "it's in your confirmation email too";
+    }
+    manage.style.display = result.manage_url ? "" : "none";
+    byId("nd-manage-fallback").style.display = result.manage_url ? "none" : "";
     byId("nd-form-view").style.display = "none";
     byId("nd-confirmation").style.display = "block";
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const send = (payload: Record<string, unknown>): Promise<BookingResult> => {
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("timeout")), 15000);
+    });
+    return Promise.race([
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify(payload),
+      }),
+      timeout,
+    ]).then(async (response) => {
+      if (!response.ok) throw new Error(await response.text());
+      return (await response.json()) as BookingResult;
+    });
+  };
+
+  const setBusy = (busy: boolean, label: string) => {
+    submitButton.disabled = busy || partySize() > partyLimit();
+    submitButton.textContent = busy ? label : submitLabel();
+    cancelButton.disabled = busy;
   };
 
   form.addEventListener("submit", (event) => {
@@ -247,6 +372,7 @@
 
     const sms = byId<HTMLInputElement>("nd-pref-sms").checked;
     const payload = {
+      ...(editing ? { token } : {}),
       area: area(),
       party_size: partySize(),
       date: dateSelect.value,
@@ -259,24 +385,9 @@
       newsletter: byId<HTMLInputElement>("nd-newsletter").checked,
     };
 
-    submitButton.disabled = true;
-    submitButton.textContent = "Booking…";
-
-    const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("timeout")), 15000);
-    });
-
-    Promise.race([
-      fetch(endpoint, {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify(payload),
-      }),
-      timeout,
-    ])
-      .then(async (response) => {
-        if (!response.ok) throw new Error(await response.text());
-        const result = (await response.json()) as BookingResult;
+    setBusy(true, editing ? "Saving…" : "Booking…");
+    send(payload)
+      .then(async (result) => {
         if (!result.ok) {
           showRefusal(result.error ?? "We couldn't take that booking.");
           // The room may have filled while they typed, so reoffer what's left.
@@ -288,9 +399,45 @@
       .catch(() => {
         byId("nd-error").style.display = "block";
       })
+      .finally(() => setBusy(false, ""));
+  });
+
+  // Cancelling takes two clicks: the first arms the button, and it disarms itself if the second doesn't come.
+  const ARMED_LABEL = "Really cancel? Click again to confirm";
+  const CANCEL_LABEL = "Cancel reservation";
+  let disarm: number | undefined;
+  const disarmCancel = () => {
+    window.clearTimeout(disarm);
+    cancelButton.textContent = CANCEL_LABEL;
+    cancelButton.classList.remove("nd-submit--armed");
+  };
+  cancelButton.addEventListener("click", () => {
+    if (!editing) return;
+    showRefusal("");
+    byId("nd-error").style.display = "none";
+    if (!cancelButton.classList.contains("nd-submit--armed")) {
+      cancelButton.textContent = ARMED_LABEL;
+      cancelButton.classList.add("nd-submit--armed");
+      disarm = window.setTimeout(disarmCancel, 8000);
+      return;
+    }
+    disarmCancel();
+    setBusy(true, submitLabel());
+    cancelButton.textContent = "Cancelling…";
+    send({ token, cancel: true })
+      .then((result) => {
+        if (!result.ok) {
+          showRefusal(result.error ?? "We couldn't cancel that reservation.");
+          return;
+        }
+        showConfirmation(result);
+      })
+      .catch(() => {
+        byId("nd-error").style.display = "block";
+      })
       .finally(() => {
-        submitButton.disabled = partySize() > partyLimit();
-        submitButton.textContent = submitLabel();
+        setBusy(false, "");
+        cancelButton.textContent = CANCEL_LABEL;
       });
   });
 

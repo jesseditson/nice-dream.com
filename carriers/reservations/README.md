@@ -6,7 +6,9 @@ site and reachable at `/carriers/reservations`.
 | | |
 | --- | --- |
 | `GET` | every seating in the booking window, and which party sizes each can still take |
+| `GET` with `?token=` | the same, plus the booking the token belongs to — see [Changing a booking](#changing-a-booking) |
 | `POST` | takes a booking — JSON or a form post |
+| `POST` with `token` | changes that booking, or with `cancel: true` cancels it |
 | `POST` with `walk_in` | holds the table a [walk-in](#walk-ins) was just seated at — sent by the Square order webhook |
 
 Every request also brings the Tracker in line with the checks open in Square,
@@ -48,6 +50,63 @@ misconfigured site throws. Availability is checked again inside the `POST`, so a
 form left open overnight can't book a table that filled up. Sheets has no
 transactions, so two bookings landing in the very same instant can both pass;
 at this size that's a thing to reconcile by hand, not to engineer around.
+
+A successful `POST` answers with the booking as the form shows it and a
+`manage_url`, the guest's link for [changing or cancelling](#changing-a-booking)
+it.
+
+## Changing a booking
+
+Every booking the form takes gets a random token, written to the Tracker's
+Token column, and a link to the form with it — `/reservations.html?token=…`.
+The link is the only thing gating edits: anyone holding it can change or cancel
+that booking, which is the trade-off for not asking guests to sign in. The
+guest gets it in their [confirmation email](#booking-emails); staff get it in
+theirs, which is how a guest who left a phone number can be sent it; and the
+form shows it on the confirmation page.
+
+Opening the link loads the form filled in with the booking, with its own
+tables counted as free so it can keep its seating or move. `GET ?token=`
+answers with the usual availability worked out that way, plus:
+
+```json
+{
+  "booking": {
+    "date": "2026-10-10", "time": "18:30", "party_size": 2, "name": "Ada Lovelace",
+    "contact_method": "email", "contact": "ada@example.com", "notes": "", "newsletter": true,
+    "area": "dining", "tables": ["5"], "status": "booked", "editable": true
+  }
+}
+```
+
+`editable` is false, with `reason` `cancelled` or `passed`, for a booking that
+was cancelled or whose seating has gone by; the form then says so and offers a
+new booking instead. A token that matches nothing comes back as
+`booking_error`.
+
+Saving posts the same fields as a new booking plus `token`. They're checked the
+same way, and the booking keeps its tables unless the date, time, party size
+or area changed, in which case it is seated again from scratch with its old
+tables free — and refused, with the original left standing, if nothing fits.
+The Tracker row is changed in place, and what changed is written in the first
+empty cell to the right of the row, starting at the Edits column:
+
+```
+edited 2026-10-09 18:02 - party 2 → 4, time 6:30 PM → 7:00 PM, tables 5 → 5, 6
+```
+
+Each later edit takes the next cell along, so the row carries its own history
+and nothing is lost. A save that changes nothing writes nothing.
+
+`{ token, cancel: true }` sets the row's Status to `cancelled`, notes
+`cancelled 2026-10-09 18:02` to the right of it the same way, and strikes the
+whole row through. The table is given back, and the Tables and Host Sheet tabs
+drop the row like any cancelled booking. A cancelled booking can't be
+reopened from its link; the guest books again.
+
+Staff are emailed about every change and cancellation, and the guest gets an
+updated confirmation when they left an email. Rows typed into the Tracker by
+hand have no token, so they can only be changed on the sheet.
 
 ## Rules
 
@@ -323,9 +382,19 @@ every template and from the built site — but *not* from this repo, so treat
 Every booking the form takes is emailed to each `email` in the dinner object's
 `[[reservation_emails]]` list, from `reservation@nice-dream.com`. The email gives the
 guest's name, the date and time, the party size, the table or bar seats, how to
-reach them, any notes, whether they signed up for the newsletter, and a link to the
-Tracker. Large parties are flagged, because the form told them we'd reach out.
-When the guest left an email, replying goes straight to them.
+reach them, any notes, whether they signed up for the newsletter, a link to the
+Tracker, and the guest's own link for [changing or cancelling](#changing-a-booking)
+the booking. Large parties are flagged, because the form told them we'd reach out.
+When the guest left an email, replying goes straight to them. Changes and
+cancellations are emailed the same way, headed **Reservation changed** (with what
+changed) or **Reservation cancelled**.
+
+A guest who left an email also gets a confirmation from the same address, with
+replies going to `hello@nice-dream.com`: what's held and when, the large-party
+note if it applies, and their change-or-cancel link. They get another when they
+change the booking, and one without the link when they cancel. A guest who left a
+phone number gets nothing by email; their link is on the confirmation page and in
+the staff email.
 
 Sending uses archival's `objects.EMAIL`, so the site's plan has to include email,
 and `reservation@nice-dream.com` has to exist in the site's email settings. The
@@ -354,9 +423,9 @@ row typed further down, past blank rows, isn't part of that block: it still
 counts against availability, but new bookings won't follow it, and it's easy to
 miss. Keep bookings in one unbroken block.
 
-| A | B | C | D | E | F | G | H | I | J | K | L | M |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Date | Name | Time | Party Size | Notes | Table(s) | Contact Method | Server | Contact | Arrived | Status | Newsletter | Booked At |
+| A | B | C | D | E | F | G | H | I | J | K | L | M | N | O… |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Date | Name | Time | Party Size | Notes | Table(s) | Contact Method | Server | Contact | Arrived | Status | Newsletter | Booked At | Token | Edits |
 
 The carrier finds these columns by position, so moving one means changing
 `TRACKER_COLUMNS` and `COL` in `sheet.ts` to match.
@@ -370,6 +439,10 @@ The carrier finds these columns by position, so moving one means changing
   closed.
 - Rows whose Contact Method is `Square` are walk-ins the carrier wrote from
   open checks.
+- **Token** is the key in the guest's change-or-cancel link; leave it alone.
+  **Edits** and the cells to its right are the row's history, one note per
+  change — see [Changing a booking](#changing-a-booking). A row the guest
+  cancelled is struck through.
 - Rows typed in by hand (a phone booking, say) count against availability like
   any other. Fill in at least Date, Time and Party Size; leave Table(s) blank
   and the carrier picks tables for it the next time anyone looks at the form.
@@ -412,8 +485,9 @@ covers everything under [Table assignment](#table-assignment) — what each part
 size gets, how long a table is held, the spacing order, 4-tops, and the
 open/closed flags the form reads — and which table a [walk-in](#walk-ins)
 holds, against a room defined in the test file.
-`notify.test.ts` covers the [booking email](#booking-emails) against a stand-in
+`notify.test.ts` covers the [booking emails](#booking-emails) against a stand-in
 for `objects.EMAIL`, `square.test.ts` the [open checks](#open-checks) lookup
 against a stand-in for `fetch`, and `sheet.test.ts` what that pass writes to the
-Tracker against a stand-in for the spreadsheet. None depends on
+Tracker, and how a [change or cancellation](#changing-a-booking) is found and
+written, against a stand-in for the spreadsheet. None depends on
 `objects/dinner.toml`, touches the spreadsheet, calls Square, or sends mail.

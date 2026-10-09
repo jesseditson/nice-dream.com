@@ -1,7 +1,8 @@
 /**
- * Reading and writing the Tracker tab. Bookings are only ever appended; a
- * table is given back by setting Status, and the Tables and Host Sheet tabs
- * derive from here by formula (see setup.ts).
+ * Reading and writing the Tracker tab. Bookings are appended, and a guest's
+ * edits change the row in place with a note of what changed written to the
+ * right of it; a table is given back by setting Status, and the Tables and
+ * Host Sheet tabs derive from here by formula (see setup.ts).
  */
 import type { SheetsClient } from "./google";
 import {
@@ -39,6 +40,8 @@ export const TRACKER_COLUMNS = [
   "Status",
   "Newsletter",
   "Booked At",
+  "Token",
+  "Edits",
 ];
 
 export const COL = {
@@ -55,6 +58,9 @@ export const COL = {
   status: 10,
   newsletter: 11,
   bookedAt: 12,
+  token: 13,
+  /** The first of the edit notes, one per cell, continuing to the right. */
+  edits: 14,
 } as const;
 
 /** Contact Method on a walk-in's row; its Contact is the Square order the check is on. */
@@ -66,7 +72,13 @@ const RELEASED = ["cancelled", "left"];
 /** A booking read from the Tracker, with the sheet row it is on. */
 export type TrackerBooking = Booking & { row: number };
 
-export const columnLetter = (index: number): string => String.fromCharCode(65 + index);
+export const columnLetter = (index: number): string => {
+  let letters = "";
+  for (let n = index; n >= 0; n = Math.floor(n / 26) - 1) {
+    letters = String.fromCharCode(65 + (n % 26)) + letters;
+  }
+  return letters;
+};
 
 const LAST_COLUMN = columnLetter(TRACKER_COLUMNS.length - 1);
 
@@ -121,6 +133,15 @@ const cellNumber = (cell: Cell): number => {
   return Number.isFinite(value) ? Math.round(value) : 0;
 };
 
+const cellBoolean = (cell: Cell): boolean =>
+  cell === true || ["true", "yes", "x", "y", "✓"].includes(cellText(cell).toLowerCase());
+
+const trackerRows = (client: SheetsClient): Promise<Cell[][]> =>
+  client<{ values?: Cell[][] }>(
+    "GET",
+    `/values/${range(TRACKER, `A2:${LAST_COLUMN}`)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`,
+  ).then((response) => response.values ?? []);
+
 type Unassigned = { row: number; date: string; start: number; party: number };
 
 /**
@@ -161,13 +182,9 @@ export const readBookings = async (
   rules: Rules,
   today: string,
 ): Promise<TrackerBooking[]> => {
-  const response = await client<{ values?: Cell[][] }>(
-    "GET",
-    `/values/${range(TRACKER, `A2:${LAST_COLUMN}`)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`,
-  );
   const bookings: TrackerBooking[] = [];
   const unassigned: Unassigned[] = [];
-  (response.values ?? []).forEach((cells, index) => {
+  (await trackerRows(client)).forEach((cells, index) => {
     const row = index + 2;
     const date = cellDate(cells[COL.date]);
     const start = cellTime(cells[COL.time]);
@@ -184,6 +201,42 @@ export const readBookings = async (
   });
   if (unassigned.length) await assignUnassigned(client, bookings, unassigned, rules);
   return bookings;
+};
+
+/** Everything on a booking's row that the form can show or change. */
+export type TrackerRow = Booking & {
+  row: number;
+  name: string;
+  method: string;
+  contact: string;
+  notes: string;
+  newsletter: boolean;
+  status: string;
+};
+
+/** The row whose Token column holds `token`, or null. */
+export const findBooking = async (client: SheetsClient, token: string): Promise<TrackerRow | null> => {
+  if (!token) return null;
+  const rows = await trackerRows(client);
+  const index = rows.findIndex((cells) => cellText(cells[COL.token]) === token);
+  if (index < 0) return null;
+  const cells = rows[index];
+  const date = cellDate(cells[COL.date]);
+  const start = cellTime(cells[COL.time]);
+  if (!date || start == null) return null;
+  return {
+    row: index + 2,
+    date,
+    start,
+    party: cellNumber(cells[COL.party]) || 2,
+    tables: cellTables(cells[COL.tables]),
+    name: cellText(cells[COL.name]),
+    method: cellText(cells[COL.method]),
+    contact: cellText(cells[COL.contact]),
+    notes: cellText(cells[COL.notes]),
+    newsletter: cellBoolean(cells[COL.newsletter]),
+    status: cellText(cells[COL.status]).toLowerCase() || "booked",
+  };
 };
 
 let trackerSheetId: number | null = null;
@@ -227,6 +280,8 @@ export type NewBooking = Booking & {
   notes: string;
   newsletter: boolean;
   arrived?: boolean;
+  /** The key in the guest's edit link; blank on rows that can't be edited online. */
+  token?: string;
 };
 
 /** The first and last row of an append's `updatedRange`, like `Tracker!A33:M34`. */
@@ -264,6 +319,8 @@ export const appendBookings = async (
     row[COL.status] = "booked";
     row[COL.newsletter] = booking.newsletter;
     row[COL.bookedAt] = bookedAt;
+    row[COL.token] = booking.token ?? "";
+    row[COL.edits] = "";
     return row;
   });
   const response = await client<{ updates?: { updatedRange?: string } }>(
@@ -326,4 +383,76 @@ export const syncWalkIns = async (
     console.error("Could not bring the Tracker's walk-ins in line with Square:", error);
   }
   return [...bookings.filter((booking) => !left.includes(booking)), ...seated];
+};
+
+/** The cell after the last one with anything in it on `row`, never left of the Edits column. */
+const nextNoteCell = async (client: SheetsClient, row: number): Promise<string> => {
+  const response = await client<{ values?: Cell[][] }>(
+    "GET",
+    `/values/${range(TRACKER, `${row}:${row}`)}?valueRenderOption=UNFORMATTED_VALUE`,
+  );
+  const filled = response.values?.[0]?.length ?? 0;
+  return `${TRACKER}!${columnLetter(Math.max(filled, COL.edits))}${row}`;
+};
+
+/** The cells a guest's edit can change. */
+export type Changes = Partial<
+  Pick<NewBooking, "date" | "start" | "party" | "tables" | "name" | "method" | "contact" | "notes" | "newsletter">
+>;
+
+const changeCells = (changes: Changes): { column: number; value: Cell }[] => {
+  const cells: { column: number; value: Cell }[] = [];
+  if (changes.date !== undefined) cells.push({ column: COL.date, value: dateSerial(changes.date) });
+  if (changes.start !== undefined) cells.push({ column: COL.time, value: changes.start / 1440 });
+  if (changes.party !== undefined) cells.push({ column: COL.party, value: changes.party });
+  if (changes.tables !== undefined) cells.push({ column: COL.tables, value: changes.tables.join(", ") });
+  if (changes.name !== undefined) cells.push({ column: COL.name, value: changes.name });
+  if (changes.method !== undefined) cells.push({ column: COL.method, value: changes.method });
+  if (changes.contact !== undefined) cells.push({ column: COL.contact, value: changes.contact });
+  if (changes.notes !== undefined) cells.push({ column: COL.notes, value: changes.notes });
+  if (changes.newsletter !== undefined) cells.push({ column: COL.newsletter, value: changes.newsletter });
+  return cells;
+};
+
+/**
+ * Changes a booking's row in place and writes `note` in the first empty cell
+ * to the right of it, so what the row used to say is kept on the row itself.
+ */
+export const updateBooking = async (
+  client: SheetsClient,
+  row: number,
+  changes: Changes,
+  note: string,
+): Promise<void> => {
+  const data = changeCells(changes).map(({ column, value }) => ({
+    range: `${TRACKER}!${columnLetter(column)}${row}`,
+    values: [[value]],
+  }));
+  data.push({ range: await nextNoteCell(client, row), values: [[note]] });
+  await client("POST", "/values:batchUpdate", { valueInputOption: "RAW", data });
+};
+
+/** Sets a booking's Status to cancelled, notes it to the right of the row, and strikes the row through. */
+export const cancelBooking = async (client: SheetsClient, row: number, note: string): Promise<void> => {
+  await client("POST", "/values:batchUpdate", {
+    valueInputOption: "RAW",
+    data: [
+      { range: `${TRACKER}!${columnLetter(COL.status)}${row}`, values: [["cancelled"]] },
+      { range: await nextNoteCell(client, row), values: [[note]] },
+    ],
+  });
+  const sheetId = await trackerId(client);
+  await client("POST", ":batchUpdate", {
+    requests: [
+      {
+        repeatCell: {
+          range: { sheetId, startRowIndex: row - 1, endRowIndex: row },
+          cell: { userEnteredFormat: { textFormat: { strikethrough: true } } },
+          fields: "userEnteredFormat.textFormat.strikethrough",
+        },
+      },
+    ],
+  }).catch((error) => {
+    console.error("Could not strike through the cancelled row:", error);
+  });
 };

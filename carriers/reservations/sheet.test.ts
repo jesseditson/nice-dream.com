@@ -2,7 +2,18 @@ import assert from "node:assert/strict";
 import { afterEach, describe, mock, test } from "node:test";
 import type { SheetsClient } from "./google.ts";
 import { type OpenTicket, type Rules, readRules } from "./room.ts";
-import { COL, type NewBooking, type TrackerBooking, appendBooking, readBookings, syncWalkIns } from "./sheet.ts";
+import {
+  COL,
+  type NewBooking,
+  type TrackerBooking,
+  appendBooking,
+  cancelBooking,
+  columnLetter,
+  findBooking,
+  readBookings,
+  syncWalkIns,
+  updateBooking,
+} from "./sheet.ts";
 
 const THURSDAY = "2026-10-08";
 const SERIAL = (Date.UTC(2026, 9, 8) - Date.UTC(1899, 11, 30)) / 86_400_000;
@@ -34,7 +45,14 @@ const sheet = (
   const calls: Call[] = [];
   const client = (async (method: string, path: string, body?: unknown) => {
     calls.push({ method, path: decodeURIComponent(path), body });
-    if (method === "GET" && path.startsWith("/values/")) return { values: rows };
+    if (method === "GET" && path.startsWith("/values/")) {
+      const whole = decodeURIComponent(path).match(/^\/values\/Tracker!(\d+):\d+/);
+      if (!whole) return { values: rows };
+      // Sheets leaves trailing empty cells off a row.
+      const cells = [...(rows[Number(whole[1]) - 2] ?? [])];
+      while (cells.length && (cells[cells.length - 1] === "" || cells[cells.length - 1] == null)) cells.pop();
+      return { values: [cells] };
+    }
     if (method === "GET") return { sheets: [{ properties: { sheetId: 7, title: "Tracker" } }] };
     if (failWrites) throw new Error("Sheets is down");
     if (path.includes(":append")) return { updates: { updatedRange: appended((body as any).values.length) } };
@@ -63,7 +81,7 @@ describe("syncWalkIns", () => {
 
     assert.deepEqual(held.map((booking) => booking.tables), [["5"], ["B2"]]);
     const [append, checkboxes] = writes();
-    assert.match(append.path, /^\/values\/Tracker!A1:M1:append/);
+    assert.match(append.path, /^\/values\/Tracker!A1:O1:append/);
     assert.deepEqual(
       append.body.values.map((row: unknown[]) => row.slice(0, 12)),
       [
@@ -144,8 +162,8 @@ describe("appendBooking", () => {
     const { client, writes } = sheet([], false, () => "Tracker!A33:M33");
     await appendBooking(client, booking, rules);
     const [append, checkboxes] = writes();
-    assert.match(append.path, /^\/values\/Tracker!A1:M1:append\?/);
-    assert.equal(append.body.range, "Tracker!A1:M1");
+    assert.match(append.path, /^\/values\/Tracker!A1:O1:append\?/);
+    assert.equal(append.body.range, "Tracker!A1:O1");
     const { startRowIndex, endRowIndex } = checkboxes.body.requests[0].setDataValidation.range;
     assert.deepEqual([startRowIndex, endRowIndex], [32, 33]);
   });
@@ -164,5 +182,113 @@ describe("appendBooking", () => {
   test("rejects when the write itself fails", async () => {
     const { client } = sheet([], true);
     await assert.rejects(appendBooking(client, booking, rules), /Sheets is down/);
+  });
+
+  test("writes the guest's token and an empty Edits cell", async () => {
+    const { client, writes } = sheet([], false, () => "Tracker!A33:O33");
+    await appendBooking(client, { ...booking, token: "KEY" }, rules);
+    const [row] = writes()[0].body.values;
+    assert.equal(row.length, 15);
+    assert.equal(row[COL.token], "KEY");
+    assert.equal(row[COL.edits], "");
+  });
+});
+
+describe("columnLetter", () => {
+  test("counts past Z the way Sheets does", () => {
+    assert.deepEqual([0, 25, 26, 27, 51, 52, 701, 702].map(columnLetter), ["A", "Z", "AA", "AB", "AZ", "BA", "ZZ", "AAA"]);
+  });
+});
+
+const tracked = (overrides: Record<number, unknown> = {}): unknown[] =>
+  Object.assign(
+    [SERIAL, "Ada Lovelace", 18.5 / 24, 2, "No shellfish", "5", "Email", "", "ada@example.com", false, "booked", true, "2026-10-01 09:00", "KEY", ""],
+    overrides,
+  );
+
+describe("findBooking", () => {
+  test("reads the whole row whose Token matches", async () => {
+    const { client } = sheet([tracked({ [COL.token]: "OTHER" }), tracked()]);
+    assert.deepEqual(await findBooking(client, "KEY"), {
+      row: 3,
+      date: THURSDAY,
+      start: 18 * 60 + 30,
+      party: 2,
+      tables: ["5"],
+      name: "Ada Lovelace",
+      method: "Email",
+      contact: "ada@example.com",
+      notes: "No shellfish",
+      newsletter: true,
+      status: "booked",
+    });
+  });
+
+  test("finds cancelled rows too, so the form can say so", async () => {
+    const { client } = sheet([tracked({ [COL.status]: "Cancelled" })]);
+    assert.equal((await findBooking(client, "KEY"))?.status, "cancelled");
+  });
+
+  test("is null for an unknown or blank token", async () => {
+    const { client } = sheet([tracked()]);
+    assert.equal(await findBooking(client, "NOPE"), null);
+    assert.equal(await findBooking(client, ""), null);
+  });
+});
+
+describe("updateBooking", () => {
+  test("changes the cells in place and notes the edit in the Edits column", async () => {
+    const { client, writes } = sheet([tracked()]);
+    await updateBooking(client, 2, { party: 4, tables: ["5", "6"], start: 19 * 60 }, "edited 2026-10-09 18:02 - party 2 → 4");
+    assert.deepEqual(writes(), [
+      {
+        method: "POST",
+        path: "/values:batchUpdate",
+        body: {
+          valueInputOption: "RAW",
+          data: [
+            { range: "Tracker!C2", values: [[19 / 24]] },
+            { range: "Tracker!D2", values: [[4]] },
+            { range: "Tracker!F2", values: [["5, 6"]] },
+            { range: "Tracker!O2", values: [["edited 2026-10-09 18:02 - party 2 → 4"]] },
+          ],
+        },
+      },
+    ]);
+  });
+
+  test("a later edit lands in the next cell to the right", async () => {
+    const { client, writes } = sheet([tracked({ [COL.edits]: "edited earlier", 15: "edited again" })]);
+    await updateBooking(client, 2, { notes: "" }, "edited now");
+    assert.deepEqual(writes()[0].body.data, [
+      { range: "Tracker!E2", values: [[""]] },
+      { range: "Tracker!Q2", values: [["edited now"]] },
+    ]);
+  });
+
+  test("rejects when the write fails, so the guest isn't told it worked", async () => {
+    const { client } = sheet([tracked()], true);
+    await assert.rejects(updateBooking(client, 2, { party: 3 }, "edited"), /Sheets is down/);
+  });
+});
+
+describe("cancelBooking", () => {
+  test("sets Status, notes the cancellation, and strikes the row through", async () => {
+    const { client, writes } = sheet([tracked({ [COL.edits]: "edited earlier" })]);
+    await cancelBooking(client, 2, "cancelled 2026-10-09 18:02");
+    const [values, format] = writes();
+    assert.deepEqual(values.body.data, [
+      { range: "Tracker!K2", values: [["cancelled"]] },
+      { range: "Tracker!P2", values: [["cancelled 2026-10-09 18:02"]] },
+    ]);
+    assert.deepEqual(format.body.requests, [
+      {
+        repeatCell: {
+          range: { sheetId: 7, startRowIndex: 1, endRowIndex: 2 },
+          cell: { userEnteredFormat: { textFormat: { strikethrough: true } } },
+          fields: "userEnteredFormat.textFormat.strikethrough",
+        },
+      },
+    ]);
   });
 });

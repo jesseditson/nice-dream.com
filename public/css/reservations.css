@@ -463,6 +463,41 @@ body::before {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 var(--ink);
 }
+
+.nd-submit--quiet {
+  display: none;
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--sheet);
+}
+
+.nd-submit--quiet.visible {
+  display: block;
+}
+
+.nd-submit--quiet:hover {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.nd-submit--armed,
+.nd-submit--armed:hover {
+  color: #b03a63;
+  background: #fdeef3;
+  border-color: #e7a7be;
+  box-shadow: none;
+}
+
+.nd-editing {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.nd-token-notice {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
 #nd-confirmation {
   display: none;
 }

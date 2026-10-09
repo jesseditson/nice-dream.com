@@ -1,7 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import type { CarrierEmail, CarrierEmailMessage } from "@archival/carrier";
-import { NOTIFY_FROM, type Notice, alertUnsaved, bookingEmail, notifyStaff, unsavedEmail } from "./notify.ts";
+import {
+  CONTACT_EMAIL,
+  NOTIFY_FROM,
+  type Notice,
+  alertUnsaved,
+  bookingEmail,
+  cancelledEmail,
+  changedEmail,
+  emailGuest,
+  guestBookedEmail,
+  guestCancelledEmail,
+  guestChangedEmail,
+  notifyStaff,
+  unsavedEmail,
+} from "./notify.ts";
 
 const notice = (overrides: Partial<Notice> = {}): Notice => ({
   date: "2026-10-08",
@@ -16,6 +30,7 @@ const notice = (overrides: Partial<Notice> = {}): Notice => ({
   area: "dining",
   largeParty: false,
   sheetId: "SHEET",
+  manageUrl: "https://nice-dream.com/reservations.html?token=KEY",
   ...overrides,
 });
 
@@ -50,8 +65,13 @@ describe("bookingEmail", () => {
         "Newsletter: yes",
         "",
         "Tracker: https://docs.google.com/spreadsheets/d/SHEET/edit",
+        "Change or cancel (the guest's link): https://nice-dream.com/reservations.html?token=KEY",
       ].join("\n"),
     );
+  });
+
+  test("leaves the link out when the booking has none", () => {
+    assert.doesNotMatch(bookingEmail(notice({ manageUrl: undefined })).text, /Change or cancel/);
   });
 
   test("names bar seats and a single table", () => {
@@ -68,6 +88,96 @@ describe("bookingEmail", () => {
 
   test("keeps a multi-line name out of the subject's line breaks", () => {
     assert.doesNotMatch(bookingEmail(notice({ name: "Ada\r\nBcc: x@example.com" })).subject, /[\r\n]/);
+  });
+});
+
+describe("changedEmail", () => {
+  test("leads with what changed", () => {
+    const { subject, text } = changedEmail(notice({ party: 4 }), "party 2 → 4, time 6:00 PM → 6:30 PM");
+    assert.equal(subject, "Reservation changed: Ada Lovelace, party of 4 — Thursday, October 8th at 6:30 PM");
+    assert.match(text, /^Ada Lovelace changed their booking: party 2 → 4, time 6:00 PM → 6:30 PM\.$/m);
+    assert.match(text, /^Seating: Dining room, tables 5, 6$/m);
+  });
+});
+
+describe("cancelledEmail", () => {
+  test("says the row is struck through", () => {
+    const { subject, text } = cancelledEmail(notice());
+    assert.equal(subject, "Reservation cancelled: Ada Lovelace, party of 4 — Thursday, October 8th at 6:30 PM");
+    assert.match(text, /^Ada Lovelace cancelled their booking\. The row is struck through on the Tracker\.$/m);
+  });
+});
+
+describe("guest emails", () => {
+  test("confirm the booking with the edit link, by first name", () => {
+    const { subject, text } = guestBookedEmail(notice());
+    assert.equal(subject, "Your reservation at Nice Dream — Thursday, October 8th at 6:30 PM");
+    assert.equal(
+      text,
+      [
+        "Hi Ada,",
+        "",
+        "You're booked. We're holding a table for 4 on Thursday, October 8th at 6:30 PM.",
+        "",
+        "Need to change or cancel? Use this link:",
+        "https://nice-dream.com/reservations.html?token=KEY",
+        "",
+        `Questions? Email us at ${CONTACT_EMAIL}.`,
+        "",
+        "Nice Dream · Sugar Water",
+      ].join("\n"),
+    );
+  });
+
+  test("describe bar seats, a table for one, and a large party", () => {
+    assert.match(guestBookedEmail(notice({ area: "bar", party: 1, tables: ["B1"] })).text, /holding a seat at the bar/);
+    assert.match(guestBookedEmail(notice({ area: "bar", party: 2, tables: ["B1", "B2"] })).text, /holding 2 seats at the bar/);
+    assert.match(guestBookedEmail(notice({ party: 1, tables: ["5"] })).text, /holding a table for one/);
+    assert.match(guestBookedEmail(notice({ largeParty: true })).text, /we'll reach out before your visit/);
+  });
+
+  test("say what a change left them with", () => {
+    const { subject, text } = guestChangedEmail(notice({ party: 2, tables: ["5"] }));
+    assert.match(subject, /^Your reservation at Nice Dream has changed/);
+    assert.match(text, /We're now holding a table for 2 on Thursday, October 8th at 6:30 PM\./);
+    assert.match(text, /Need to change or cancel\?/);
+  });
+
+  test("confirm a cancellation with a way to book again, and no edit link", () => {
+    const { subject, text } = guestCancelledEmail(notice({ largeParty: true }), "https://nice-dream.com/reservations.html");
+    assert.match(subject, /^Your reservation at Nice Dream is cancelled/);
+    assert.match(text, /is cancelled\. We hope to see you another time/);
+    assert.match(text, /^https:\/\/nice-dream\.com\/reservations\.html$/m);
+    assert.doesNotMatch(text, /Need to change or cancel/);
+    assert.doesNotMatch(text, /larger group/);
+  });
+});
+
+describe("emailGuest", () => {
+  test("sends to the guest's email, with replies going to the restaurant", async () => {
+    const { email, sent } = recorder();
+    await emailGuest(email, notice(), guestBookedEmail(notice()));
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].from, NOTIFY_FROM);
+    assert.equal(sent[0].to, "ada@example.com");
+    assert.equal(sent[0].replyTo, CONTACT_EMAIL);
+  });
+
+  test("sends nothing to a guest who left a phone number", async () => {
+    const { email, sent } = recorder();
+    await emailGuest(email, notice({ method: "Text (SMS)", contact: "5550100" }), guestBookedEmail(notice()));
+    assert.equal(sent.length, 0);
+  });
+
+  test("resolves even when sending fails", async () => {
+    const { email } = recorder(true);
+    const logged = console.error;
+    console.error = () => {};
+    try {
+      await assert.doesNotReject(emailGuest(email, notice(), guestBookedEmail(notice())));
+    } finally {
+      console.error = logged;
+    }
   });
 });
 
@@ -117,7 +227,8 @@ describe("unsavedEmail", () => {
       "NOT ON THE SHEET — Reservation: Ada Lovelace, party of 4 — Thursday, October 8th at 6:30 PM",
     );
     assert.match(text, /^This booking couldn't be written to the Tracker/);
-    assert.ok(text.includes(bookingEmail(notice({ notes: "No shellfish" })).text));
+    assert.ok(text.includes(bookingEmail(notice({ notes: "No shellfish", manageUrl: undefined })).text));
+    assert.doesNotMatch(text, /Change or cancel/);
     assert.match(text, /^Error: Sheets POST → 503: backend$/m);
   });
 });
