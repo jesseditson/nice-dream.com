@@ -60,6 +60,51 @@ hold_minutes = "number"
 [dinner.reservation_emails]
 email = "string"
 
+[emails]
+# Reservation email copy — carriers/reservations reads these when it sends mail.
+# {name}, {party}, {area}, {when}, {holding}, {summary}, {contact} and {book_url}
+# are filled in by the carrier. guest_*_title are the two lines of the card, split on "\n".
+# --- Staff summary emails ---
+staff_booked_subject = "string"
+staff_changed_subject = "string"
+staff_cancelled_subject = "string"
+staff_booked_lead = "string"
+staff_changed_lead = "string"
+staff_cancelled_lead = "string"
+unsaved_subject_prefix = "string"
+# The alert staff get when a booking couldn't be written to the Tracker; the full
+# booking summary and the error are appended by the carrier.
+unsaved_alert = "markdown"
+
+# --- Shared guest copy ---
+large_party_note = "string"
+manage_note = "string"
+questions = "string"
+signoff = "string"
+button_change_label = "string"
+button_book_again_label = "string"
+
+# --- Guest confirmation ---
+guest_booked_subject = "string"
+guest_booked_body = "string"
+guest_booked_title = "string"
+guest_booked_lead = "string"
+guest_booked_footmark = "string"
+
+# --- Guest change ---
+guest_changed_subject = "string"
+guest_changed_body = "string"
+guest_changed_title = "string"
+guest_changed_lead = "string"
+guest_changed_footmark = "string"
+
+# --- Guest cancellation ---
+guest_cancelled_subject = "string"
+guest_cancelled_body = "string"
+guest_cancelled_title = "string"
+guest_cancelled_lead = "string"
+guest_cancelled_footmark = "string"
+
 [business]
 name = "string"
 description = "string"

@@ -4,8 +4,13 @@
  * cancelled, a louder one when a booking couldn't be written to the Tracker,
  * and a confirmation to the guest with the link that lets them change or
  * cancel it.
+ *
+ * The copy — subjects, leads, body text — lives on the `emails` object, so it
+ * can be edited as content. Placeholders like {name}, {party}, {area}, {when},
+ * {holding}, {summary}, {contact}, {book_url} and {error} are filled in here.
  */
 import type { CarrierEmail } from "@archival/carrier";
+import type { EmailsObject } from "./archival-objects.d.ts";
 import { type Area, formatClock, formatDateLabel } from "./room.ts";
 import type { NewBooking } from "./sheet.ts";
 
@@ -27,6 +32,16 @@ export type Notice = NewBooking & {
 /** Staff get `text`; the guest's emails carry an `html` version styled like the form. */
 export type Message = { subject: string; text: string; html?: string };
 
+/** Fills the {placeholders} in an email copy template with the given values. */
+const fill = (template: string | null, vars: Record<string, string>): string =>
+  (template ?? "").replace(/\{(\w+)\}/g, (_, key) => (key in vars ? vars[key] : `{${key}}`));
+
+/** An `emails` copy field that holds two lines of a card title, split on "\n". */
+const titleLines = (title: string | null): [string, string] => {
+  const [a = "", b = ""] = (title ?? "").split("\n");
+  return [a, b];
+};
+
 const oneLine = (value: string): string => value.replace(/\s+/g, " ").trim();
 
 const when = (booking: Notice): string => `${formatDateLabel(booking.date)} at ${formatClock(booking.start)}`;
@@ -39,7 +54,7 @@ const seating = (booking: Notice): string => {
 };
 
 /** The booking as staff see it, under a lead line. */
-const staffEmail = (subject: string, lead: string, booking: Notice): Message => {
+const staffEmail = (emails: EmailsObject, subject: string | null, lead: string, booking: Notice): Message => {
   const lines = [
     lead,
     "",
@@ -55,32 +70,48 @@ const staffEmail = (subject: string, lead: string, booking: Notice): Message => 
   }
   lines.push("", `Tracker: https://docs.google.com/spreadsheets/d/${booking.sheetId}/edit`);
   if (booking.manageUrl) lines.push(`Change or cancel (the guest's link): ${booking.manageUrl}`);
-  return { subject: oneLine(`${subject}: ${booking.name}, party of ${booking.party} — ${when(booking)}`), text: lines.join("\n") };
+  return {
+    subject: oneLine(`${subject}: ${booking.name}, party of ${booking.party} — ${when(booking)}`),
+    text: lines.join("\n"),
+  };
 };
 
-export const bookingEmail = (booking: Notice): Message =>
+export const bookingEmail = (emails: EmailsObject, booking: Notice): Message =>
   staffEmail(
-    "Reservation",
-    `${booking.name} booked ${booking.area === "bar" ? "the bar" : "a table"} for ${booking.party}.`,
+    emails,
+    emails.staff_booked_subject,
+    fill(emails.staff_booked_lead, {
+      name: booking.name,
+      party: String(booking.party),
+      area: booking.area === "bar" ? "the bar" : "a table",
+    }),
     booking,
   );
 
 /** `summary` is what changed, as it was noted on the Tracker row. */
-export const changedEmail = (booking: Notice, summary: string): Message =>
-  staffEmail("Reservation changed", `${booking.name} changed their booking: ${summary}.`, booking);
+export const changedEmail = (emails: EmailsObject, booking: Notice, summary: string): Message =>
+  staffEmail(
+    emails,
+    emails.staff_changed_subject,
+    fill(emails.staff_changed_lead, { name: booking.name, summary }),
+    booking,
+  );
 
-export const cancelledEmail = (booking: Notice): Message =>
-  staffEmail("Reservation cancelled", `${booking.name} cancelled their booking. The row is struck through on the Tracker.`, booking);
+export const cancelledEmail = (emails: EmailsObject, booking: Notice): Message =>
+  staffEmail(
+    emails,
+    emails.staff_cancelled_subject,
+    fill(emails.staff_cancelled_lead, { name: booking.name }),
+    booking,
+  );
 
 /** The email staff get instead when a booking couldn't be written to the Tracker. */
-export const unsavedEmail = (booking: Notice, error: unknown): Message => {
-  const message = bookingEmail({ ...booking, manageUrl: undefined });
+export const unsavedEmail = (emails: EmailsObject, booking: Notice, error: unknown): Message => {
+  const message = bookingEmail(emails, { ...booking, manageUrl: undefined });
   return {
-    subject: oneLine(`NOT ON THE SHEET — ${message.subject}`),
+    subject: oneLine(`${emails.unsaved_subject_prefix}${message.subject}`),
     text: [
-      "This booking couldn't be written to the Tracker, so it isn't holding a table. Add it by hand.",
-      `The guest was told something went wrong and to email ${CONTACT_EMAIL}, so check for a`,
-      "second booking or an email from them before adding it.",
+      fill(emails.unsaved_alert, { contact: CONTACT_EMAIL }),
       "",
       message.text,
       "",
@@ -97,8 +128,6 @@ const holding = (booking: Notice): string => {
     ? solo ? "a seat at the bar" : `${booking.party} seats at the bar`
     : solo ? "a table for one" : `a table for ${booking.party}`;
 };
-
-const LARGE_PARTY_NOTE = "Since you're a larger group, we'll reach out before your visit to confirm the details.";
 
 // ---- the guest's email, styled like the form ----------------------------------
 
@@ -146,7 +175,7 @@ const detailRows = (details: [string, string][]): string =>
 
 const wave = `<div style="font-family:${BODY_FONT};font-size:15px;line-height:1;letter-spacing:0.18em;white-space:nowrap;overflow:hidden;color:${INK};" aria-hidden="true">~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~</div>`;
 
-const cardHtml = (booking: Notice, card: Card): string => {
+const cardHtml = (emails: EmailsObject, booking: Notice, card: Card): string => {
   const paragraph = `font-family:${BODY_FONT};font-size:15px;line-height:1.75;color:${INK_70};`;
   const sections = [
     `<tr><td align="center" style="padding:0 0 14px;"><img src="${site(booking, `/img/nd-${card.dog}-dog.png`)}" width="150" height="150" alt="" style="display:block;width:150px;height:150px;border:0;"></td></tr>`,
@@ -161,7 +190,7 @@ const cardHtml = (booking: Notice, card: Card): string => {
   }
   if (card.largeParty) {
     sections.push(
-      `<tr><td style="padding:16px 0 0;"><div style="border:1.5px solid ${INK};border-radius:11px;background:#fbf7ee;padding:12px 15px;${paragraph}font-size:13px;line-height:1.65;">${LARGE_PARTY_NOTE}</div></td></tr>`,
+      `<tr><td style="padding:16px 0 0;"><div style="border:1.5px solid ${INK};border-radius:11px;background:#fbf7ee;padding:12px 15px;${paragraph}font-size:13px;line-height:1.65;">${escapeHtml(emails.large_party_note ?? "")}</div></td></tr>`,
     );
   }
   if (card.button) {
@@ -192,22 +221,24 @@ const cardHtml = (booking: Notice, card: Card): string => {
 
 const whereLabel = (booking: Notice): string => (booking.area === "bar" ? "Sugar Water, our bar" : "The dining room");
 
-const guestEmail = (subject: string, body: string[], booking: Notice, card: Card): Message => {
+const guestEmail = (emails: EmailsObject, subject: string, body: string[], booking: Notice, card: Card): Message => {
   const lines = [`Hi ${firstName(booking)},`, "", ...body];
-  if (booking.largeParty) lines.push("", LARGE_PARTY_NOTE);
-  if (booking.manageUrl) lines.push("", "Need to change or cancel? Use this link:", booking.manageUrl);
-  lines.push("", `Questions? Email us at ${CONTACT_EMAIL}.`, "", "Nice Dream · Sugar Water");
-  return { subject: oneLine(subject), text: lines.join("\n"), html: cardHtml(booking, card) };
+  if (booking.largeParty) lines.push("", emails.large_party_note ?? "");
+  if (booking.manageUrl) lines.push("", emails.manage_note ?? "", booking.manageUrl);
+  lines.push("", fill(emails.questions, { contact: CONTACT_EMAIL }), "", emails.signoff ?? "");
+  return { subject: oneLine(subject), text: lines.join("\n"), html: cardHtml(emails, booking, card) };
 };
 
 const strong = (text: string): string => `<strong style="color:${INK};">${escapeHtml(text)}</strong>`;
 
-const askUs = `Questions? Email us at <a href="mailto:${CONTACT_EMAIL}" style="color:${INK};text-decoration:underline;">${CONTACT_EMAIL}</a>.`;
+/** The questions line, with {contact} turned into a mailto link for the HTML card. */
+const askUsHtml = (emails: EmailsObject): string =>
+  fill(emails.questions, { contact: `<a href="mailto:${CONTACT_EMAIL}" style="color:${INK};text-decoration:underline;">${CONTACT_EMAIL}</a>` });
 
-const manageAside = (booking: Notice): string =>
-  booking.manageUrl ? `The button above lets you change or cancel any time. ${askUs}` : askUs;
+const manageAside = (emails: EmailsObject, booking: Notice): string =>
+  booking.manageUrl ? `The button above lets you change or cancel any time. ${askUsHtml(emails)}` : askUsHtml(emails);
 
-const heldCard = (booking: Notice, title: [string, string], lead: string): Card => ({
+const heldCard = (emails: EmailsObject, booking: Notice, title: [string, string], lead: string, footmark: string): Card => ({
   dog: "confirm",
   title,
   lead,
@@ -217,50 +248,62 @@ const heldCard = (booking: Notice, title: [string, string], lead: string): Card 
     ["Where", whereLabel(booking)],
   ],
   largeParty: booking.largeParty,
-  ...(booking.manageUrl ? { button: { label: "Change or cancel", url: booking.manageUrl } } : {}),
-  aside: manageAside(booking),
-  footmark: "Sweet dreams · See you soon",
+  ...(booking.manageUrl ? { button: { label: emails.button_change_label ?? "", url: booking.manageUrl } } : {}),
+  aside: manageAside(emails, booking),
+  footmark,
 });
 
-export const guestBookedEmail = (booking: Notice): Message =>
+export const guestBookedEmail = (emails: EmailsObject, booking: Notice): Message =>
   guestEmail(
-    `Your reservation at Nice Dream — ${when(booking)}`,
-    [`You're booked. We're holding ${holding(booking)} on ${when(booking)}.`],
+    emails,
+    fill(emails.guest_booked_subject, { when: when(booking) }),
+    [fill(emails.guest_booked_body, { holding: holding(booking), when: when(booking) })],
     booking,
     heldCard(
+      emails,
       booking,
-      ["You're", "booked."],
-      `See you soon, ${strong(firstName(booking))} — we're holding ${strong(holding(booking))} on ${strong(when(booking))}.`,
+      titleLines(emails.guest_booked_title),
+      fill(emails.guest_booked_lead, {
+        name: strong(firstName(booking)),
+        holding: holding(booking),
+        when: when(booking),
+      }),
+      emails.guest_booked_footmark ?? "",
     ),
   );
 
-export const guestChangedEmail = (booking: Notice): Message =>
+export const guestChangedEmail = (emails: EmailsObject, booking: Notice): Message =>
   guestEmail(
-    `Your reservation at Nice Dream has changed — ${when(booking)}`,
-    [`Your reservation is updated. We're now holding ${holding(booking)} on ${when(booking)}.`],
+    emails,
+    fill(emails.guest_changed_subject, { when: when(booking) }),
+    [fill(emails.guest_changed_body, { holding: holding(booking), when: when(booking) })],
     booking,
     heldCard(
+      emails,
       booking,
-      ["All", "updated."],
-      `Got it, ${strong(firstName(booking))} — we're now holding ${strong(holding(booking))} on ${strong(when(booking))}.`,
+      titleLines(emails.guest_changed_title),
+      fill(emails.guest_changed_lead, {
+        name: strong(firstName(booking)),
+        holding: holding(booking),
+        when: when(booking),
+      }),
+      emails.guest_changed_footmark ?? "",
     ),
   );
 
-export const guestCancelledEmail = (booking: Notice, bookAgainUrl: string): Message =>
+export const guestCancelledEmail = (emails: EmailsObject, booking: Notice, bookAgainUrl: string): Message =>
   guestEmail(
-    `Your reservation at Nice Dream is cancelled — ${when(booking)}`,
-    [
-      `Your reservation for ${when(booking)} is cancelled. We hope to see you another time — you can book again at:`,
-      bookAgainUrl,
-    ],
+    emails,
+    fill(emails.guest_cancelled_subject, { when: when(booking) }),
+    [fill(emails.guest_cancelled_body, { when: when(booking), book_url: bookAgainUrl }), bookAgainUrl],
     { ...booking, largeParty: false, manageUrl: undefined },
     {
       dog: "hero",
-      title: ["Reservation", "cancelled."],
-      lead: `No worries, ${strong(firstName(booking))} — your reservation for ${strong(when(booking))} is cancelled. We'll keep a fork and spoon ready for next time.`,
-      button: { label: "Book again", url: bookAgainUrl },
-      aside: askUs,
-      footmark: "Sweet dreams · Until next time",
+      title: titleLines(emails.guest_cancelled_title),
+      lead: fill(emails.guest_cancelled_lead, { name: strong(firstName(booking)), when: when(booking) }),
+      button: { label: emails.button_book_again_label ?? "", url: bookAgainUrl },
+      aside: askUsHtml(emails),
+      footmark: emails.guest_cancelled_footmark ?? "",
     },
   );
 
@@ -292,16 +335,18 @@ export const emailGuest = async (email: CarrierEmail, booking: Notice, message: 
 };
 
 export const notifyStaff = (
+  emails: EmailsObject,
   email: CarrierEmail,
   recipients: string[],
   booking: Notice,
   replyTo?: string,
-): Promise<void> => emailStaff(email, recipients, bookingEmail(booking), replyTo);
+): Promise<void> => emailStaff(email, recipients, bookingEmail(emails, booking), replyTo);
 
 export const alertUnsaved = (
+  emails: EmailsObject,
   email: CarrierEmail,
   recipients: string[],
   booking: Notice,
   error: unknown,
   replyTo?: string,
-): Promise<void> => emailStaff(email, recipients, unsavedEmail(booking, error), replyTo);
+): Promise<void> => emailStaff(email, recipients, unsavedEmail(emails, booking, error), replyTo);

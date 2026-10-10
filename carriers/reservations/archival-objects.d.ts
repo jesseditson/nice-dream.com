@@ -109,6 +109,45 @@ export interface DinnerReservationEmailsObject {
   email: string | null;
 }
 
+/** Reservation email copy — carriers/reservations reads these when it sends mail. */
+export interface EmailsObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  /** {name}, {party}, {area}, {when}, {holding}, {summary}, {contact} and {book_url} are filled in by the carrier. */
+  staff_booked_subject: string | null;
+  staff_changed_subject: string | null;
+  staff_cancelled_subject: string | null;
+  staff_booked_lead: string | null;
+  staff_changed_lead: string | null;
+  staff_cancelled_lead: string | null;
+  unsaved_subject_prefix: string | null;
+  /** The alert staff get when a booking couldn't be written to the Tracker. */
+  unsaved_alert: string | null;
+  large_party_note: string | null;
+  manage_note: string | null;
+  questions: string | null;
+  signoff: string | null;
+  button_change_label: string | null;
+  button_book_again_label: string | null;
+  guest_booked_subject: string | null;
+  guest_booked_body: string | null;
+  guest_booked_title: string | null;
+  guest_booked_lead: string | null;
+  guest_booked_footmark: string | null;
+  guest_changed_subject: string | null;
+  guest_changed_body: string | null;
+  guest_changed_title: string | null;
+  guest_changed_lead: string | null;
+  guest_changed_footmark: string | null;
+  guest_cancelled_subject: string | null;
+  guest_cancelled_body: string | null;
+  guest_cancelled_title: string | null;
+  guest_cancelled_lead: string | null;
+  guest_cancelled_footmark: string | null;
+}
+
 export interface BusinessObject {
   /** `<object name>/<file name>` this object was read from. */
   path: string;
@@ -146,6 +185,7 @@ export interface ArchivalObjects {
   lunch: LunchObject;
   dinner: DinnerObject;
   business: BusinessObject;
+  emails: EmailsObject;
 }
 
 import type { CarrierEnv } from "@archival/carrier";

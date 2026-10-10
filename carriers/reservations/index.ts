@@ -281,8 +281,8 @@ const carrier: Carrier = async (params, body, objects) => {
 
     if (truthy(fields.cancel)) {
       await cancelBooking(client, own.row, `cancelled ${timestampIn(rules.timezone)}`);
-      await emailStaff(objects.EMAIL, staff, cancelledEmail(before), replyToFor(before));
-      await emailGuest(objects.EMAIL, before, guestCancelledEmail(before, `${siteUrl}${FORM_PATH}`));
+      await emailStaff(objects.EMAIL, staff, cancelledEmail(objects.emails, before), replyToFor(before));
+      await emailGuest(objects.EMAIL, before, guestCancelledEmail(objects.emails, before, `${siteUrl}${FORM_PATH}`));
       return reply({ ...bookingReply(own, before.area, false), cancelled: true });
     }
 
@@ -330,8 +330,8 @@ const carrier: Carrier = async (params, body, objects) => {
     await updateBooking(client, own.row, cells, `edited ${timestampIn(rules.timezone)} - ${changes.join(", ")}`);
 
     const after: Notice = { ...before, ...cells, largeParty, area: request.area };
-    await emailStaff(objects.EMAIL, staff, changedEmail(after, changes.join(", ")), replyToFor(after));
-    await emailGuest(objects.EMAIL, after, guestChangedEmail(after));
+    await emailStaff(objects.EMAIL, staff, changedEmail(objects.emails, after, changes.join(", ")), replyToFor(after));
+    await emailGuest(objects.EMAIL, after, guestChangedEmail(objects.emails, after));
     return reply({ ...bookingReply(updated, request.area, largeParty), changed: true, manage_url: manageUrl(token) });
   }
 
@@ -380,11 +380,11 @@ const carrier: Carrier = async (params, body, objects) => {
     try {
       await appendBooking(client, booking, rules);
     } catch (error) {
-      await alertUnsaved(objects.EMAIL, staff, notice, error, replyTo);
+      await alertUnsaved(objects.emails, objects.EMAIL, staff, notice, error, replyTo);
       throw error;
     }
-    await notifyStaff(objects.EMAIL, staff, notice, replyTo);
-    await emailGuest(objects.EMAIL, notice, guestBookedEmail(notice));
+    await notifyStaff(objects.emails, objects.EMAIL, staff, notice, replyTo);
+    await emailGuest(objects.EMAIL, notice, guestBookedEmail(objects.emails, notice));
 
     return reply({ ...bookingReply(booking, area, largeParty), manage_url: manageUrl(token) });
   }
