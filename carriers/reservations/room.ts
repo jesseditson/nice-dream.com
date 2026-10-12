@@ -17,6 +17,8 @@ export type Rules = {
   slotMinutes: number;
   /** How long a booking holds its tables, unless an override covers its party size. */
   holdMinutes: number;
+  /** How long a bar booking holds its seats; overrides holdMinutes and holdOverrides for the bar. */
+  barHoldMinutes: number;
   holdOverrides: HoldOverride[];
   weekendsAhead: number;
   twoTops: number;
@@ -211,6 +213,10 @@ export const seatingFor = (party: number): Seating =>
 export const holdFor = (party: number, rules: Rules): number =>
   rules.holdOverrides.find(({ min, max }) => party >= min && party <= max)?.minutes ?? rules.holdMinutes;
 
+/** How long a party in `area` holds its seats. The bar holds for barHoldMinutes. */
+export const holdForArea = (area: Area, party: number, rules: Rules): number =>
+  area === "bar" ? rules.barHoldMinutes : holdFor(party, rules);
+
 /** Tables held by any booking that overlaps a seating starting at `start` and lasting `hold`. */
 export const occupiedAt = (
   bookings: Booking[],
@@ -222,8 +228,9 @@ export const occupiedAt = (
   const taken = new Set<string>();
   for (const booking of bookings) {
     if (booking.date !== date) continue;
+    const area: Area = booking.tables.every((table) => table.startsWith("B")) ? "bar" : "dining";
     const overlaps =
-      booking.start < start + hold && start < booking.start + holdFor(booking.party, rules);
+      booking.start < start + hold && start < booking.start + holdForArea(area, booking.party, rules);
     if (overlaps) for (const table of booking.tables) taken.add(table);
   }
   return taken;
@@ -245,7 +252,8 @@ export const turningAt = (
   const turning = new Set<string>();
   for (const booking of bookings) {
     if (booking.date !== date) continue;
-    const bookingEnd = booking.start + holdFor(booking.party, rules);
+    const area: Area = booking.tables.every((table) => table.startsWith("B")) ? "bar" : "dining";
+    const bookingEnd = booking.start + holdForArea(area, booking.party, rules);
     const endsJustBefore = bookingEnd <= start && start - bookingEnd < rules.slotMinutes;
     const startsJustAfter = booking.start >= end && booking.start - end < rules.slotMinutes;
     if (endsJustBefore || startsJustAfter) for (const table of booking.tables) turning.add(table);
@@ -402,7 +410,8 @@ export const walkInAt = (ticket: string, date: string, start: number, rules: Rul
   const table = tableForTicket(ticket, rules);
   if (!table) return null;
   const party = seatsAt(table, rules);
-  const end = start + holdFor(party, rules);
+  const area: Area = table.startsWith("B") ? "bar" : "dining";
+  const end = start + holdForArea(area, party, rules);
   const seatedIntoService = slotsOn(date, rules).some((slot) => slot >= start && slot < end);
   return seatedIntoService ? { date, start, party, tables: [table] } : null;
 };
@@ -477,7 +486,7 @@ export const availabilityOn = (
       const parties: number[] = [];
       if (time <= earliest) return parties;
       for (let party = 1; party <= largest; party += 1) {
-        const taken = occupiedAt(bookings, date, time, holdFor(party, rules), rules);
+        const taken = occupiedAt(bookings, date, time, holdForArea(area, party, rules), rules);
         if (seatParty(area, party, taken, rules)) parties.push(party);
       }
       return parties;
@@ -490,6 +499,7 @@ export const availabilityOn = (
 type DinnerConfig = {
   slot_minutes: number | null;
   hold_minutes: number | null;
+  bar_hold_minutes: number | null;
   weekends_ahead: number | null;
   two_tops: number | null;
   first_table: number | null;
@@ -537,6 +547,7 @@ export const readRules = (dinner: DinnerConfig): Rules => {
     timezone: "America/Los_Angeles",
     slotMinutes: whole(dinner.slot_minutes, 30),
     holdMinutes: whole(dinner.hold_minutes, 90),
+    barHoldMinutes: whole(dinner.bar_hold_minutes, whole(dinner.hold_minutes, 90)),
     holdOverrides,
     weekendsAhead: whole(dinner.weekends_ahead, 3),
     twoTops,

@@ -38,6 +38,7 @@ import {
   formatDateLabel,
   formatHHMM,
   holdFor,
+  holdForArea,
   isIsoDate,
   nowMinutesIn,
   occupiedAt,
@@ -297,7 +298,7 @@ const carrier: Carrier = async (params, body, objects) => {
       request.area !== before.area;
     let tables = own.tables;
     if (reseat) {
-      const hold = holdFor(request.party, rules);
+      const hold = holdForArea(request.area, request.party, rules);
       const seated = seatParty(
         request.area,
         request.party,
@@ -344,7 +345,7 @@ const carrier: Carrier = async (params, body, objects) => {
 
     // Availability is decided here, from a fresh read, so a form left open can't
     // take a table that filled up in the meantime.
-    const hold = holdFor(party, rules);
+    const hold = holdForArea(area, party, rules);
     const tables = seatParty(
       area,
       party,

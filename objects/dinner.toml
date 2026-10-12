@@ -8,6 +8,7 @@ questions about the menu or allergens, email us at
 blurb_note = "_Please note that we have limited vegan and vegetarian options._"
 slot_minutes = 30.0
 hold_minutes = 90.0
+bar_hold_minutes = 120.0
 weekends_ahead = 3.0
 two_tops = 10.0
 first_table = 5.0

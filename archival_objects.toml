@@ -15,6 +15,8 @@ blurb_note = "markdown"
 slot_minutes = "number"
 # how long a booking holds its table, in minutes
 hold_minutes = "number"
+# how long a bar booking holds its seats, in minutes (overrides hold_minutes and hold_overrides for the bar)
+bar_hold_minutes = "number"
 # how many service weekends ahead the form offers
 weekends_ahead = "number"
 # 2-tops are numbered 1..two_tops and combine in adjacent pairs (1/2, 3/4, …) for parties of 3–4
