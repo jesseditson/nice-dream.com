@@ -120,7 +120,7 @@ phone = "string"
 cuisine = "string"
 # dollar signs ("$" to "$$$$") or a range like "$15-40"
 price_range = "string"
-hours_note = "string"
+hours_note = "markdown"
 
 # days uses schema.org openingHours shorthand (Mo Tu We Th Fr Sa Su, ranges like Fr-Sa); opens/closes are 24h HH:MM, blank opens means closed
 [business.hours]
