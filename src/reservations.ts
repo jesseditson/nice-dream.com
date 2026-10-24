@@ -64,8 +64,10 @@
 
   let availability: Availability | null = null;
 
+  const params = new URLSearchParams(window.location.search);
+
   // The key from the guest's edit link; cleared when it turns out not to open anything.
-  let token = new URLSearchParams(window.location.search).get("token") ?? "";
+  let token = params.get("token") ?? "";
   let editing: Existing | null = null;
   // The night and seating to select once the form has something to offer, from the booking being edited.
   let wantedDate = "";
@@ -443,6 +445,7 @@
       });
   });
 
+  byId<HTMLInputElement>(params.get("area") === "bar" ? "nd-area-bar" : "nd-area-dining").checked = true;
   updateParty();
   void loadAvailability();
 })();
