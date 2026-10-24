@@ -30,6 +30,7 @@
     ok: boolean;
     error?: string;
     today: string;
+    serving_now: boolean;
     dates: Night[];
     booking?: Existing | null;
     booking_error?: string;
@@ -264,6 +265,7 @@
       if (!result.ok) throw new Error(result.error);
       availability = result;
       setStatus("");
+      setVisible(byId("nd-walk-in-note"), result.serving_now === true);
       // Only the first load fills the form in; a reload after a refusal keeps what the guest typed.
       if (token && !editing) {
         if (result.booking) startEditing(result.booking);

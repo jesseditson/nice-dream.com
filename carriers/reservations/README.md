@@ -20,6 +20,7 @@ A `GET` answers with one entry per service night:
 {
   "ok": true,
   "today": "2026-10-02",
+  "serving_now": false,
   "max_party": 8,
   "large_party_min": 6,
   "bar_seats": 4,
@@ -34,6 +35,9 @@ A `GET` answers with one entry per service night:
   ]
 }
 ```
+
+`serving_now` is true from tonight's first seating through its last, while
+the form tells guests to walk in.
 
 `dining` and `bar` list every party size that seating can still take in each
 area. A party's size decides both its table and how long it holds it, so

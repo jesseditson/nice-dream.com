@@ -207,6 +207,12 @@ export const serviceDates = (today: string, now: number, rules: Rules): string[]
   return dates;
 };
 
+/** Whether `today` is a seating night and `now` falls between its first and last seating. */
+export const servingNow = (today: string, now: number, rules: Rules): boolean => {
+  const window = rules.seatings.get(weekdayOf(today));
+  return !!window && now >= window.first && now <= window.last;
+};
+
 // ---- the floor --------------------------------------------------------------
 
 export const seatingFor = (party: number): Seating =>

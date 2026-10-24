@@ -17,6 +17,7 @@ import {
   seatParty,
   seatingFor,
   serviceDates,
+  servingNow,
   tableForTicket,
   turningAt,
   walkInAt,
@@ -619,6 +620,19 @@ describe("serviceDates", () => {
 
   test("skips nights without seatings", () => {
     assert.equal(serviceDates(WEDNESDAY, at("12:00"), room())[0], THURSDAY);
+  });
+});
+
+describe("servingNow", () => {
+  test("is true from the first seating through the last", () => {
+    assert.equal(servingNow(THURSDAY, at("17:29"), room()), false);
+    assert.equal(servingNow(THURSDAY, at("17:30"), room()), true);
+    assert.equal(servingNow(THURSDAY, at("20:00"), room()), true);
+    assert.equal(servingNow(THURSDAY, at("20:01"), room()), false);
+  });
+
+  test("is false on nights without seatings", () => {
+    assert.equal(servingNow(WEDNESDAY, at("18:00"), room()), false);
   });
 });
 

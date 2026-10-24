@@ -786,11 +786,13 @@ body::before {
   outline-offset: -5px;
 }
 
-.nd-bar-note {
+.nd-bar-note,
+.nd-walk-in-note {
   display: none;
 }
 
-.nd-bar-note.visible {
+.nd-bar-note.visible,
+.nd-walk-in-note.visible {
   display: block;
 }
 
