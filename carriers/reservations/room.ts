@@ -184,18 +184,19 @@ export const slotsOn = (date: string, rules: Rules): number[] => {
 const mondayOf = (date: string): string => addDays(date, -((weekdayOf(date) + 6) % 7));
 
 /**
- * The service dates the form offers: every seating night from the day after
- * `today` through the end of the `weekendsAhead`-th week that still has a night
- * left in it. The night service starts is never offered online — guests walk
- * in for service.
+ * The service dates the form offers: every seating night from `today` through
+ * the end of the `weekendsAhead`-th week that still has a night left in it.
+ * Tonight is offered until its first seating, `now` being minutes past
+ * midnight; once service starts, guests walk in.
  */
-export const serviceDates = (today: string, rules: Rules): string[] => {
+export const serviceDates = (today: string, now: number, rules: Rules): string[] => {
   const dates: string[] = [];
   const weeks = new Set<string>();
   const limit = 7 * (rules.weekendsAhead + 2);
-  for (let offset = 1; offset < limit; offset += 1) {
+  for (let offset = 0; offset < limit; offset += 1) {
     const date = addDays(today, offset);
-    if (!rules.seatings.has(weekdayOf(date))) continue;
+    const window = rules.seatings.get(weekdayOf(date));
+    if (!window || (offset === 0 && now >= window.first)) continue;
     const week = mondayOf(date);
     if (!weeks.has(week)) {
       if (weeks.size >= rules.weekendsAhead) break;

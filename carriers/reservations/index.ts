@@ -216,7 +216,7 @@ const carrier: Carrier = async (params, body, objects) => {
   const rules = readRules(dinner);
   const today = todayIn(rules.timezone);
   const now = nowMinutesIn(rules.timezone);
-  const dates = serviceDates(today, rules);
+  const dates = serviceDates(today, now, rules);
   const earliest = (date: string): number => (date === today ? now : -1);
   const fields =
     body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;

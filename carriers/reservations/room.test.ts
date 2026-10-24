@@ -16,6 +16,7 @@ import {
   reconcileWalkIns,
   seatParty,
   seatingFor,
+  serviceDates,
   tableForTicket,
   turningAt,
   walkInAt,
@@ -604,6 +605,20 @@ describe("availabilityOn", () => {
 
   test("there is no bar room while bar_seats is 0", () => {
     assert.deepEqual(barRoom([], room({ bar_seats: 0 })), [0, 0, 0, 0, 0, 0]);
+  });
+});
+
+describe("serviceDates", () => {
+  test("offers tonight until its first seating", () => {
+    assert.equal(serviceDates(THURSDAY, at("17:29"), room())[0], THURSDAY);
+  });
+
+  test("drops tonight once service starts", () => {
+    assert.equal(serviceDates(THURSDAY, at("17:30"), room())[0], "2026-10-09");
+  });
+
+  test("skips nights without seatings", () => {
+    assert.equal(serviceDates(WEDNESDAY, at("12:00"), room())[0], THURSDAY);
   });
 });
 
