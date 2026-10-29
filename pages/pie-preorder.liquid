@@ -1,0 +1,205 @@
+{%
+  layout 'theme'
+  , title: 'Thanksgiving Pies — Nice Dream'
+  , page: 'pie-preorder'
+  , stylesheet: '/css/reservations.css'
+%}
+{% assign max_per_order = pie_preorder.max_per_order | floor %}
+<link rel="stylesheet" type="text/css" href="/css/pies.css" />
+
+<article class="page-content">
+  <section class="page-region">
+    <section data-theme="" class="page-section page-section--medium">
+      <div class="page-section__border">
+        <div class="page-section__background"></div>
+      </div>
+      <div class="page-section__wrapper" style="">
+        <div class="page-section__content">
+          <div class="grid-wrapper">
+            <div class="grid reservation-grid">
+              <div class="reservation-grid__form">
+                <div class="block code-block">
+                  <div class="block__content">
+                    <div>
+                      <div id="nd-reservation-form">
+                        <!-- ── FORM VIEW ──────────────────────────────────────────────── -->
+                        <div id="nd-form-view">
+                          <div class="nd-sheet">
+                            <header class="nd-header">
+                              <img class="nd-hero-dog" src="/img/nd-hero-dog.png" alt="Karen holding a fork and spoon" />
+                              <div class="reservation-logos">
+                                <img class="nd-wordmark" src="/img/nice-dream-logo.webp" alt="Nice Dream" />
+                              </div>
+                              <svg viewBox="0 0 260 40" class="nd-title">
+                                <text x="130" y="25" text-anchor="middle" font-size="20">{{ pie_preorder.title }}</text>
+                              </svg>
+                            </header>
+
+                            <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
+                              <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                            </svg>
+
+                            <div class="nd-blurb">{{ pie_preorder.blurb }}</div>
+                            <div class="nd-blurb-note">{{ pie_preorder.blurb_note }}</div>
+
+                            <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
+                              <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                            </svg>
+
+                            <p class="nd-notice nd-closed" id="nd-closed" role="note">
+                              Pre-orders are closed — thank you to everyone who ordered! Questions about an order? Email us at
+                              <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+                              >.
+                            </p>
+
+                            <form id="nd-form" data-endpoint="/carriers/pies" data-max-per-order="{{ max_per_order }}" novalidate>
+                              <!-- 1. Pies -->
+                              <div class="nd-field">
+                                <span class="nd-label">Which pies?</span>
+                                <ul class="nd-pie-list">
+                                  {% for pie in pie_preorder.pies %}{% if pie.square_variation_id and pie.square_variation_id != "" %}
+                                  <li class="nd-pie">
+                                    <div class="nd-pie-text">
+                                      <span class="nd-pie-name">{{ pie.name }}</span>
+                                      <span class="nd-pie-description">{{ pie.description }}</span>
+                                      <span class="nd-pie-price" data-price="{{ pie.price }}"></span>
+                                    </div>
+                                    <div class="nd-stepper">
+                                      <button class="nd-step" type="button" data-step="-1" aria-label="One fewer {{ pie.name }}">&minus;</button>
+                                      <input class="nd-count nd-pie-count" type="number" min="0" max="{{ max_per_order }}" step="1" value="0" inputmode="numeric" data-id="{{ pie.square_variation_id }}" data-price="{{ pie.price }}" aria-label="How many {{ pie.name }}" />
+                                      <button class="nd-step" type="button" data-step="1" aria-label="One more {{ pie.name }}">+</button>
+                                    </div>
+                                  </li>
+                                  {% endif %}{% endfor %}
+                                </ul>
+                                <p class="nd-field-note">Up to {{ max_per_order }} pies per order.</p>
+                              </div>
+
+                              {% if pie_preorder.add_on_name and pie_preorder.add_on_name != "" and pie_preorder.add_on_modifier_id and pie_preorder.add_on_modifier_id != "" %}
+                              <!-- 2. Add-on -->
+                              <div class="nd-field">
+                                <span class="nd-label">Anything with it?</span>
+                                <ul class="nd-pie-list">
+                                  <li class="nd-pie">
+                                    <div class="nd-pie-text">
+                                      <span class="nd-pie-name">{{ pie_preorder.add_on_name }}</span>
+                                      <span class="nd-pie-price" data-price="{{ pie_preorder.add_on_price }}"></span>
+                                    </div>
+                                    <div class="nd-stepper">
+                                      <button class="nd-step" type="button" data-step="-1" aria-label="One fewer {{ pie_preorder.add_on_name }}">&minus;</button>
+                                      <input class="nd-count" id="nd-add-ons" type="number" min="0" max="0" step="1" value="0" inputmode="numeric" data-price="{{ pie_preorder.add_on_price }}" aria-label="How many {{ pie_preorder.add_on_name }}" />
+                                      <button class="nd-step" type="button" data-step="1" aria-label="One more {{ pie_preorder.add_on_name }}">+</button>
+                                    </div>
+                                  </li>
+                                </ul>
+                                <p class="nd-field-note">One per pie.</p>
+                              </div>
+                              {% endif %}
+
+                              <!-- 3. Pickup day -->
+                              <div class="nd-field">
+                                <label class="nd-label" for="nd-date">Pickup day</label>
+                                <select class="nd-select" id="nd-date" name="date" required disabled>
+                                  <option value="" disabled selected>Checking pickup times…</option>
+                                </select>
+                                <p class="nd-field-note nd-availability-status" id="nd-availability-status" role="status"></p>
+                              </div>
+
+                              <!-- 4. Pickup time -->
+                              <div class="nd-field">
+                                <span class="nd-label" id="nd-time-label">Pickup time</span>
+                                <div class="nd-pills" id="nd-times" role="radiogroup" aria-labelledby="nd-time-label"></div>
+                              </div>
+
+                              <!-- 5. Name -->
+                              <div class="nd-field">
+                                <label class="nd-label" for="nd-name">Your name</label>
+                                <input class="nd-input" type="text" id="nd-name" name="name" placeholder="First and last name" required autocomplete="name" />
+                              </div>
+
+                              <!-- 6. Contact -->
+                              <div class="nd-field">
+                                <label class="nd-label" for="nd-email">Email address</label>
+                                <input class="nd-input" type="email" id="nd-email" name="email" placeholder="you@example.com" required autocomplete="email" />
+                              </div>
+                              <div class="nd-field">
+                                <label class="nd-label" for="nd-phone">Mobile number</label>
+                                <input class="nd-input" type="tel" id="nd-phone" name="phone" placeholder="(   )   -    " required autocomplete="tel" />
+                              </div>
+
+                              <!-- 7. Notes -->
+                              <div class="nd-field">
+                                <label class="nd-label" for="nd-notes">
+                                  Anything we should know?
+                                  <span class="nd-optional">optional</span>
+                                </label>
+                                <textarea class="nd-textarea" id="nd-notes" name="notes" placeholder="Someone else picking up, allergies, or other requests"></textarea>
+                              </div>
+
+                              <p class="nd-pie-total" id="nd-total" aria-live="polite"></p>
+
+                              <!-- Submit -->
+                              <button class="nd-submit" type="submit">Continue to payment</button>
+                              <p class="nd-field-note nd-pay-note">You'll pay on Square's secure checkout, then come right back here.</p>
+                              <p class="nd-field-error nd-refusal" id="nd-refusal" role="alert"></p>
+                              <p class="nd-error" id="nd-error">
+                                Something went wrong &mdash; please email us directly at
+                                <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+                                >.
+                              </p>
+                            </form>
+                          </div>
+                          <!-- /nd-sheet -->
+
+                          <p class="nd-footmark">Nice Dream · Sugar Water</p>
+                        </div>
+                        <!-- /nd-form-view -->
+
+                        <!-- ── CONFIRMATION VIEW ──────────────────────────────────────── -->
+                        <div id="nd-confirmation">
+                          <div class="nd-sheet">
+                            <img class="nd-confirm-dog" src="/img/nd-confirm-dog.png" alt="Karen curled up asleep" />
+                            <h2 class="nd-confirm-title" id="nd-confirm-title"></h2>
+
+                            <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
+                              <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                            </svg>
+
+                            <p class="nd-confirm-body" id="nd-confirm-paid">
+                              Thank you, <strong class="nd-confirm-name"></strong>! We'll have
+                              <strong class="nd-confirm-summary"></strong> ready for you on
+                              <strong class="nd-confirm-pickup"></strong>.
+                            </p>
+                            <p class="nd-confirm-body" id="nd-confirm-pending">
+                              We haven't seen your payment for <strong class="nd-confirm-summary"></strong> yet.
+                              If you just paid, give it a moment &mdash; this page checks again on its own.
+                              Otherwise, <a id="nd-checkout-link" href="#">finish checking out</a> to hold your pickup on
+                              <strong class="nd-confirm-pickup"></strong>.
+                            </p>
+                            <p class="nd-confirm-body" id="nd-confirm-cancelled">
+                              This order was cancelled. You're welcome to <a href="/pie-preorder.html">place a new one</a>.
+                            </p>
+                            <p class="nd-confirm-body" id="nd-confirm-missing"></p>
+                            <p class="nd-confirm-note">
+                              Square emails your receipt. Need to change something? Email us at
+                              <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+                              >.
+                            </p>
+                          </div>
+                        </div>
+                        <!-- /nd-confirmation -->
+                      </div>
+                      <!-- /nd-reservation-form -->
+
+                      <script src="/js/pies.js"></script>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+</article>

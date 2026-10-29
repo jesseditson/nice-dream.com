@@ -1,0 +1,43 @@
+title = "Thanksgiving Pies"
+blurb = """
+Our Thanksgiving 2026 pies are ready to pre-order! Pick your pies, add a pint of Vanilla Bean at a slightly discounted rate, and choose when you'd like to pick them up at the restaurant (56778 29 Palms Highway, Yucca Valley).
+"""
+blurb_note = "_Pre-orders close Saturday, November 21st at midnight. Pickup is Wednesday, November 25th._"
+orders_close = "2026-11-21 23:59"
+slot_minutes = 30.0
+pies_per_slot = 0.0
+max_per_order = 6.0
+add_on_name = "Pint of Vanilla Bean (V/GF)"
+add_on_price = 13.0
+add_on_modifier_id = "SCZAADQEIDFD67MLNAHYNLCX"
+square_location_id = "LD5VJT9B9ADK7"
+orders_sheet_id = ""
+
+[[pies]]
+name = "Houjicha Basque Cheesecake (6”, Gluten-Free)"
+description = "Small but mighty! Asamiya houjicha cheesecake with a burnished top. Houjicha is a roasted green tea, with notes of chocolate, peanut butter, buttery popcorn, and salted caramel."
+price = 60.0
+square_variation_id = "LP2RIA36UTQF6QE6QE2ROGLG"
+
+[[pies]]
+name = "Fig Leaf Apple Crumble (9”, Vegan)"
+description = "A medley of Ha’s apples perfumed with fig leaves, topped with oat crumble."
+price = 60.0
+square_variation_id = "FQEK7X2QY2UP2TX623OIDY7W"
+
+[[pies]]
+name = "Ginger Sweet Potato Meringue (9”)"
+description = "JH Family Ranch fresh ginger, T&D sweet potatoes, toasted meringue."
+price = 60.0
+square_variation_id = "XEIRJUGNWZGXQOSVDUKGUIN2"
+
+[[pies]]
+name = "Passionfruit Meringue (9”)"
+description = "Bonsall passionfruit curd, toasted meringue."
+price = 60.0
+square_variation_id = "2OCYDTGFCYOHIDFZKLHKXUWS"
+
+[[pickup_windows]]
+date = "2026-11-25"
+first = "12:00"
+last = "18:00"

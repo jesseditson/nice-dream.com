@@ -1,0 +1,17 @@
+{
+  "name": "nice-dream-pies-carrier",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "description": "Pie pre-orders with a pickup time, paid through Square and logged to a Google Sheet.",
+  "scripts": {
+    "types": "archival-carrier-types",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@archival/carrier": "^0.18.0",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.0"
+  }
+}

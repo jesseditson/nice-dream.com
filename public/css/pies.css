@@ -1,0 +1,142 @@
+.nd-blurb p + p {
+  margin-top: 10px;
+}
+
+.nd-pie-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nd-pie {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  background: var(--sheet);
+}
+
+.nd-pie-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nd-pie-name {
+  font-family: "Perrrot", "Nunito", sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.nd-pie-description {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-50);
+}
+
+.nd-pie-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-70);
+}
+
+.nd-stepper {
+  display: flex;
+  align-items: center;
+  flex: none;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.nd-step {
+  width: 36px;
+  height: 40px;
+  border: none;
+  background: var(--sheet);
+  color: var(--ink);
+  font-family: "Nunito", "Avenir Next", sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nd-step:hover {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.nd-count {
+  width: 38px;
+  height: 40px;
+  border: none;
+  border-left: 1.5px solid var(--line);
+  border-right: 1.5px solid var(--line);
+  text-align: center;
+  font-family: "Perrrot", "Nunito", sans-serif;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--sheet);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.nd-count::-webkit-outer-spin-button,
+.nd-count::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.nd-count:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.nd-pie-total {
+  min-height: 1.5em;
+  margin-bottom: 10px;
+  font-family: "Perrrot", "Nunito", sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--ink);
+}
+
+.nd-pay-note {
+  text-align: center;
+}
+
+.nd-closed {
+  margin: 0 0 4px;
+}
+
+#nd-confirm-pending a,
+#nd-confirm-cancelled a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .nd-pie {
+    flex-wrap: wrap;
+  }
+
+  .nd-pie-text {
+    flex-basis: 100%;
+  }
+
+  .nd-stepper {
+    margin-left: auto;
+  }
+}
