@@ -51,6 +51,8 @@ export interface DinnerObject {
   slot_minutes: number | null;
   /** how long a booking holds its table, in minutes */
   hold_minutes: number | null;
+  /** how long a bar booking holds its seats, in minutes (overrides hold_minutes and hold_overrides for the bar) */
+  bar_hold_minutes: number | null;
   /** how many service weekends ahead the form offers */
   weekends_ahead: number | null;
   /** 2-tops are numbered 1..two_tops and combine in adjacent pairs (1/2, 3/4, …) for parties of 3–4 */
@@ -109,13 +111,17 @@ export interface DinnerReservationEmailsObject {
   email: string | null;
 }
 
-/** Reservation email copy — carriers/reservations reads these when it sends mail. */
 export interface EmailsObject {
   /** `<object name>/<file name>` this object was read from. */
   path: string;
   /** The object's `order`, or null when it is unordered. */
   order: number | null;
-  /** {name}, {party}, {area}, {when}, {holding}, {summary}, {contact} and {book_url} are filled in by the carrier. */
+  /**
+   * Reservation email copy — carriers/reservations reads these when it sends mail.
+   * {name}, {party}, {area}, {when}, {holding}, {summary}, {contact} and {book_url}
+   * are filled in by the carrier. guest_*_title are the two lines of the card, split on "\n".
+   * --- Staff summary emails ---
+   */
   staff_booked_subject: string | null;
   staff_changed_subject: string | null;
   staff_cancelled_subject: string | null;
@@ -123,24 +129,31 @@ export interface EmailsObject {
   staff_changed_lead: string | null;
   staff_cancelled_lead: string | null;
   unsaved_subject_prefix: string | null;
-  /** The alert staff get when a booking couldn't be written to the Tracker. */
+  /**
+   * The alert staff get when a booking couldn't be written to the Tracker; the full
+   * booking summary and the error are appended by the carrier.
+   */
   unsaved_alert: string | null;
+  /** --- Shared guest copy --- */
   large_party_note: string | null;
   manage_note: string | null;
   questions: string | null;
   signoff: string | null;
   button_change_label: string | null;
   button_book_again_label: string | null;
+  /** --- Guest confirmation --- */
   guest_booked_subject: string | null;
   guest_booked_body: string | null;
   guest_booked_title: string | null;
   guest_booked_lead: string | null;
   guest_booked_footmark: string | null;
+  /** --- Guest change --- */
   guest_changed_subject: string | null;
   guest_changed_body: string | null;
   guest_changed_title: string | null;
   guest_changed_lead: string | null;
   guest_changed_footmark: string | null;
+  /** --- Guest cancellation --- */
   guest_cancelled_subject: string | null;
   guest_cancelled_body: string | null;
   guest_cancelled_title: string | null;
@@ -179,13 +192,62 @@ export interface BusinessHoursObject {
   closes: string | null;
 }
 
+export interface PiePreorderObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  /** Pie pre-orders — carriers/pies and pages/pie-preorder.liquid both read these. */
+  title: string | null;
+  blurb: string | null;
+  blurb_note: string | null;
+  /** orders are taken until this local time, as "YYYY-MM-DD HH:MM" (24h) */
+  orders_close: string | null;
+  /** minutes between pickup times */
+  slot_minutes: number | null;
+  /** the most pies one pickup time takes; 0 for no limit */
+  pies_per_slot: number | null;
+  /** the most pies one order can take */
+  max_per_order: number | null;
+  /** an extra each pie can carry, sold as a Square modifier on the pie; blank add_on_name hides it */
+  add_on_name: string | null;
+  add_on_price: number | null;
+  add_on_modifier_id: string | null;
+  /** the Square location the orders are placed at and picked up from */
+  square_location_id: string | null;
+  /** the id from the orders spreadsheet's URL; shared with dinner.google_service_account as an Editor */
+  orders_sheet_id: string | null;
+  /** price is what the page shows; Square charges the catalog price of square_variation_id */
+  pies: PiePreorderPiesObject[];
+  /** first/last are the first and last pickup times as 24h HH:MM */
+  pickup_windows: PiePreorderPickupWindowsObject[];
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** price is what the page shows; Square charges the catalog price of square_variation_id */
+export interface PiePreorderPiesObject {
+  name: string | null;
+  description: string | null;
+  price: number | null;
+  square_variation_id: string | null;
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** first/last are the first and last pickup times as 24h HH:MM */
+export interface PiePreorderPickupWindowsObject {
+  date: string | null;
+  first: string | null;
+  last: string | null;
+}
+
 /** Every object in the site, keyed by name. */
 export interface ArchivalObjects {
   about: AboutObject;
   lunch: LunchObject;
   dinner: DinnerObject;
-  business: BusinessObject;
   emails: EmailsObject;
+  business: BusinessObject;
+  pie_preorder: PiePreorderObject;
 }
 
 import type { CarrierEnv } from "@archival/carrier";
