@@ -37,7 +37,6 @@ import {
   parseSelection,
   pickupDates,
   pickupTimes,
-  pieCount,
   readMenu,
   timestampIn,
 } from "./menu.ts";
@@ -46,7 +45,6 @@ import {
   appendOrders,
   applyStates,
   ensureSheet,
-  piesBySlot,
   readOrders,
   rowsToSync,
 } from "./sheet.ts";
@@ -115,10 +113,6 @@ const carrier: Carrier = async (params, body, objects) => {
     );
   }
 
-  const taken = piesBySlot(orders);
-  const left = (date: string, start: number): number | null =>
-    menu.perSlot ? Math.max(0, menu.perSlot - (taken.get(`${date} ${formatHHMM(start)}`) ?? 0)) : null;
-
   if (!fields) {
     const reply: Reply = {
       ok: true,
@@ -130,7 +124,6 @@ const carrier: Carrier = async (params, body, objects) => {
         slots: pickupTimes(menu, date).map((start) => ({
           time: formatHHMM(start),
           label: formatClock(start),
-          left: left(date, start),
         })),
       })),
     };
@@ -165,14 +158,6 @@ const carrier: Carrier = async (params, body, objects) => {
   const start = parseHHMM(text(fields.time));
   if (start == null || !pickupTimes(menu, date).includes(start)) {
     return refuse("Pick one of the pickup times listed.");
-  }
-  const room = left(date, start);
-  if (room != null && pieCount(selection) > room) {
-    return refuse(
-      room
-        ? `That pickup time only has room for ${room} more ${room === 1 ? "pie" : "pies"} — pick another time.`
-        : "That pickup time just filled up — pick another time.",
-    );
   }
 
   const name = text(fields.name);

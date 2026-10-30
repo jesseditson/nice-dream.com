@@ -12,7 +12,7 @@ import {
   pickupTimes,
   readMenu,
 } from "./menu.ts";
-import { type OrderRow, STATUS, piesBySlot, rowsToSync, statusFrom } from "./sheet.ts";
+import { type OrderRow, STATUS, rowsToSync, statusFrom } from "./sheet.ts";
 import { planFound } from "./link.ts";
 import { type PickupOrder, createCheckout, reschedulePickup } from "./square.ts";
 
@@ -24,7 +24,6 @@ const object: PiePreorderObject = {
   blurb_note: null,
   orders_close: "2026-11-21 23:59",
   slot_minutes: 30,
-  pies_per_slot: 4,
   max_per_order: 6,
   add_on_name: "Pint",
   add_on_price: 13,
@@ -105,11 +104,10 @@ const row = (overrides: Partial<OrderRow>): OrderRow => ({
   squareOrder: "ORDER",
   checkout: "",
   token: "tok",
-  pies: 1,
   ...overrides,
 });
 
-test("unpaid checkouts hold their pies for a while, then let them go", () => {
+test("a checkout left unpaid for half an hour is marked not paid, and paid if it's paid later", () => {
   const created = new Date("2026-11-01T18:00:00Z");
   const draft = { state: "DRAFT", createdAt: created, total: null };
   assert.equal(statusFrom(STATUS.awaiting, draft, new Date("2026-11-01T18:20:00Z")), null);
@@ -117,15 +115,6 @@ test("unpaid checkouts hold their pies for a while, then let them go", () => {
   assert.equal(statusFrom(STATUS.notPaid, { ...draft, state: "OPEN" }), STATUS.paid);
   assert.equal(statusFrom(STATUS.paid, { ...draft, state: "COMPLETED" }), null);
   assert.equal(statusFrom(STATUS.paid, { ...draft, state: "CANCELED" }), STATUS.cancelled);
-
-  const taken = piesBySlot([
-    row({ pies: 2 }),
-    row({ status: STATUS.awaiting }),
-    row({ status: "" }),
-    row({ status: STATUS.notPaid, pies: 5 }),
-    row({ status: STATUS.cancelled, pies: 5 }),
-  ]);
-  assert.equal(taken.get("2026-11-25 12:00"), 4);
 });
 
 test("looks up recent unpaid checkouts, and the guest's own at any age", () => {

@@ -5,7 +5,6 @@ Our Thanksgiving 2026 pies are ready to pre-order! Pick your pies, add a pint of
 blurb_note = "_Pre-orders close Saturday, November 21st at midnight. Pickup is Wednesday, November 25th, between 1 and 5 PM._"
 orders_close = "2026-11-21 23:59"
 slot_minutes = 30.0
-pies_per_slot = 0.0
 max_per_order = 6.0
 add_on_name = "Pint of Vanilla Bean (V/GF)"
 add_on_price = 13.0

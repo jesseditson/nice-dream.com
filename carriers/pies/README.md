@@ -56,8 +56,7 @@ field notes in `archival_objects.toml`):
 - `add_on_*` — one extra (the pint) sold as a Square modifier on a pie, at most
   one per pie. A blank `add_on_name` hides it.
 - `[[pickup_windows]]` — pickup times run every `slot_minutes` from `first` to
-  `last` on `date`. `pies_per_slot` caps how many pies one time takes; 0 means
-  no cap.
+  `last` on `date`. Any number of orders can choose the same time.
 - `orders_close` — local time after which the form shows a closed notice and
   refuses orders.
 - `square_location_id` — the location orders are placed at.
@@ -82,10 +81,6 @@ rows and writes back what it says:
 `not paid` rows are checked again for two days in case the guest comes back to
 the link, and the guest's own row is checked whenever they open their return
 link.
-
-A pickup time's cap counts every row except `not paid` and `cancelled` ones, so
-an unpaid checkout holds its pies for 30 minutes and then lets them go. Rows
-typed in by hand, with no status, count too.
 
 If the row can't be written, the guest still goes to checkout. Once they pay,
 the search for [link orders](#orders-through-the-square-link) adds the row.
