@@ -185,7 +185,7 @@ export const rowsToSync = (orders: OrderRow[], token: string, now: Date = new Da
     return ordered != null && now.getTime() - ordered.getTime() < SYNC_DAYS * DAY_MS;
   });
 
-const dollars = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
+export const dollars = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
 /** Writes what Square says back to the rows, and updates `orders` to match. */
 export const applyStates = async (
@@ -214,9 +214,15 @@ export const applyStates = async (
   }
 };
 
+/** Pickup Time on a row whose order was placed without choosing one. */
+export const ANY_TIME = "any time";
+
 export type NewOrder = {
   date: string;
-  start: number;
+  /** null for an order placed without choosing a time. */
+  start: number | null;
+  status: string;
+  total: string;
   name: string;
   phone: string;
   email: string;
@@ -229,18 +235,18 @@ export type NewOrder = {
   token: string;
 };
 
-export const appendOrder = async (client: SheetsClient, menu: Menu, order: NewOrder): Promise<void> => {
+const orderRow = (menu: Menu, order: NewOrder): Cell[] => {
   const row: Cell[] = [];
   row[COL.date] = dateSerial(order.date);
-  row[COL.time] = order.start / 1440;
+  row[COL.time] = order.start == null ? ANY_TIME : order.start / 1440;
   row[COL.name] = order.name;
-  row[COL.status] = STATUS.awaiting;
+  row[COL.status] = order.status;
   row[COL.pickedUp] = false;
   row[COL.summary] = order.summary;
   row[COL.phone] = order.phone;
   row[COL.email] = order.email;
   row[COL.notes] = order.notes;
-  row[COL.total] = "";
+  row[COL.total] = order.total;
   row[COL.orderedAt] = order.orderedAt;
   row[COL.squareOrder] = order.squareOrder;
   row[COL.checkout] = order.checkout;
@@ -249,12 +255,17 @@ export const appendOrder = async (client: SheetsClient, menu: Menu, order: NewOr
     row[COL.counts + offset] = order.selection.pies.get(pie.id) ?? 0;
   });
   if (menu.addOn) row[COL.counts + menu.pies.length] = order.selection.addOns;
+  return row;
+};
+
+export const appendOrders = async (client: SheetsClient, menu: Menu, orders: NewOrder[]): Promise<void> => {
+  if (!orders.length) return;
   const header = `A1:${columnLetter(headers(menu).length - 1)}1`;
   // Anchoring on the header keeps new rows directly under the orders even when something sits far below them.
   await client(
     "POST",
     `/values/${range(ORDERS, header)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
-    { range: `${ORDERS}!${header}`, majorDimension: "ROWS", values: [row] },
+    { range: `${ORDERS}!${header}`, majorDimension: "ROWS", values: orders.map((order) => orderRow(menu, order)) },
   );
 };
 

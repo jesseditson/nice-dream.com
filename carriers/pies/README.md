@@ -25,6 +25,26 @@ them back to `/pie-preorder.html?order=<token>`.
 The order in Square is complete on its own. The sheet is a working copy for
 the kitchen.
 
+## Orders through the Square link
+
+The dashboard link still works. Every request searches Square for paid pickup
+orders from the last 60 days that include a pie on the menu, and for each one:
+
+- If it isn't on the sheet, it gets a row: Status `paid`, Pickup Date the first
+  pickup day, and Pickup Time `any time`, since the guest never chose one. An
+  order already scheduled for a pickup day keeps its own date and time.
+- If its pickup isn't scheduled on a pickup day (the link's orders are always
+  ASAP), it's moved in Square to the first pickup time, so Square's order list
+  and tickets show the right day. A move that fails is logged and tried again
+  on the next request.
+
+Orders are matched to rows by the Square Order column, so mark an unwanted row
+`cancelled` rather than deleting it, or the next request adds it back. The
+search also catches a form order whose row failed to write, once it's paid.
+
+Nothing runs in the background, so a link order reaches the sheet the next
+time anyone loads the form.
+
 ## Content
 
 Everything lives on the `pie_preorder` object (`objects/pie_preorder.toml`;
@@ -67,9 +87,8 @@ A pickup time's cap counts every row except `not paid` and `cancelled` ones, so
 an unpaid checkout holds its pies for 30 minutes and then lets them go. Rows
 typed in by hand, with no status, count too.
 
-If the row can't be written, the guest still goes to checkout. The order is
-complete in Square either way, but it won't be on the sheet or show as paid on
-the return page.
+If the row can't be written, the guest still goes to checkout. Once they pay,
+the search for [link orders](#orders-through-the-square-link) adds the row.
 
 ## The spreadsheet
 
