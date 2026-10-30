@@ -2,7 +2,7 @@ title = "Thanksgiving Pies"
 blurb = """
 Our Thanksgiving 2026 pies are ready to pre-order! Pick your pies, add a pint of Vanilla Bean at a slightly discounted rate, and choose when you'd like to pick them up at the restaurant (56778 29 Palms Highway, Yucca Valley).
 """
-blurb_note = "_Pre-orders close Saturday, November 21st at midnight. Pickup is Wednesday, November 25th._"
+blurb_note = "_Pre-orders close Saturday, November 21st at midnight. Pickup is Wednesday, November 25th, between 1 and 5 PM._"
 orders_close = "2026-11-21 23:59"
 slot_minutes = 30.0
 pies_per_slot = 0.0
@@ -39,5 +39,5 @@ square_variation_id = "2OCYDTGFCYOHIDFZKLHKXUWS"
 
 [[pickup_windows]]
 date = "2026-11-25"
-first = "12:00"
-last = "18:00"
+first = "13:00"
+last = "16:30"
