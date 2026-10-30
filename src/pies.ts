@@ -8,7 +8,7 @@
     link.textContent = address;
   });
 
-  type Slot = { time: string; label: string; left: number | null };
+  type Slot = { time: string; label: string };
   type PickupDay = { date: string; label: string; slots: Slot[] };
   type Order = { status: string; name: string; summary: string; pickup: string; checkout_url?: string };
   type Availability = {
@@ -95,22 +95,18 @@
       timePills.append(hint);
       return;
     }
-    const wanted = Math.max(1, pieTotal());
     for (const slot of day.slots) {
-      const open = slot.left == null || slot.left >= wanted;
       const input = document.createElement("input");
       input.type = "radio";
       input.name = "time";
       input.value = slot.time;
       input.id = `nd-time-${slot.time.replace(":", "")}`;
       input.className = "nd-pill-radio";
-      input.disabled = !open;
-      input.checked = open && slot.time === previous;
+      input.checked = slot.time === previous;
       const label = document.createElement("label");
       label.htmlFor = input.id;
-      label.className = open ? "nd-pill" : "nd-pill nd-pill--off";
+      label.className = "nd-pill";
       label.textContent = slot.label;
-      if (!open) label.title = slot.left ? `Room for ${slot.left} more` : "This time is full";
       timePills.append(input, label);
     }
   };
@@ -246,7 +242,7 @@
     }
     const time = selectedTime();
     if (!dateSelect.value || !time) {
-      showRefusal("Pick a pickup time that's still open.");
+      showRefusal("Pick a pickup time.");
       return;
     }
 
@@ -282,7 +278,7 @@
         const result = (await response.json()) as CheckoutResult;
         if (!result.ok || !result.checkout_url) {
           showRefusal(result.error ?? "We couldn't start checkout.");
-          // A pickup time may have filled while they chose, so reoffer what's left.
+          // Orders may have closed while they chose.
           await loadAvailability();
           setBusy(false);
           return;

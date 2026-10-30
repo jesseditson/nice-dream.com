@@ -18,8 +18,6 @@ export type Menu = {
   addOn: AddOn | null;
   windows: PickupWindow[];
   slotMinutes: number;
-  /** 0 means no limit. */
-  perSlot: number;
   maxPerOrder: number;
   /** When orders stop being taken; null takes them indefinitely. */
   closesAt: Date | null;
@@ -148,7 +146,6 @@ export const readMenu = (pies: PiePreorderObject): Menu => {
     addOn: addOnName && modifierId ? { name: addOnName, price: pies.add_on_price ?? 0, modifierId } : null,
     windows,
     slotMinutes: Math.max(5, whole(pies.slot_minutes, 30)),
-    perSlot: whole(pies.pies_per_slot, 0),
     maxPerOrder: Math.max(1, whole(pies.max_per_order, 6)),
     closesAt: parseLocalTimestamp(pies.orders_close ?? ""),
     locationId: (pies.square_location_id ?? "").trim(),

@@ -12,8 +12,9 @@ import {
   pickupTimes,
   readMenu,
 } from "./menu.ts";
-import { type OrderRow, STATUS, piesBySlot, rowsToSync, statusFrom } from "./sheet.ts";
-import { createCheckout } from "./square.ts";
+import { type OrderRow, STATUS, rowsToSync, statusFrom } from "./sheet.ts";
+import { planFound } from "./link.ts";
+import { type PickupOrder, createCheckout, reschedulePickup } from "./square.ts";
 
 const object: PiePreorderObject = {
   path: "pies.toml",
@@ -23,7 +24,6 @@ const object: PiePreorderObject = {
   blurb_note: null,
   orders_close: "2026-11-21 23:59",
   slot_minutes: 30,
-  pies_per_slot: 4,
   max_per_order: 6,
   add_on_name: "Pint",
   add_on_price: 13,
@@ -104,11 +104,10 @@ const row = (overrides: Partial<OrderRow>): OrderRow => ({
   squareOrder: "ORDER",
   checkout: "",
   token: "tok",
-  pies: 1,
   ...overrides,
 });
 
-test("unpaid checkouts hold their pies for a while, then let them go", () => {
+test("a checkout left unpaid for half an hour is marked not paid, and paid if it's paid later", () => {
   const created = new Date("2026-11-01T18:00:00Z");
   const draft = { state: "DRAFT", createdAt: created, total: null };
   assert.equal(statusFrom(STATUS.awaiting, draft, new Date("2026-11-01T18:20:00Z")), null);
@@ -116,15 +115,6 @@ test("unpaid checkouts hold their pies for a while, then let them go", () => {
   assert.equal(statusFrom(STATUS.notPaid, { ...draft, state: "OPEN" }), STATUS.paid);
   assert.equal(statusFrom(STATUS.paid, { ...draft, state: "COMPLETED" }), null);
   assert.equal(statusFrom(STATUS.paid, { ...draft, state: "CANCELED" }), STATUS.cancelled);
-
-  const taken = piesBySlot([
-    row({ pies: 2 }),
-    row({ status: STATUS.awaiting }),
-    row({ status: "" }),
-    row({ status: STATUS.notPaid, pies: 5 }),
-    row({ status: STATUS.cancelled, pies: 5 }),
-  ]);
-  assert.equal(taken.get("2026-11-25 12:00"), 4);
 });
 
 test("looks up recent unpaid checkouts, and the guest's own at any age", () => {
@@ -168,4 +158,85 @@ test("the checkout's Square order carries a scheduled pickup and the guest's det
   assert.equal(pickup.pickup_at, "2026-11-25T20:30:00.000Z");
   assert.equal(pickup.recipient.display_name, "Ada");
   assert.equal(sent.checkout_options.redirect_url, "https://nice-dream.com/pie-preorder.html?order=tok");
+});
+
+const linkOrder = (overrides: Partial<PickupOrder> = {}): PickupOrder => ({
+  id: "LINK1",
+  version: 3,
+  state: "OPEN",
+  created_at: "2026-11-02T18:05:00Z",
+  total_money: { amount: 7504 },
+  line_items: [
+    { catalog_object_id: "BASQUE", quantity: "2", modifiers: [{ catalog_object_id: "MOD" }] },
+    { catalog_object_id: "COFFEE", quantity: "1" },
+  ],
+  fulfillments: [
+    {
+      uid: "F1",
+      type: "PICKUP",
+      state: "PROPOSED",
+      pickup_details: {
+        schedule_type: "ASAP",
+        pickup_at: "2026-11-02T18:20:00Z",
+        note: "no nuts",
+        recipient: { display_name: "Grace Hopper", email_address: "grace@example.com", phone_number: "7602397919" },
+      },
+    },
+  ],
+  ...overrides,
+});
+
+test("a Square link order gets a row for the first pickup day, any time, and its pickup moved there", () => {
+  const found = planFound(menu, [linkOrder()], new Set());
+  assert.equal(found.rows.length, 1);
+  const [row] = found.rows;
+  assert.equal(row.date, "2026-11-25");
+  assert.equal(row.start, null);
+  assert.equal(row.status, STATUS.paid);
+  assert.equal(row.total, "$75.04");
+  assert.equal(row.name, "Grace Hopper");
+  assert.equal(row.phone, "+17602397919");
+  assert.equal(row.orderedAt, "2026-11-02 10:05");
+  assert.equal(row.summary, "2 × Basque + 2 × Pint");
+  assert.equal(found.moves.length, 1);
+  assert.equal(found.moves[0].fulfillmentUid, "F1");
+  assert.equal(found.moves[0].pickupAt.toISOString(), "2026-11-25T20:00:00.000Z");
+});
+
+test("orders already on the sheet, already on a pickup day, or without pies are left alone", () => {
+  assert.equal(planFound(menu, [linkOrder()], new Set(["LINK1"])).rows.length, 0);
+  assert.equal(planFound(menu, [linkOrder()], new Set(["LINK1"])).moves.length, 1);
+
+  const scheduled = linkOrder({
+    fulfillments: [
+      { uid: "F1", type: "PICKUP", pickup_details: { schedule_type: "SCHEDULED", pickup_at: "2026-11-25T20:30:00Z" } },
+    ],
+  });
+  const found = planFound(menu, [scheduled], new Set());
+  assert.equal(found.moves.length, 0);
+  assert.equal(found.rows[0].date, "2026-11-25");
+  assert.equal(found.rows[0].start, 750);
+
+  const coffee = linkOrder({ line_items: [{ catalog_object_id: "COFFEE", quantity: "1" }] });
+  assert.deepEqual(planFound(menu, [coffee], new Set()), { rows: [], moves: [] });
+
+  const pickedUp = linkOrder({ fulfillments: [{ uid: "F1", type: "PICKUP", state: "COMPLETED" }] });
+  assert.equal(planFound(menu, [pickedUp], new Set()).moves.length, 0);
+});
+
+test("moving a pickup sends the order's version and the fulfillment's new time", async () => {
+  let sent: Record<string, any> = {};
+  let method = "";
+  const fetcher = (async (_url: string, init: RequestInit) => {
+    method = String(init.method);
+    sent = JSON.parse(String(init.body));
+    return new Response("{}");
+  }) as typeof fetch;
+  const moved = await reschedulePickup("token", "LOC", linkOrder(), "F1", localInstant("2026-11-25", 780), fetcher);
+  assert.equal(moved, true);
+  assert.equal(method, "PUT");
+  assert.equal(sent.order.version, 3);
+  assert.deepEqual(sent.order.fulfillments, [
+    { uid: "F1", pickup_details: { schedule_type: "SCHEDULED", pickup_at: "2026-11-25T21:00:00.000Z" } },
+  ]);
 });

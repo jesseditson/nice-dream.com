@@ -138,8 +138,6 @@ blurb_note = "markdown"
 orders_close = "string"
 # minutes between pickup times
 slot_minutes = "number"
-# the most pies one pickup time takes; 0 for no limit
-pies_per_slot = "number"
 # the most pies one order can take
 max_per_order = "number"
 # an extra each pie can carry, sold as a Square modifier on the pie; blank add_on_name hides it

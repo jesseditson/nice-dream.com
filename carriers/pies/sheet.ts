@@ -5,7 +5,7 @@
  * and Bake List whenever the menu or pickup days change.
  */
 import type { SheetsClient } from "./google.ts";
-import { type Menu, type Selection, formatHHMM, isIsoDate, parseHHMM, parseLocalTimestamp } from "./menu.ts";
+import { type Menu, type Selection, isIsoDate, parseHHMM, parseLocalTimestamp } from "./menu.ts";
 import type { OrderState } from "./square.ts";
 
 export const ORDERS = "Orders";
@@ -57,12 +57,10 @@ export const STATUS = {
   cancelled: "cancelled",
 } as const;
 
-/** How long an unpaid checkout holds its pies against a pickup time. */
-export const HOLD_MINUTES = 30;
+/** How long a checkout can go unpaid before its row says so. */
+export const UNPAID_AFTER_MINUTES = 30;
 /** Unpaid checkouts older than this are no longer looked up in Square, except by their own guest. */
 const SYNC_DAYS = 2;
-
-const RELEASED: string[] = [STATUS.notPaid, STATUS.cancelled];
 
 export const headers = (menu: Menu): string[] => [
   ...FIXED_COLUMNS,
@@ -108,11 +106,6 @@ const cellTime = (cell: Cell): number | null => {
 
 const cellText = (cell: Cell): string => (cell == null ? "" : String(cell).trim());
 
-const cellNumber = (cell: Cell): number => {
-  const value = typeof cell === "number" ? cell : Number(cellText(cell));
-  return Number.isFinite(value) ? Math.round(value) : 0;
-};
-
 export type OrderRow = {
   row: number;
   date: string | null;
@@ -124,7 +117,6 @@ export type OrderRow = {
   squareOrder: string;
   checkout: string;
   token: string;
-  pies: number;
 };
 
 export const readOrders = async (client: SheetsClient, menu: Menu): Promise<OrderRow[]> => {
@@ -144,22 +136,7 @@ export const readOrders = async (client: SheetsClient, menu: Menu): Promise<Orde
     squareOrder: cellText(cells[COL.squareOrder]),
     checkout: cellText(cells[COL.checkout]),
     token: cellText(cells[COL.token]),
-    pies: menu.pies.reduce((sum, _, offset) => sum + cellNumber(cells[COL.counts + offset]), 0),
   }));
-};
-
-/** Whether a row's pies count against its pickup time. Rows typed in by hand, with no status, do. */
-export const holdsPies = (order: OrderRow): boolean => !RELEASED.includes(order.status);
-
-/** Pies already promised at each pickup time, keyed `YYYY-MM-DD HH:MM`. */
-export const piesBySlot = (orders: OrderRow[]): Map<string, number> => {
-  const taken = new Map<string, number>();
-  for (const order of orders) {
-    if (!order.date || order.start == null || !holdsPies(order)) continue;
-    const key = `${order.date} ${formatHHMM(order.start)}`;
-    taken.set(key, (taken.get(key) ?? 0) + order.pies);
-  }
-  return taken;
 };
 
 /** The status Square says a row should have, or null to leave it. */
@@ -169,7 +146,7 @@ export const statusFrom = (current: string, square: OrderState, now: Date = new 
   else if (square.state === "OPEN" || square.state === "COMPLETED") next = STATUS.paid;
   else if (square.state === "DRAFT") {
     const age = square.createdAt ? now.getTime() - square.createdAt.getTime() : 0;
-    next = age > HOLD_MINUTES * 60_000 ? STATUS.notPaid : STATUS.awaiting;
+    next = age > UNPAID_AFTER_MINUTES * 60_000 ? STATUS.notPaid : STATUS.awaiting;
   } else return null;
   return next === current ? null : next;
 };
@@ -185,7 +162,7 @@ export const rowsToSync = (orders: OrderRow[], token: string, now: Date = new Da
     return ordered != null && now.getTime() - ordered.getTime() < SYNC_DAYS * DAY_MS;
   });
 
-const dollars = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
+export const dollars = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
 /** Writes what Square says back to the rows, and updates `orders` to match. */
 export const applyStates = async (
@@ -214,9 +191,15 @@ export const applyStates = async (
   }
 };
 
+/** Pickup Time on a row whose order was placed without choosing one. */
+export const ANY_TIME = "any time";
+
 export type NewOrder = {
   date: string;
-  start: number;
+  /** null for an order placed without choosing a time. */
+  start: number | null;
+  status: string;
+  total: string;
   name: string;
   phone: string;
   email: string;
@@ -229,18 +212,18 @@ export type NewOrder = {
   token: string;
 };
 
-export const appendOrder = async (client: SheetsClient, menu: Menu, order: NewOrder): Promise<void> => {
+const orderRow = (menu: Menu, order: NewOrder): Cell[] => {
   const row: Cell[] = [];
   row[COL.date] = dateSerial(order.date);
-  row[COL.time] = order.start / 1440;
+  row[COL.time] = order.start == null ? ANY_TIME : order.start / 1440;
   row[COL.name] = order.name;
-  row[COL.status] = STATUS.awaiting;
+  row[COL.status] = order.status;
   row[COL.pickedUp] = false;
   row[COL.summary] = order.summary;
   row[COL.phone] = order.phone;
   row[COL.email] = order.email;
   row[COL.notes] = order.notes;
-  row[COL.total] = "";
+  row[COL.total] = order.total;
   row[COL.orderedAt] = order.orderedAt;
   row[COL.squareOrder] = order.squareOrder;
   row[COL.checkout] = order.checkout;
@@ -249,12 +232,17 @@ export const appendOrder = async (client: SheetsClient, menu: Menu, order: NewOr
     row[COL.counts + offset] = order.selection.pies.get(pie.id) ?? 0;
   });
   if (menu.addOn) row[COL.counts + menu.pies.length] = order.selection.addOns;
+  return row;
+};
+
+export const appendOrders = async (client: SheetsClient, menu: Menu, orders: NewOrder[]): Promise<void> => {
+  if (!orders.length) return;
   const header = `A1:${columnLetter(headers(menu).length - 1)}1`;
   // Anchoring on the header keeps new rows directly under the orders even when something sits far below them.
   await client(
     "POST",
     `/values/${range(ORDERS, header)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
-    { range: `${ORDERS}!${header}`, majorDimension: "ROWS", values: [row] },
+    { range: `${ORDERS}!${header}`, majorDimension: "ROWS", values: orders.map((order) => orderRow(menu, order)) },
   );
 };
 

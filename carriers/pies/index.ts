@@ -10,10 +10,13 @@
  *                     Orders tab, and answers with the checkout's URL
  *
  * Every request also asks Square whether the checkouts still awaiting payment
- * have been paid, and writes the answer to their rows.
+ * have been paid, and writes the answer to their rows. It also picks up paid
+ * pie orders placed through the dashboard checkout link: each gets a row, and
+ * its ASAP pickup is moved to the first pickup time (see link.ts).
  *
- * The menu, pickup days and orders spreadsheet live on the pie_preorder object; the
- * Google and Square credentials are the ones the dinner object already holds.
+ * The menu, pickup days and orders spreadsheet live on the pie_preorder
+ * object; the Google and Square credentials are the ones the dinner object
+ * already holds.
  *
  * Anything the guest can fix comes back as `{ ok: false, error }` with a 200 so
  * the form can show it; only a misconfigured site throws.
@@ -34,20 +37,19 @@ import {
   parseSelection,
   pickupDates,
   pickupTimes,
-  pieCount,
   readMenu,
   timestampIn,
 } from "./menu.ts";
 import {
   STATUS,
-  appendOrder,
+  appendOrders,
   applyStates,
   ensureSheet,
-  piesBySlot,
   readOrders,
   rowsToSync,
 } from "./sheet.ts";
-import { createCheckout, orderStates } from "./square.ts";
+import { LOOKBACK_DAYS, planFound } from "./link.ts";
+import { createCheckout, orderStates, paidPickupOrders, reschedulePickup } from "./square.ts";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_EMAIL = "hello@nice-dream.com";
@@ -92,18 +94,24 @@ const carrier: Carrier = async (params, body, objects) => {
 
   const lookup = fields ? "" : text(params.get("order"));
   const unsettled = rowsToSync(orders, lookup);
-  if (unsettled.length) {
-    const states = await orderStates(
-      squareToken,
-      menu.locationId,
-      unsettled.map((order) => order.squareOrder),
+  const [states, placed] = await Promise.all([
+    unsettled.length
+      ? orderStates(squareToken, menu.locationId, unsettled.map((order) => order.squareOrder))
+      : null,
+    paidPickupOrders(squareToken, menu.locationId, new Date(Date.now() - LOOKBACK_DAYS * 86_400_000)),
+  ]);
+  if (states) await applyStates(client, unsettled, states);
+  if (placed) {
+    const found = planFound(menu, placed, new Set(orders.map((order) => order.squareOrder).filter(Boolean)));
+    await appendOrders(client, menu, found.rows).catch((error) => {
+      console.error("Could not write Square link orders to the Orders tab:", error);
+    });
+    await Promise.all(
+      found.moves.map((move) =>
+        reschedulePickup(squareToken, menu.locationId, move.order, move.fulfillmentUid, move.pickupAt),
+      ),
     );
-    if (states) await applyStates(client, unsettled, states);
   }
-
-  const taken = piesBySlot(orders);
-  const left = (date: string, start: number): number | null =>
-    menu.perSlot ? Math.max(0, menu.perSlot - (taken.get(`${date} ${formatHHMM(start)}`) ?? 0)) : null;
 
   if (!fields) {
     const reply: Reply = {
@@ -116,7 +124,6 @@ const carrier: Carrier = async (params, body, objects) => {
         slots: pickupTimes(menu, date).map((start) => ({
           time: formatHHMM(start),
           label: formatClock(start),
-          left: left(date, start),
         })),
       })),
     };
@@ -152,14 +159,6 @@ const carrier: Carrier = async (params, body, objects) => {
   if (start == null || !pickupTimes(menu, date).includes(start)) {
     return refuse("Pick one of the pickup times listed.");
   }
-  const room = left(date, start);
-  if (room != null && pieCount(selection) > room) {
-    return refuse(
-      room
-        ? `That pickup time only has room for ${room} more ${room === 1 ? "pie" : "pies"} — pick another time.`
-        : "That pickup time just filled up — pick another time.",
-    );
-  }
 
   const name = text(fields.name);
   if (!name) return refuse("Please tell us your name.");
@@ -188,22 +187,26 @@ const carrier: Carrier = async (params, body, objects) => {
     return refuse(`We couldn't start checkout just now — please try again, or email us at ${CONTACT_EMAIL}.`);
   }
 
-  // The Square order already carries the pies, pickup time and contact, so a
-  // row that fails to write still leaves staff a complete order in Square.
-  await appendOrder(client, menu, {
-    date,
-    start,
-    name,
-    phone,
-    email,
-    notes,
-    summary: describeSelection(menu, selection),
-    selection,
-    orderedAt: timestampIn(),
-    squareOrder: checkout.orderId,
-    checkout: checkout.url,
-    token,
-  }).catch((error) => {
+  // A row that fails to write is added once the order is paid, by the next
+  // request's search of Square.
+  await appendOrders(client, menu, [
+    {
+      date,
+      start,
+      status: STATUS.awaiting,
+      total: "",
+      name,
+      phone,
+      email,
+      notes,
+      summary: describeSelection(menu, selection),
+      selection,
+      orderedAt: timestampIn(),
+      squareOrder: checkout.orderId,
+      checkout: checkout.url,
+      token,
+    },
+  ]).catch((error) => {
     console.error("Could not write a pie order to the Orders tab:", error);
   });
 

@@ -205,8 +205,6 @@ export interface PiePreorderObject {
   orders_close: string | null;
   /** minutes between pickup times */
   slot_minutes: number | null;
-  /** the most pies one pickup time takes; 0 for no limit */
-  pies_per_slot: number | null;
   /** the most pies one order can take */
   max_per_order: number | null;
   /** an extra each pie can carry, sold as a Square modifier on the pie; blank add_on_name hides it */
