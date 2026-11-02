@@ -60,7 +60,7 @@ field notes in `archival_objects.toml`):
 - `orders_close` — local time after which the form shows a closed notice and
   refuses orders.
 - `square_location_id` — the location orders are placed at.
-- `orders_sheet_id` — a `secret`: the id from the orders spreadsheet's URL.
+- `orders_sheet_id` — the id from the orders spreadsheet's URL.
 
 The Google service account and the Square access token are the ones already on
 the `dinner` object. The spreadsheet must be shared with the service account's

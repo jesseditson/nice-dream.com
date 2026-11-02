@@ -156,8 +156,8 @@ const carrier: Carrier = async (params, body, objects) => {
 
   const date = text(fields.date);
   const start = parseHHMM(text(fields.time));
-  if (start == null || !pickupTimes(menu, date).includes(start)) {
-    return refuse("Pick one of the pickup times listed.");
+  if (start == null || !pickupDates(menu).includes(date)) {
+    return refuse("Pick a pickup day and time.");
   }
 
   const name = text(fields.name);

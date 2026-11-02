@@ -116,6 +116,16 @@
   text-align: center;
 }
 
+.nd-tax-note {
+  margin: -8px 0 12px;
+  text-align: center;
+  visibility: hidden;
+}
+
+.nd-tax-note.visible {
+  visibility: visible;
+}
+
 .nd-closed {
   margin: 0 0 4px;
 }

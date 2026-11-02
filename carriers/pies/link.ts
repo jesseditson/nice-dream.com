@@ -12,7 +12,6 @@ import {
   localInstant,
   parseHHMM,
   pickupDates,
-  pickupTimes,
   pieCount,
   timestampIn,
 } from "./menu.ts";
@@ -48,8 +47,7 @@ const scheduledPickup = (menu: Menu, order: PickupOrder): { date: string; start:
   if (details?.schedule_type !== "SCHEDULED" || Number.isNaN(at.getTime())) return null;
   const [date, time] = timestampIn(at).split(" ");
   if (!pickupDates(menu).includes(date)) return null;
-  const start = parseHHMM(time);
-  return { date, start: start != null && pickupTimes(menu, date).includes(start) ? start : null };
+  return { date, start: parseHHMM(time) };
 };
 
 export type Move = { order: PickupOrder; fulfillmentUid: string; pickupAt: Date };

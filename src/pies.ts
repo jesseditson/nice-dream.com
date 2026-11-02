@@ -11,13 +11,11 @@
   type Slot = { time: string; label: string };
   type PickupDay = { date: string; label: string; slots: Slot[] };
   type Order = { status: string; name: string; summary: string; pickup: string; checkout_url?: string };
-  type Availability = {
-    ok: boolean;
-    error?: string;
-    open: boolean;
-    dates: PickupDay[];
-    order?: Order;
-    order_error?: string;
+  type OrderLookup = { ok: boolean; error?: string; order?: Order; order_error?: string };
+  type PickupConfig = {
+    close: string;
+    slot_minutes: number;
+    windows: { date: string; first: string; last: string }[];
   };
   type CheckoutResult = { ok: boolean; error?: string; checkout_url?: string };
 
@@ -31,7 +29,7 @@
   const addOnInput = document.getElementById("nd-add-ons") as HTMLInputElement | null;
   const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
 
-  let availability: Availability | null = null;
+  const pickup = JSON.parse(byId("nd-pickup").textContent ?? "{}") as PickupConfig;
 
   const money = (amount: number): string =>
     Number.isInteger(amount) ? `$${amount}` : `$${amount.toFixed(2)}`;
@@ -42,11 +40,68 @@
 
   const setVisible = (element: HTMLElement, visible: boolean) => element.classList.toggle("visible", visible);
 
-  const setStatus = (message: string, isError = false) => {
-    const status = byId("nd-availability-status");
-    status.textContent = message;
-    status.classList.toggle("nd-availability-status--error", isError);
-    setVisible(status, message !== "");
+  const parseHHMM = (value: string): number | null => {
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  };
+
+  const clock = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    return `${hours % 12 || 12}:${String(minutes % 60).padStart(2, "0")} ${hours < 12 ? "AM" : "PM"}`;
+  };
+
+  const ordinal = (day: number): string => {
+    const suffix = day % 100 >= 11 && day % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][day % 10] ?? "th";
+    return `${day}${suffix}`;
+  };
+
+  const dateLabel = (date: string): string => {
+    const [year, month, day] = date.split("-").map(Number);
+    const at = new Date(Date.UTC(year, month - 1, day));
+    const weekday = at.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+    const monthName = at.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+    return `${weekday}, ${monthName} ${ordinal(day)}`;
+  };
+
+  const pickupDays: PickupDay[] = [];
+  for (const window of pickup.windows ?? []) {
+    const first = parseHHMM(window.first);
+    const last = parseHHMM(window.last);
+    if (first == null || last == null) continue;
+    let day = pickupDays.find((entry) => entry.date === window.date);
+    if (!day) {
+      day = { date: window.date, label: dateLabel(window.date), slots: [] };
+      pickupDays.push(day);
+    }
+    for (let time = first; time <= last; time += Math.max(5, pickup.slot_minutes || 30)) {
+      const value = `${String(Math.floor(time / 60)).padStart(2, "0")}:${String(time % 60).padStart(2, "0")}`;
+      if (!day.slots.some((slot) => slot.time === value)) day.slots.push({ time: value, label: clock(time) });
+    }
+  }
+  pickupDays.sort((a, b) => a.date.localeCompare(b.date));
+  for (const day of pickupDays) day.slots.sort((a, b) => a.time.localeCompare(b.time));
+
+  /** Compares the restaurant's wall clock with orders_close, which is written in its local time. */
+  const isClosed = (): boolean => {
+    const close = pickup.close?.trim().replace("T", " ");
+    if (!close) return false;
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Los_Angeles",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).formatToParts(new Date());
+    const part = (type: string) => parts.find((entry) => entry.type === type)?.value ?? "";
+    return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}` > close;
+  };
+
+  const showClosedIfPast = () => {
+    if (!isClosed()) return;
+    setVisible(byId("nd-closed"), true);
+    form.style.display = "none";
   };
 
   const quantity = (input: HTMLInputElement): number => Math.max(0, Math.floor(Number(input.value) || 0));
@@ -75,9 +130,8 @@
     const subtotal =
       pieInputs.reduce((sum, input) => sum + quantity(input) * (Number(input.dataset.price) || 0), 0) +
       (addOnInput ? quantity(addOnInput) * (Number(addOnInput.dataset.price) || 0) : 0);
-    byId("nd-total").textContent = pies
-      ? `${pies} ${pies === 1 ? "pie" : "pies"} · ${money(subtotal)} before tax`
-      : "";
+    byId("nd-total").textContent = pies ? `${pies} ${pies === 1 ? "pie" : "pies"} · ${money(subtotal)}` : "";
+    setVisible(byId("nd-tax-note"), pies > 0);
     renderTimes();
   };
 
@@ -87,11 +141,11 @@
   const renderTimes = () => {
     const previous = selectedTime();
     timePills.textContent = "";
-    const day = availability?.dates.find((entry) => entry.date === dateSelect.value);
+    const day = pickupDays.find((entry) => entry.date === dateSelect.value);
     if (!day) {
       const hint = document.createElement("p");
       hint.className = "nd-field-note";
-      hint.textContent = availability ? "Pick a day first." : "Checking pickup times…";
+      hint.textContent = "Pick a day first.";
       timePills.append(hint);
       return;
     }
@@ -112,16 +166,14 @@
   };
 
   const renderDates = () => {
-    const previous = dateSelect.value;
     dateSelect.textContent = "";
-    for (const day of availability?.dates ?? []) dateSelect.add(new Option(day.label, day.date));
+    for (const day of pickupDays) dateSelect.add(new Option(day.label, day.date));
     if (!dateSelect.options.length) {
       const option = new Option("No pickup days set yet", "");
       option.disabled = true;
       dateSelect.add(option);
     }
-    if (previous && availability?.dates.some((day) => day.date === previous)) dateSelect.value = previous;
-    dateSelect.disabled = !availability?.dates.length;
+    dateSelect.disabled = !pickupDays.length;
     renderTimes();
   };
 
@@ -157,29 +209,14 @@
     byId("nd-confirmation").style.display = "block";
   };
 
-  const fetchAvailability = async (order: string): Promise<Availability> => {
-    const url = order ? `${endpoint}?order=${encodeURIComponent(order)}` : endpoint;
-    const response = await fetch(url, { headers: { accept: "application/json" } });
+  const fetchOrder = async (order: string): Promise<OrderLookup> => {
+    const response = await fetch(`${endpoint}?order=${encodeURIComponent(order)}`, {
+      headers: { accept: "application/json" },
+    });
     if (!response.ok) throw new Error(await response.text());
-    const result = (await response.json()) as Availability;
+    const result = (await response.json()) as OrderLookup;
     if (!result.ok) throw new Error(result.error);
     return result;
-  };
-
-  const loadAvailability = async () => {
-    setStatus("Checking pickup times…");
-    try {
-      availability = await fetchAvailability("");
-      setStatus("");
-      if (!availability.open) {
-        setVisible(byId("nd-closed"), true);
-        form.style.display = "none";
-      }
-    } catch {
-      availability = null;
-      setStatus("We couldn't load pickup times right now — please email us at hello@nice-dream.com to order.", true);
-    }
-    renderDates();
   };
 
   // Square sends the guest back the moment they pay, which can be a beat before the order shows as paid.
@@ -188,7 +225,7 @@
 
   const loadOrder = async (token: string, attempt = 0) => {
     try {
-      const result = await fetchAvailability(token);
+      const result = await fetchOrder(token);
       if (!result.order) {
         showConfirmation(null, result.order_error ?? "We couldn't find that order.");
         return;
@@ -278,8 +315,7 @@
         const result = (await response.json()) as CheckoutResult;
         if (!result.ok || !result.checkout_url) {
           showRefusal(result.error ?? "We couldn't start checkout.");
-          // Orders may have closed while they chose.
-          await loadAvailability();
+          showClosedIfPast();
           setBusy(false);
           return;
         }
@@ -300,6 +336,9 @@
   } else {
     clampCounts();
     updateTotal();
-    void loadAvailability();
+    renderDates();
+    showClosedIfPast();
+    // Each request to the carrier also copies orders placed through the Square link onto the sheet.
+    void fetch(endpoint, { headers: { accept: "application/json" } }).catch(() => {});
   }
 })();

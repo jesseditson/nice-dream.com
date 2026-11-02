@@ -99,10 +99,7 @@
                               <!-- 3. Pickup day -->
                               <div class="nd-field">
                                 <label class="nd-label" for="nd-date">Pickup day</label>
-                                <select class="nd-select" id="nd-date" name="date" required disabled>
-                                  <option value="" disabled selected>Checking pickup times…</option>
-                                </select>
-                                <p class="nd-field-note nd-availability-status" id="nd-availability-status" role="status"></p>
+                                <select class="nd-select" id="nd-date" name="date" required></select>
                               </div>
 
                               <!-- 4. Pickup time -->
@@ -137,6 +134,7 @@
                               </div>
 
                               <p class="nd-pie-total" id="nd-total" aria-live="polite"></p>
+                              <p class="nd-field-note nd-tax-note" id="nd-tax-note">Tax calculated at checkout.</p>
 
                               <!-- Submit -->
                               <button class="nd-submit" type="submit">Continue to payment</button>
@@ -191,6 +189,8 @@
                       </div>
                       <!-- /nd-reservation-form -->
 
+                      {% assign window_separator = "" %}
+                      <script type="application/json" id="nd-pickup">{"close":{% include 'json_string', value: pie_preorder.orders_close %},"slot_minutes":{{ pie_preorder.slot_minutes | floor }},"windows":[{% for window in pie_preorder.pickup_windows %}{{ window_separator }}{"date":{% include 'json_string', value: window.date %},"first":{% include 'json_string', value: window.first %},"last":{% include 'json_string', value: window.last %}}{% assign window_separator = "," %}{% endfor %}]}</script>
                       <script src="/js/pies.js"></script>
                     </div>
                   </div>
