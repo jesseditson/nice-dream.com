@@ -2,6 +2,8 @@ order = 3
 title = "Matcha"
 statement = """
 A multi-varietal matcha program, with tea from our partners at Kettl.
+We only use the highest quality matchas & hojichas, and show their rich complexity without using sweeteners.
+Ask about our available cultivars, which rotate seasonally.
 """
 served = "All day"
 light = "morning"
@@ -10,9 +12,9 @@ link_label = ""
 link_url = ""
 
 [[photo]]
-local = "bookshelf-window"
-alt = "The bar and the window toward the hills"
+local = "iced-matcha"
+alt = "A tall iced matcha latte held up in the sun outside"
 
 [[photo]]
-local = "window-flowers-close"
-alt = "Dried flowers on the window tables"
+local = "matcha-layered"
+alt = "Iced matcha layered over milk and a bright orange purée"

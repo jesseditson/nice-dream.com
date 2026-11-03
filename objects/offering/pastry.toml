@@ -1,22 +1,51 @@
 order = 4
 title = "Pastry"
 statement = """
-Pastries built on local and heirloom grains. The case changes daily, so come see what's in it.
+Our world-class pastries range from the classic to the creative, with something for every palate.
+Each week, find a new selection of beautiful and delicious selections ranging from the savory to the sweet.
 """
-served = "All day"
+served = "8am until sell out"
 light = "morning"
 menu_label = ""
 link_label = ""
 link_url = ""
 
 [[photo]]
-local = "cookbooks"
-alt = "Cookbooks on the shelves beside the kitchen"
+local = "almond-croissants"
+alt = "A tray of croissants, some topped with sliced almonds and some with a piped filling"
 
 [[photo]]
-local = "dill"
-alt = "Dill flowers in a glazed crock on the counter"
+local = "pastries-lavender"
+alt = "Glossy laminated pastries with a crumble top beside a clay foot vase of dried lavender"
 
 [[photo]]
-local = "bench-and-stools"
-alt = "Wooden stools along the window bench"
+local = "cream-cakes"
+alt = "Small cakes topped with whipped frosting, a red fruit glaze and fresh herbs"
+
+[[photo]]
+local = "muffins"
+alt = "A stand piled with sugar-crusted muffins on the pastry counter"
+
+[[photo]]
+local = "pain-au-chocolat-close"
+alt = "Rows of chocolate-filled laminated pastries, close up"
+
+[[photo]]
+local = "pastry-plates"
+alt = "Pastries on blue-rimmed plates around a terrazzo table, including an almond croissant and a glazed swirl"
+
+[[photo]]
+local = "savory-swirls"
+alt = "Laminated swirls with herbs and flaky salt, stacked on a platter"
+
+[[photo]]
+local = "croissants-stack"
+alt = "A plate of glossy croissants in the sun"
+
+[[photo]]
+local = "frosted-cakes"
+alt = "Small cakes with speckled frosting, an orange fruit center and fresh herbs, on two plates"
+
+[[photo]]
+local = "cornichon-pastries"
+alt = "Laminated savory pastries, each topped with a cornichon on a pick"

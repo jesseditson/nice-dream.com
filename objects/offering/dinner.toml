@@ -1,8 +1,8 @@
 order = 7
 title = "Dinner"
 statement = """
-Nice Dreams of Sushi is this season's dinner concept: fish-forward, carefully sourced, and made with
-a lot of care.
+Nice Dreams of Sushi is this season's dinner concept: fish-forward, carefully sourced, and stunningly presented.
+Full cocktail & spirits menu available along with Sake and Wine selections at all tables.
 """
 served = "5:30 – 9pm"
 light = "night"
@@ -16,6 +16,22 @@ filename = "sample-menu.pdf"
 sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
 mime = "application/pdf"
 name = "sample-menu.pdf"
+
+[[photo]]
+local = "sashimi-bowl"
+alt = "A sashimi bowl with tuna, white fish and abalone in its shell, dressed with shiso, citrus and shaved radish"
+
+[[photo]]
+local = "oysters"
+alt = "Oysters on ice with red seaweed, one under a pink granita"
+
+[[photo]]
+local = "scallops"
+alt = "Raw scallops with olive oil, thin citrus slices and microgreens on a blue-rimmed plate"
+
+[[photo]]
+local = "melon"
+alt = "Melon wedges scattered with flaky salt and savory shavings on a blue-rimmed plate"
 
 [[photo]]
 local = "communal-table"

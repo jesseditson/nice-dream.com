@@ -1,14 +1,30 @@
 order = 2
 title = "Coffee"
 statement = """
-A multi-roaster coffee program, with beans from Dorothea, Push x Pull, Little Wolf, Botz, Sey and
-April Coffee Roasters.
+Our coffee program is curated weekly, and features small roasters from across the US and beyond.
+Featuring beans from Dorothea, Push x Pull, Little Wolf, Botz, Sey and April Coffee Roasters, we offer simple drinks made with care.
 """
 served = "All day"
 light = "morning"
 menu_label = ""
 link_label = ""
 link_url = ""
+
+[[photo]]
+local = "latte-heart"
+alt = "A small latte with a heart poured in the milk, from above, on the terrazzo bar"
+
+[[photo]]
+local = "iced-coffee-tall"
+alt = "A tall iced coffee with milk on the terrazzo table in afternoon sun"
+
+[[photo]]
+local = "black-coffee-lavender"
+alt = "A glass of black coffee beside a clay animal vase of dried lavender"
+
+[[photo]]
+local = "iced-coffee-short"
+alt = "A short iced coffee with milk in low golden light"
 
 [[photo]]
 local = "espresso-pour-over"
@@ -21,7 +37,3 @@ alt = "The round coffee bar in morning light"
 [[photo]]
 local = "grinder-shadow"
 alt = "A grinder behind the glass, with the window lettering in shadow on the bar"
-
-[[photo]]
-local = "bookshelf-window"
-alt = "The coffee bar and the window toward the hills"

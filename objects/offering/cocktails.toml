@@ -1,8 +1,9 @@
 order = 6
 title = "Cocktails"
 statement = """
-Sugar Water is our cocktail bar, here to change everything you knew to be true about cocktails.
-Pull up a seat at the bar with dinner.
+Sugar Water is our cocktail experience, a re-imagination of what a cocktail bar can be.
+Our in-house Zero Proof program, Omakase bar experience, and creative menu make this the most magical place in the desert after dark.
+Full menu served at the bar, and full cocktail menu served at our tables.
 """
 served = ""
 light = "dusk"
@@ -11,9 +12,25 @@ link_label = "Book a bar seat"
 link_url = "/reservations"
 
 [[photo]]
-local = "sugar-water"
-alt = "The Sugar Water sign above the back bar in evening light"
+local = "green-coupes"
+alt = "Two green cocktails in coupes on the terrazzo bar, with bitters bottles and a jigger"
 
 [[photo]]
-local = "lavender-tables"
-alt = "Evening light across the bar tables"
+local = "rosemary-cocktail"
+alt = "A dark cocktail on the rocks with a sprig of rosemary, on the bar at night"
+
+[[photo]]
+local = "highball-and-martini"
+alt = "A frothy lavender highball beside a red cocktail in a martini glass"
+
+[[photo]]
+local = "back-bar-bottles"
+alt = "The lit back bar, rows of bottles beneath the Sugar Water sign on a pink curtain"
+
+[[photo]]
+local = "bar-top-glow"
+alt = "The perforated bar top glowing pink and teal under the back bar lights"
+
+[[photo]]
+local = "sugar-water"
+alt = "The Sugar Water sign above the back bar in evening light"

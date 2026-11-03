@@ -1,8 +1,7 @@
 order = 5
 title = "Lunch"
 statement = """
-Sustainably sourced and seafood-driven, with Japanese aesthetics and Californian sensibilities:
-onigiri, rice bowls and farmers market sides.
+Simple and filling lunches, rotating with the season: onigiri, rice bowls and farmers market sides.
 """
 served = "11am – 3pm"
 light = "midday"
@@ -16,6 +15,18 @@ filename = "sample-menu.pdf"
 sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
 mime = "application/pdf"
 name = "sample-menu.pdf"
+
+[[photo]]
+local = "fish-rice-bowl"
+alt = "Grilled fish over multigrain rice with potato salad, sesame broccolini and pickled cabbage and cucumber"
+
+[[photo]]
+local = "fish-collar"
+alt = "A grilled fish collar with a coil of pickled cucumber on a blue-rimmed plate"
+
+[[photo]]
+local = "braised-eggplant"
+alt = "Braised eggplant in broth topped with sliced scallions, on the kitchen pass"
 
 [[photo]]
 local = "window-flowers"
