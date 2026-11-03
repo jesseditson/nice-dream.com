@@ -7,12 +7,13 @@
  *   POST (JSON)     { pies: { <variation id>: quantity }, add_ons, date, time,
  *                     name, email, phone, notes? } — starts a Square checkout
  *                     for the order with its pickup time set, logs it to the
- *                     Orders tab, and answers with the checkout's URL
+ *                     hidden Checkouts tab, and answers with the checkout's URL
  *
  * Every request also asks Square whether the checkouts still awaiting payment
- * have been paid, and writes the answer to their rows. It also picks up paid
- * pie orders placed through the dashboard checkout link: each gets a row, and
- * its ASAP pickup is moved to the first pickup time (see link.ts).
+ * have been paid, and writes the answer to their rows; a paid one gets a row on
+ * the Orders tab. It also picks up paid pie orders placed through the dashboard
+ * checkout link: each gets an Orders row, and its ASAP pickup is moved to the
+ * first pickup time (see link.ts).
  *
  * The menu, pickup days and orders spreadsheet live on the pie_preorder
  * object; the Google and Square credentials are the ones the dinner object
@@ -41,6 +42,8 @@ import {
   timestampIn,
 } from "./menu.ts";
 import {
+  CHECKOUTS,
+  ORDERS,
   STATUS,
   appendOrders,
   applyStates,
@@ -90,21 +93,31 @@ const carrier: Carrier = async (params, body, objects) => {
 
   const client = sheetsClient(await accessToken(dinner.google_service_account), objects.pie_preorder.orders_sheet_id);
   await ensureSheet(client, menu);
-  const orders = await readOrders(client, menu);
+  const [orders, checkouts] = await Promise.all([
+    readOrders(client, menu, ORDERS),
+    readOrders(client, menu, CHECKOUTS),
+  ]);
 
   const lookup = fields ? "" : text(params.get("order"));
-  const unsettled = rowsToSync(orders, lookup);
+  const unsettled = rowsToSync(checkouts, lookup);
   const [states, placed] = await Promise.all([
     unsettled.length
-      ? orderStates(squareToken, menu.locationId, unsettled.map((order) => order.squareOrder))
+      ? orderStates(squareToken, menu.locationId, unsettled.map((checkout) => checkout.squareOrder))
       : null,
     paidPickupOrders(squareToken, menu.locationId, new Date(Date.now() - LOOKBACK_DAYS * 86_400_000)),
   ]);
   if (states) await applyStates(client, unsettled, states);
-  if (placed) {
-    const found = planFound(menu, placed, new Set(orders.map((order) => order.squareOrder).filter(Boolean)));
-    await appendOrders(client, menu, found.rows).catch((error) => {
-      console.error("Could not write Square link orders to the Orders tab:", error);
+  const paid = [
+    ...(placed ?? []),
+    ...unsettled.flatMap((checkout) => {
+      const square = states?.get(checkout.squareOrder);
+      return checkout.status === STATUS.paid && square ? [square.order] : [];
+    }),
+  ];
+  if (paid.length) {
+    const found = planFound(menu, paid, new Set(orders.map((order) => order.squareOrder).filter(Boolean)));
+    await appendOrders(client, menu, ORDERS, found.rows).catch((error) => {
+      console.error("Could not write paid pie orders to the Orders tab:", error);
     });
     await Promise.all(
       found.moves.map((move) =>
@@ -128,7 +141,8 @@ const carrier: Carrier = async (params, body, objects) => {
       })),
     };
     if (lookup) {
-      const order = orders.find((entry) => entry.token === lookup);
+      const order =
+        orders.find((entry) => entry.token === lookup) ?? checkouts.find((entry) => entry.token === lookup);
       if (order) {
         reply.order = {
           status: order.status,
@@ -187,9 +201,9 @@ const carrier: Carrier = async (params, body, objects) => {
     return refuse(`We couldn't start checkout just now — please try again, or email us at ${CONTACT_EMAIL}.`);
   }
 
-  // A row that fails to write is added once the order is paid, by the next
-  // request's search of Square.
-  await appendOrders(client, menu, [
+  // An order whose checkout row fails to write still reaches the Orders tab
+  // once it's paid, through the next request's search of Square.
+  await appendOrders(client, menu, CHECKOUTS, [
     {
       date,
       start,
@@ -207,7 +221,7 @@ const carrier: Carrier = async (params, body, objects) => {
       token,
     },
   ]).catch((error) => {
-    console.error("Could not write a pie order to the Orders tab:", error);
+    console.error("Could not write a pie checkout to the Checkouts tab:", error);
   });
 
   return { ok: true, checkout_url: checkout.url };

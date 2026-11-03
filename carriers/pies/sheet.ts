@@ -1,20 +1,22 @@
 /**
- * The orders spreadsheet: an Orders tab with one row per checkout started, a
- * Bake List that totals the pies due on each pickup day, and a hidden Config
- * tab. The carrier builds them on an empty spreadsheet and rebuilds the header
- * and Bake List whenever the menu or pickup days change.
+ * The orders spreadsheet: an Orders tab with one row per paid order, a Bake
+ * List that totals the pies due on each pickup day, a hidden Checkouts tab with
+ * one row per checkout started through the form, and a hidden Config tab. The
+ * carrier builds them on an empty spreadsheet and rebuilds the headers and Bake
+ * List whenever the menu or pickup days change.
  */
 import type { SheetsClient } from "./google.ts";
-import { type Menu, type Selection, isIsoDate, parseHHMM, parseLocalTimestamp } from "./menu.ts";
+import { type Menu, type Selection, formatClock, isIsoDate, parseHHMM, parseLocalTimestamp } from "./menu.ts";
 import type { OrderState } from "./square.ts";
 
 export const ORDERS = "Orders";
 export const BAKE = "Bake List";
+export const CHECKOUTS = "Checkouts";
 export const CONFIG = "Config";
 
-const SETUP_VERSION = 1;
+const SETUP_VERSION = 2;
 
-/** Orders columns before the per-pie counts, which follow in menu order and end with the add-on. */
+/** Orders and Checkouts columns before the per-pie counts, which follow in menu order and end with the add-on. */
 export const FIXED_COLUMNS = [
   "Pickup Date",
   "Pickup Time",
@@ -119,11 +121,11 @@ export type OrderRow = {
   token: string;
 };
 
-export const readOrders = async (client: SheetsClient, menu: Menu): Promise<OrderRow[]> => {
+export const readOrders = async (client: SheetsClient, menu: Menu, tab: string): Promise<OrderRow[]> => {
   const last = columnLetter(headers(menu).length - 1);
   const response = await client<{ values?: Cell[][] }>(
     "GET",
-    `/values/${range(ORDERS, `A2:${last}`)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`,
+    `/values/${range(tab, `A2:${last}`)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`,
   );
   return (response.values ?? []).map((cells, index) => ({
     row: index + 2,
@@ -164,35 +166,35 @@ export const rowsToSync = (orders: OrderRow[], token: string, now: Date = new Da
 
 export const dollars = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
-/** Writes what Square says back to the rows, and updates `orders` to match. */
+/** Writes what Square says back to the checkouts' rows, and updates `checkouts` to match. */
 export const applyStates = async (
   client: SheetsClient,
-  orders: OrderRow[],
+  checkouts: OrderRow[],
   states: Map<string, OrderState>,
   now: Date = new Date(),
 ): Promise<void> => {
   const data: { range: string; values: Cell[][] }[] = [];
-  for (const order of orders) {
-    const square = states.get(order.squareOrder);
+  for (const checkout of checkouts) {
+    const square = states.get(checkout.squareOrder);
     if (!square) continue;
-    const next = statusFrom(order.status, square, now);
+    const next = statusFrom(checkout.status, square, now);
     if (!next) continue;
-    order.status = next;
-    data.push({ range: `${ORDERS}!${columnLetter(COL.status)}${order.row}`, values: [[next]] });
+    checkout.status = next;
+    data.push({ range: `${CHECKOUTS}!${columnLetter(COL.status)}${checkout.row}`, values: [[next]] });
     if (next === STATUS.paid && square.total != null) {
-      data.push({ range: `${ORDERS}!${columnLetter(COL.total)}${order.row}`, values: [[dollars(square.total)]] });
+      data.push({ range: `${CHECKOUTS}!${columnLetter(COL.total)}${checkout.row}`, values: [[dollars(square.total)]] });
     }
   }
   if (!data.length) return;
   try {
     await client("POST", "/values:batchUpdate", { valueInputOption: "RAW", data });
   } catch (error) {
-    console.error("Could not write payment states to the Orders tab:", error);
+    console.error("Could not write payment states to the Checkouts tab:", error);
   }
 };
 
 /** Pickup Time on a row whose order was placed without choosing one. */
-export const ANY_TIME = "any time";
+export const UNSCHEDULED = "unscheduled";
 
 export type NewOrder = {
   date: string;
@@ -215,7 +217,7 @@ export type NewOrder = {
 const orderRow = (menu: Menu, order: NewOrder): Cell[] => {
   const row: Cell[] = [];
   row[COL.date] = dateSerial(order.date);
-  row[COL.time] = order.start == null ? ANY_TIME : order.start / 1440;
+  row[COL.time] = order.start == null ? UNSCHEDULED : formatClock(order.start);
   row[COL.name] = order.name;
   row[COL.status] = order.status;
   row[COL.pickedUp] = false;
@@ -235,14 +237,19 @@ const orderRow = (menu: Menu, order: NewOrder): Cell[] => {
   return row;
 };
 
-export const appendOrders = async (client: SheetsClient, menu: Menu, orders: NewOrder[]): Promise<void> => {
+export const appendOrders = async (
+  client: SheetsClient,
+  menu: Menu,
+  tab: string,
+  orders: NewOrder[],
+): Promise<void> => {
   if (!orders.length) return;
   const header = `A1:${columnLetter(headers(menu).length - 1)}1`;
   // Anchoring on the header keeps new rows directly under the orders even when something sits far below them.
   await client(
     "POST",
-    `/values/${range(ORDERS, header)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
-    { range: `${ORDERS}!${header}`, majorDimension: "ROWS", values: orders.map((order) => orderRow(menu, order)) },
+    `/values/${range(tab, header)}:append?valueInputOption=RAW&insertDataOption=OVERWRITE`,
+    { range: `${tab}!${header}`, majorDimension: "ROWS", values: orders.map((order) => orderRow(menu, order)) },
   );
 };
 
@@ -323,7 +330,7 @@ const buildSheet = async (client: SheetsClient, menu: Menu, layout: string): Pro
   let sheets = await listSheets(client);
   const has = (title: string) => sheets.some((sheet) => sheet.properties.title === title);
   const firstBuild = !has(ORDERS);
-  const missing = [ORDERS, BAKE, CONFIG].filter((title) => !has(title));
+  const missing = [ORDERS, BAKE, CHECKOUTS, CONFIG].filter((title) => !has(title));
   if (missing.length) {
     await client("POST", ":batchUpdate", {
       requests: missing.map((title) => ({ addSheet: { properties: { title } } })),
@@ -337,6 +344,7 @@ const buildSheet = async (client: SheetsClient, menu: Menu, layout: string): Pro
   };
   const ordersId = sheetId(ORDERS);
   const bakeId = sheetId(BAKE);
+  const checkoutsId = sheetId(CHECKOUTS);
   const configId = sheetId(CONFIG);
 
   await client("POST", `/values/${range(BAKE, "A1:Z100")}:clear`, {});
@@ -344,6 +352,7 @@ const buildSheet = async (client: SheetsClient, menu: Menu, layout: string): Pro
     valueInputOption: "USER_ENTERED",
     data: [
       { range: `${ORDERS}!A1`, values: [headers(menu)] },
+      { range: `${CHECKOUTS}!A1`, values: [headers(menu)] },
       { range: `${BAKE}!A1`, values: bakeList(menu) },
       { range: `${CONFIG}!A1`, values: [["Layout", layout]] },
     ],
@@ -371,7 +380,7 @@ const buildSheet = async (client: SheetsClient, menu: Menu, layout: string): Pro
         rule: {
           condition: {
             type: "ONE_OF_LIST",
-            values: Object.values(STATUS).map((userEnteredValue) => ({ userEnteredValue })),
+            values: [STATUS.paid, STATUS.cancelled].map((userEnteredValue) => ({ userEnteredValue })),
           },
           showCustomUi: true,
           strict: false,
@@ -386,6 +395,7 @@ const buildSheet = async (client: SheetsClient, menu: Menu, layout: string): Pro
     },
     formatCells({ sheetId: bakeId, startRowIndex: 0, endRowIndex: 1 }, { textFormat: { bold: true } }),
     formatCells(columnRange(bakeId, 0), { numberFormat: { type: "DATE", pattern: "dddd, mmmm d" } }),
+    { updateSheetProperties: { properties: { sheetId: checkoutsId, hidden: true }, fields: "hidden" } },
     { updateSheetProperties: { properties: { sheetId: configId, hidden: true }, fields: "hidden" } },
   ];
 

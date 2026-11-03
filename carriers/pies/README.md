@@ -7,7 +7,7 @@ reachable at `/carriers/pies`.
 | --- | --- |
 | `GET` | whether orders are open, and every pickup time with how many pies it can still take |
 | `GET` with `?order=` | the same, plus that order and whether it has been paid |
-| `POST` | starts a Square checkout for an order and logs it to the sheet |
+| `POST` | starts a Square checkout for an order and logs it to the hidden Checkouts tab |
 
 ## Why not just the Square link
 
@@ -30,9 +30,9 @@ the kitchen.
 The dashboard link still works. Every request searches Square for paid pickup
 orders from the last 60 days that include a pie on the menu, and for each one:
 
-- If it isn't on the sheet, it gets a row: Status `paid`, Pickup Date the first
-  pickup day, and Pickup Time `any time`, since the guest never chose one. An
-  order already scheduled for a pickup day keeps its own date and time.
+- If it isn't on the Orders tab, it gets a row: Status `paid`, Pickup Date the
+  first pickup day, and Pickup Time `unscheduled`, since the guest never chose
+  one. An order already scheduled for a pickup day keeps its own date and time.
 - If its pickup isn't scheduled on a pickup day (the link's orders are always
   ASAP), it's moved in Square to the first pickup time, so Square's order list
   and tickets show the right day. A move that fails is logged and tried again
@@ -40,7 +40,7 @@ orders from the last 60 days that include a pie on the menu, and for each one:
 
 Orders are matched to rows by the Square Order column, so mark an unwanted row
 `cancelled` rather than deleting it, or the next request adds it back. The
-search also catches a form order whose row failed to write, once it's paid.
+search also catches a paid form order whose checkout row failed to write.
 
 Nothing runs in the background, so a link order reaches the sheet the next
 time anyone loads the form.
@@ -69,8 +69,9 @@ the `dinner` object. The spreadsheet must be shared with the service account's
 
 ## Payment
 
-A new row's Status is `awaiting payment`. Every request asks Square about those
-rows and writes back what it says:
+A checkout started through the form gets a row on the hidden Checkouts tab with
+Status `awaiting payment`. Every request asks Square about those rows and writes
+back what it says:
 
 | Square order | Status |
 | --- | --- |
@@ -78,24 +79,29 @@ rows and writes back what it says:
 | `DRAFT` for more than 30 minutes | `not paid` |
 | `CANCELED` | `cancelled` |
 
-`not paid` rows are checked again for two days in case the guest comes back to
-the link, and the guest's own row is checked whenever they open their return
-link.
+A checkout that turns `paid` gets its row on the Orders tab, so the Orders tab
+only ever holds paid orders. `not paid` rows are checked again for two days in
+case the guest comes back to the link, and the guest's own row is checked
+whenever they open their return link.
 
-If the row can't be written, the guest still goes to checkout. Once they pay,
-the search for [link orders](#orders-through-the-square-link) adds the row.
+If the checkout row can't be written, the guest still goes to checkout. Once
+they pay, the search for [link orders](#orders-through-the-square-link) adds
+the Orders row.
 
 ## The spreadsheet
 
 The carrier builds its tabs on an empty spreadsheet, and rewrites the Orders
 header and the Bake List whenever the pies, add-on or pickup days change.
 
-- **Orders** — one row per checkout started. The per-pie count columns follow
-  the fixed ones in menu order, then the add-on. They're found by position, so
-  add new pies to the end of `[[pies]]` rather than reordering them. Picked Up
-  is a checkbox for the day.
+- **Orders** — one row per paid order. Pickup Time is a clock time such as
+  `2:00 PM`, or `unscheduled`. The per-pie count columns follow the fixed ones
+  in menu order, then the add-on. They're found by position, so add new pies to
+  the end of `[[pies]]` rather than reordering them. Picked Up is a checkbox
+  for the day.
 - **Bake List** — how many of each pie, and how many orders, each pickup day,
   counting every order except `not paid` and `cancelled` ones.
+- **Checkouts** — hidden; one row per checkout started through the form, with
+  the same columns as Orders, whether or not it was paid.
 - **Config** — hidden; a fingerprint of the layout.
 
 ## Working on it

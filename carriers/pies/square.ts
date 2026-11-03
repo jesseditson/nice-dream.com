@@ -98,6 +98,7 @@ export type OrderState = {
   createdAt: Date | null;
   /** What was charged, tax and tip included, in cents. */
   total: number | null;
+  order: PickupOrder;
 };
 
 /**
@@ -113,9 +114,7 @@ export const orderStates = async (
   const states = new Map<string, OrderState>();
   try {
     for (let start = 0; start < orderIds.length; start += 100) {
-      const response = await square<{
-        orders?: { id?: string; state?: string; created_at?: string; total_money?: { amount?: number } }[];
-      }>(
+      const response = await square<{ orders?: PickupOrder[] }>(
         accessToken,
         "/orders/batch-retrieve",
         { location_id: locationId, order_ids: orderIds.slice(start, start + 100) },
@@ -128,6 +127,7 @@ export const orderStates = async (
           state: order.state ?? "",
           createdAt: Number.isNaN(created.getTime()) ? null : created,
           total: order.total_money?.amount ?? null,
+          order,
         });
       }
     }

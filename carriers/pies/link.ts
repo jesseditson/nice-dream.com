@@ -1,8 +1,8 @@
 /**
- * Pie orders found in Square rather than placed through the form — mostly the
- * dashboard checkout link, which can only schedule pickup ASAP. Each one gets a
- * row on the sheet, and a pickup that isn't on a pickup day is moved to the
- * first pickup time.
+ * Paid pie orders found in Square: the form's once they're paid, and those
+ * placed through the dashboard checkout link, which can only schedule pickup
+ * ASAP. Each one gets a row on the Orders tab, and a pickup that isn't on a
+ * pickup day is moved to the first pickup time.
  */
 import {
   type Menu,

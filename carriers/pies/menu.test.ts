@@ -12,7 +12,8 @@ import {
   pickupTimes,
   readMenu,
 } from "./menu.ts";
-import { type OrderRow, STATUS, rowsToSync, statusFrom } from "./sheet.ts";
+import { CHECKOUTS, COL, type OrderRow, STATUS, UNSCHEDULED, appendOrders, rowsToSync, statusFrom } from "./sheet.ts";
+import type { SheetsClient } from "./google.ts";
 import { planFound } from "./link.ts";
 import { type PickupOrder, createCheckout, reschedulePickup } from "./square.ts";
 
@@ -109,7 +110,7 @@ const row = (overrides: Partial<OrderRow>): OrderRow => ({
 
 test("a checkout left unpaid for half an hour is marked not paid, and paid if it's paid later", () => {
   const created = new Date("2026-11-01T18:00:00Z");
-  const draft = { state: "DRAFT", createdAt: created, total: null };
+  const draft = { state: "DRAFT", createdAt: created, total: null, order: { id: "O1" } };
   assert.equal(statusFrom(STATUS.awaiting, draft, new Date("2026-11-01T18:20:00Z")), null);
   assert.equal(statusFrom(STATUS.awaiting, draft, new Date("2026-11-01T18:31:00Z")), STATUS.notPaid);
   assert.equal(statusFrom(STATUS.notPaid, { ...draft, state: "OPEN" }), STATUS.paid);
@@ -186,7 +187,7 @@ const linkOrder = (overrides: Partial<PickupOrder> = {}): PickupOrder => ({
   ...overrides,
 });
 
-test("a Square link order gets a row for the first pickup day, any time, and its pickup moved there", () => {
+test("a Square link order gets an unscheduled row for the first pickup day, and its pickup moved there", () => {
   const found = planFound(menu, [linkOrder()], new Set());
   assert.equal(found.rows.length, 1);
   const [row] = found.rows;
@@ -239,4 +240,21 @@ test("moving a pickup sends the order's version and the fulfillment's new time",
   assert.deepEqual(sent.order.fulfillments, [
     { uid: "F1", pickup_details: { schedule_type: "SCHEDULED", pickup_at: "2026-11-25T21:00:00.000Z" } },
   ]);
+});
+
+test("a row's pickup time is written as a clock time, or unscheduled", async () => {
+  let path = "";
+  let sent: Record<string, any> = {};
+  const client = (async (_method: string, url: string, body: unknown) => {
+    path = url;
+    sent = body as Record<string, any>;
+    return {};
+  }) as SheetsClient;
+  const [found] = planFound(menu, [linkOrder()], new Set()).rows;
+  await appendOrders(client, menu, CHECKOUTS, [{ ...found, start: 840 }, found]);
+  assert.match(decodeURIComponent(path), /^\/values\/Checkouts!A1:/);
+  assert.deepEqual(
+    sent.values.map((cells: unknown[]) => cells[COL.time]),
+    ["2:00 PM", UNSCHEDULED],
+  );
 });
