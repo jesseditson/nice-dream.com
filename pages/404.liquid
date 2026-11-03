@@ -1,7 +1,13 @@
 {% layout 'theme'
   , title: 'Page Not Found — Nice Dream'
   , page: '404'
-  , collection_id: '69ddad9b449d6a56e2ff97e6' %}
+  , light: 'dusk'
+  , noindex: true
+  , stylesheet: '/css/reservations.css' %}
 
-<h1>Page Not Found</h1>
-<p>Sorry, but the page you were trying to view does not exist.</p>
+<section class="form-page" data-light="dusk">
+  <h1 class="section-title form-page__title">Lost?</h1>
+  <div class="nd-sheet not-found">
+    <p class="nd-blurb">Sorry, the page you were looking for drifted off. Let's get you back <a href="/">home</a>.</p>
+  </div>
+</section>

@@ -1,0 +1,19 @@
+order = 6
+title = "Cocktails"
+statement = """
+Sugar Water is our cocktail bar, here to change everything you knew to be true about cocktails.
+Pull up a seat at the bar with dinner.
+"""
+served = ""
+light = "dusk"
+menu_label = ""
+link_label = "Book a bar seat"
+link_url = "/reservations"
+
+[[photo]]
+local = "sugar-water"
+alt = "The Sugar Water sign above the back bar in evening light"
+
+[[photo]]
+local = "lavender-tables"
+alt = "Evening light across the bar tables"

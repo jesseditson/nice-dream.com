@@ -1,0 +1,27 @@
+order = 2
+title = "Coffee"
+statement = """
+A multi-roaster coffee program, with beans from Dorothea, Push x Pull, Little Wolf, Botz, Sey and
+April Coffee Roasters.
+"""
+served = "All day"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+local = "espresso-pour-over"
+alt = "The espresso machine and a pour-over dripper on the terrazzo bar"
+
+[[photo]]
+local = "coffee-bar"
+alt = "The round coffee bar in morning light"
+
+[[photo]]
+local = "grinder-shadow"
+alt = "A grinder behind the glass, with the window lettering in shadow on the bar"
+
+[[photo]]
+local = "bookshelf-window"
+alt = "The coffee bar and the window toward the hills"

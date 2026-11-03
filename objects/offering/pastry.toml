@@ -1,0 +1,22 @@
+order = 4
+title = "Pastry"
+statement = """
+Pastries built on local and heirloom grains. The case changes daily, so come see what's in it.
+"""
+served = "All day"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+local = "cookbooks"
+alt = "Cookbooks on the shelves beside the kitchen"
+
+[[photo]]
+local = "dill"
+alt = "Dill flowers in a glazed crock on the counter"
+
+[[photo]]
+local = "bench-and-stools"
+alt = "Wooden stools along the window bench"

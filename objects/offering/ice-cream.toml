@@ -1,0 +1,23 @@
+order = 1
+title = "Ice Cream"
+statement = """
+Where Nice Dream began: hyper-seasonal ice creams and sorbets made from peak produce, first scooped
+at the Joshua Tree Farmers Market. Every one of them is dairy-free.
+"""
+served = "All day"
+light = "golden"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+local = "window-mountains"
+alt = "The front window, with the hills beyond 29 Palms Highway"
+
+[[photo]]
+local = "corner-table"
+alt = "A terrazzo table in the corner window"
+
+[[photo]]
+local = "wavy-pendant"
+alt = "Terrazzo tables beneath a wavy ceramic pendant"

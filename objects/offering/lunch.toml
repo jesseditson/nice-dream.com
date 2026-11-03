@@ -1,0 +1,26 @@
+order = 5
+title = "Lunch"
+statement = """
+Sustainably sourced and seafood-driven, with Japanese aesthetics and Californian sensibilities:
+onigiri, rice bowls and farmers market sides.
+"""
+served = "11am – 3pm"
+light = "midday"
+menu_label = "Sample menu"
+link_label = ""
+link_url = ""
+
+[menu]
+display_type = "upload"
+filename = "sample-menu.pdf"
+sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
+mime = "application/pdf"
+name = "sample-menu.pdf"
+
+[[photo]]
+local = "window-flowers"
+alt = "Window tables in the midday sun"
+
+[[photo]]
+local = "long-room"
+alt = "The long room, from the counter through to the dining room"

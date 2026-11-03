@@ -1,0 +1,18 @@
+order = 3
+title = "Matcha"
+statement = """
+A multi-varietal matcha program, with tea from our partners at Kettl.
+"""
+served = "All day"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+local = "bookshelf-window"
+alt = "The bar and the window toward the hills"
+
+[[photo]]
+local = "window-flowers-close"
+alt = "Dried flowers on the window tables"

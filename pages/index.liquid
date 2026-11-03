@@ -2,90 +2,124 @@
   layout 'theme'
   , title: 'Nice Dream'
   , page: 'index'
-  , description: 'Non-dairy coconut- and oat-milk ice creams and fresh fruit sorbets from Joshua Tree, CA.'
+  , light: 'golden'
+  , description: 'Ice cream, coffee, matcha, pastry, lunch, cocktails and dinner in Yucca Valley, CA.'
   , og_image: '/img/nice-dream-logo-og.png'
   , og_image_width: '1200'
   , og_image_height: '630'
-  , collection_id: '69ddad9b449d6a56e2ff97e6'
-  , stylesheet: '/css/index.css'
+  , stylesheet: '/css/home.css'
 %}
 
-<article class="page-content">
-  <section class="page-region">
-    <section data-theme="" class="page-section page-section--medium">
-      <div class="page-section__border">
-        <div class="page-section__background"></div>
+<section class="hero" data-light="golden">
+  <figure class="hero__photo" data-depth="-0.05">
+    {% include 'photo', image: home.hero_image, local: home.hero_local, alt: home.hero_alt, sizes: '(min-width: 48rem) 40vw, 100vw', loading: 'eager' %}
+  </figure>
+  <div class="hero__card glass reveal">
+    <div class="hero__mission markdown">{{ home.mission }}</div>
+    <h2 class="eyebrow">Hours</h2>
+    <dl class="hours">
+      {% for hours in business.hours %}<div class="hours__row">
+        <dt>{{ hours.label }}</dt>
+        <dd>{% if hours.opens == "" %}Closed{% else %}{% include 'hours_time', time: hours.opens %} – {% include 'hours_time', time: hours.closes %}{% endif %}</dd>
       </div>
-      <div class="page-section__wrapper" style="">
-        <div class="page-section__content">
-          <div class="grid-wrapper">
-            <div class="grid home-grid">
-              <div class="home-grid__photo">
-                <div class="block image-block photo-block">
-                  <div class="block__content">
-                    <div class="image-block__frame">
-                      <div class="image-block__figure" data-animate="image">
-                        <div class="image-block__container">
-                          <div class="image-block__media">
-                            <div class="image-block__fill">
-                              <img alt="" elementtiming="system-image-block" src="/img/DSC_4210.jpeg" width="3264" height="4928" alt="" sizes="auto, 100vw" style="display:block;object-position: var(--image-focal-point);object-fit: var(--image-object-fit);" srcset="/img/DSC_4210-100w.jpeg 100w, /img/DSC_4210-300w.jpeg 300w, /img/DSC_4210-500w.jpeg 500w, /img/DSC_4210-750w.jpeg 750w, /img/DSC_4210-1000w.jpeg 1000w, /img/DSC_4210-1500w.jpeg 1500w, /img/DSC_4210-2500w.jpeg 2500w" loading="lazy" decoding="async">
+      {% endfor %}
+    </dl>
+    <div class="hero__note markdown">{{ business.hours_note }}</div>
+  </div>
+</section>
 
-                              <div class="image-block__overlay"></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="home-grid__details">
-                <div class="block text-block">
-                  <div class="block__content">
-                    <div>
-                      <div class="text-block__content">
-                        <h4>{{ business.name }}</h4>
-                        <p class="text-small">
-                          {{ business.street_address }} {{ business.locality }}, {{ business.region }} {{ business.postal_code }}
-                        </p>
-                        {% for hours in business.hours %}
-                        <p class="text-small">
-                          {{ hours.label }} {% if hours.opens == "" %}CLOSED{% else %}{% include 'hours_time', time: hours.opens %}-{% include 'hours_time', time: hours.closes %}{% endif %}
-                        </p>
-                        {% endfor %}
-                        <p class="text-small">
-                          {{ business.hours_note }}
-                        </p>
-                        <p class="text-small">
-                          {% if lunch.sample_menu %}
-                          <span class="text-highlight"><a target="_blank" href="{{ lunch.sample_menu.url }}">Sample Menus</a
-                            ></span
-                          >
-                          {% endif %}
-                        </p>
-                        <p class="text-small">
-                          <span class="text-highlight"><a href="/pie-preorder.html">Pre-order {{ pie_preorder.title }}</a></span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="home-grid__about">
-                <div class="block text-block about-block">
-                  <div class="block__content">
-                    <div>
-                      <div class="text-block__content">
-                        {{ about.body }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+<section class="visit" id="visit" data-light="midday">
+  <h2 class="section-title reveal">Visit</h2>
+  <div class="visit__layout">
+    <div class="visit__map glass reveal" data-depth="0.03">
+      {% include 'map' %}
+      <p class="visit__credit">Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors</p>
+    </div>
+    <div class="visit__details glass reveal" data-depth="-0.04">
+      <h3 class="eyebrow">Find us</h3>
+      <address class="visit__address">
+        {{ business.street_address }}<br />
+        {{ business.locality }}, {{ business.region }} {{ business.postal_code }}
+      </address>
+      {% if business.apple_maps_url != blank or business.google_maps_url != blank %}<h3 class="eyebrow">Directions</h3>
+      <div class="visit__directions">
+        {% if business.apple_maps_url != blank %}<a class="button button--soft" href="{{ business.apple_maps_url }}" rel="noopener">Apple Maps</a>{% endif %}
+        {% if business.google_maps_url != blank %}<a class="button button--soft" href="{{ business.google_maps_url }}" rel="noopener">Google Maps</a>{% endif %}
+      </div>{% endif %}
+      {% if business.parking != blank %}<h3 class="eyebrow">Parking</h3>
+      <div class="markdown">{{ business.parking }}</div>{% endif %}
+    </div>
+  </div>
+</section>
+
+{% if events.size > 0 %}{% assign upcoming = events | sort: "starts" %}
+<section class="events" id="events" data-light="golden" data-events>
+  <h2 class="section-title reveal">Events</h2>
+  <ol class="events__list" role="list">
+    {% for event in upcoming %}{% if event.ends != blank %}{% assign event_ends = event.ends %}{% else %}{% assign event_ends = event.starts %}{% endif %}
+    <li class="event glass reveal" data-ends="{{ event_ends | date: '%Y-%m-%dT%H:%M' }}">
+      {% if event.image != blank or event.image_local != blank %}<div class="event__image">{% include 'photo', image: event.image, local: event.image_local, alt: event.image_alt, sizes: '(min-width: 48rem) 30vw, 90vw', loading: 'lazy' %}</div>{% endif %}
+      <div class="event__body">
+        <p class="eyebrow"><time datetime="{{ event.starts | date: '%Y-%m-%dT%H:%M' }}">{{ event.starts | date: '%A, %B %-d · %-I:%M%P' }}</time></p>
+        <h3 class="event__title">{{ event.title }}</h3>
+        <div class="markdown">{{ event.summary }}</div>
+        {% if event.rsvp_url != blank %}<a class="button" href="{{ event.rsvp_url }}">{% if event.rsvp_label != blank %}{{ event.rsvp_label }}{% else %}RSVP{% endif %}</a>{% endif %}
       </div>
-    </section>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% for offering in offerings %}{% assign side = forloop.index | modulo: 2 %}{% assign slug = offering.path | remove: 'offering/' %}{% assign photo_count = offering.photo.size %}
+<section class="offering{% if side == 0 %} offering--flip{% endif %}" id="{{ slug }}" data-light="{{ offering.light }}">
+  <div class="offering__intro">
+    <h2 class="section-title reveal">{{ offering.title }}</h2>
+    <div class="offering__statement glass reveal">
+      <div class="markdown">{{ offering.statement }}</div>
+      {% include 'offering_meta' %}
+    </div>
+  </div>
+  <ul class="gallery" role="list">
+    {% for photo in offering.photo limit: 3 %}{% assign depth = forloop.index | modulo: 3 %}
+    <li class="gallery__item reveal" data-depth="{% if depth == 1 %}-0.04{% elsif depth == 2 %}0.06{% else %}-0.01{% endif %}">
+      <a class="gallery__link" href="{% include 'photo_full', image: photo.image, local: photo.local %}" data-section="{{ slug }}" data-index="{{ forloop.index0 }}">
+        {% include 'photo', image: photo.image, local: photo.local, alt: photo.alt, sizes: '(min-width: 48rem) 22vw, 72vw', loading: 'lazy' %}
+        {% if forloop.last and photo_count > 3 %}<span class="gallery__more">+{{ photo_count | minus: 3 }} more</span>{% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+<section class="story" id="about" data-light="night">
+  <div class="story__body glass markdown reveal">{{ about.body }}</div>
+</section>
+
+<dialog class="viewer" aria-label="Photos">
+  <div class="viewer__bar">
+    <div class="viewer__tabs" role="tablist" aria-label="Sections">
+      {% for offering in offerings %}{% assign slug = offering.path | remove: 'offering/' %}<button class="viewer__tab" type="button" role="tab" id="viewer-tab-{{ slug }}" aria-controls="viewer-panel-{{ slug }}" aria-selected="false" tabindex="-1" data-section="{{ slug }}">{{ offering.title }}</button>
+      {% endfor %}
+    </div>
+    <button class="viewer__close" type="button" aria-label="Close">&times;</button>
+  </div>
+  {% for offering in offerings %}{% assign slug = offering.path | remove: 'offering/' %}
+  <section class="viewer__panel" role="tabpanel" id="viewer-panel-{{ slug }}" aria-labelledby="viewer-tab-{{ slug }}" data-section="{{ slug }}" hidden>
+    <div class="viewer__stage">
+      <ul class="viewer__track" role="list" tabindex="0" aria-label="{{ offering.title }} photos">
+        {% for photo in offering.photo %}<li class="viewer__slide">{% include 'photo', image: photo.image, local: photo.local, alt: photo.alt, sizes: '(min-width: 48rem) 40vw, 85vw', loading: 'lazy' %}</li>
+        {% endfor %}
+      </ul>
+      <button class="viewer__step viewer__step--prev" type="button" aria-label="Previous photo">&larr;</button>
+      <button class="viewer__step viewer__step--next" type="button" aria-label="Next photo">&rarr;</button>
+    </div>
+    <div class="viewer__message glass">
+      <h2 class="viewer__title">{{ offering.title }}</h2>
+      <div class="markdown">{{ offering.statement }}</div>
+      {% include 'offering_meta' %}
+    </div>
   </section>
-</article>
+  {% endfor %}
+</dialog>

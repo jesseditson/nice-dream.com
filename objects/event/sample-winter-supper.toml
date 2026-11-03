@@ -1,0 +1,11 @@
+order = 1
+title = "Thanksiging Pie Preorder 2026"
+starts = "2026-11-25 18:00:00"
+ends = "2026-11-25 20:00:00"
+summary = """
+Thanksgiving Pie preorders are now live! Choose your pie and
+"""
+image_local = "communal-table"
+image_alt = "The communal table under paper lanterns"
+rsvp_url = "/pie-preorder"
+rsvp_label = "Preorder Now"
