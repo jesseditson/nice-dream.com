@@ -81,11 +81,11 @@
     </div>
   </div>
   <ul class="gallery" role="list">
-    {% for photo in offering.photo limit: 3 %}{% assign depth = forloop.index | modulo: 3 %}
-    <li class="gallery__item reveal" data-depth="{% if depth == 1 %}-0.04{% elsif depth == 2 %}0.06{% else %}-0.01{% endif %}">
+    {% for photo in offering.photo %}{% assign depth = forloop.index | modulo: 3 %}
+    <li class="gallery__item{% if forloop.index > 3 %} gallery__item--extra{% endif %} reveal" data-depth="{% if depth == 1 %}-0.04{% elsif depth == 2 %}0.06{% else %}-0.01{% endif %}">
       <a class="gallery__link" href="{% include 'photo_full', image: photo.image, local: photo.local %}" data-section="{{ slug }}" data-index="{{ forloop.index0 }}">
         {% include 'photo', image: photo.image, local: photo.local, alt: photo.alt, sizes: '(min-width: 48rem) 22vw, 72vw', loading: 'lazy' %}
-        {% if forloop.last and photo_count > 3 %}<span class="gallery__more">+{{ photo_count | minus: 3 }} more</span>{% endif %}
+        {% if forloop.index == 3 and photo_count > 3 %}<span class="gallery__more">+{{ photo_count | minus: 3 }} more</span>{% endif %}
       </a>
     </li>
     {% endfor %}

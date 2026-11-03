@@ -366,6 +366,10 @@
   margin-top: 2.5rem;
 }
 
+.gallery__item--extra {
+  display: none;
+}
+
 .gallery__link {
   position: relative;
   display: block;
@@ -435,6 +439,14 @@
     margin-top: 0;
     scroll-snap-align: start;
     transform: none;
+  }
+
+  .gallery__item--extra {
+    display: block;
+  }
+
+  .gallery__more {
+    display: none;
   }
 }
 
