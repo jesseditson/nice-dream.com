@@ -16,5 +16,9 @@ local = "iced-matcha"
 alt = "A tall iced matcha latte held up in the sun outside"
 
 [[photo]]
+local = "matcha-heart"
+alt = "A hot matcha latte with a heart poured in the foam, in a speckled cup"
+
+[[photo]]
 local = "matcha-layered"
 alt = "Iced matcha layered over milk and a bright orange purée"

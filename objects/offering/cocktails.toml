@@ -12,12 +12,24 @@ link_label = "Book a bar seat"
 link_url = "/reservations"
 
 [[photo]]
+local = "cardamom-cocktail"
+alt = "A golden cocktail on the rocks, garnished with cardamom pods"
+
+[[photo]]
 local = "green-coupes"
 alt = "Two green cocktails in coupes on the terrazzo bar, with bitters bottles and a jigger"
 
 [[photo]]
 local = "rosemary-cocktail"
 alt = "A dark cocktail on the rocks with a sprig of rosemary, on the bar at night"
+
+[[photo]]
+local = "pink-sour"
+alt = "A pink sour in a coupe with a foam top and drops of bitters, on a sunlit terrazzo table"
+
+[[photo]]
+local = "olive-martinis"
+alt = "Two amber martinis, each with a large olive on a steel pick"
 
 [[photo]]
 local = "highball-and-martini"

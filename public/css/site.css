@@ -68,10 +68,32 @@ html {
   scroll-padding-top: 5rem;
 }
 
+@property --glass {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(255, 253, 246, 0.5);
+}
+
+@property --glass-strong {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(255, 253, 246, 0.74);
+}
+
+@property --ink-soft {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #786752;
+}
+
 body {
   margin: 0;
   min-height: 100svh;
   background: #f4e8c8;
+  transition:
+    --glass 1.8s var(--ease),
+    --glass-strong 1.8s var(--ease),
+    --ink-soft 1.8s var(--ease);
   color: var(--ink);
   font-family: var(--sans);
   font-size: 1.0625rem;
@@ -155,32 +177,32 @@ address {
 
 .sky__light--morning {
   background:
-    radial-gradient(120% 80% at 15% 0%, #fffbe8 0%, transparent 60%),
-    linear-gradient(180deg, #f8efcf 0%, #efdfb0 100%);
+    radial-gradient(120% 80% at 12% 0%, #fffdf0 0%, transparent 60%),
+    linear-gradient(180deg, #e2ebe5 0%, #f3e3b6 100%);
 }
 
 .sky__light--midday {
   background:
-    radial-gradient(110% 70% at 50% 0%, #fffef6 0%, transparent 65%),
-    linear-gradient(180deg, #f5f0de 0%, #ece0bf 100%);
+    radial-gradient(110% 70% at 50% 0%, #ffffff 0%, transparent 65%),
+    linear-gradient(180deg, #faf6ea 0%, #eee4c6 100%);
 }
 
 .sky__light--golden {
   background:
-    radial-gradient(120% 80% at 85% 10%, #fff4d6 0%, transparent 60%),
-    linear-gradient(180deg, #f6e8c2 0%, #ebd39f 100%);
+    radial-gradient(120% 80% at 85% 8%, #fff0c4 0%, transparent 60%),
+    linear-gradient(180deg, #f5d79c 0%, #e0ad68 100%);
 }
 
 .sky__light--dusk {
   background:
-    radial-gradient(120% 80% at 80% 0%, #fbeed8 0%, transparent 60%),
-    linear-gradient(180deg, #f2e2c6 0%, #e4d6c4 100%);
+    radial-gradient(120% 80% at 80% 0%, #f8d8b6 0%, transparent 60%),
+    linear-gradient(180deg, #e6bf9e 0%, #b0979f 100%);
 }
 
 .sky__light--night {
   background:
-    radial-gradient(100% 70% at 70% 0%, #f1ece0 0%, transparent 65%),
-    linear-gradient(180deg, #e6decc 0%, #d6ccb8 100%);
+    radial-gradient(90% 60% at 72% 0%, #d0d1dc 0%, transparent 65%),
+    linear-gradient(180deg, #9ca1b5 0%, #6b7085 100%);
 }
 
 body[data-light="morning"] .sky__light--morning,
@@ -189,6 +211,19 @@ body[data-light="golden"] .sky__light--golden,
 body[data-light="dusk"] .sky__light--dusk,
 body[data-light="night"] .sky__light--night {
   opacity: 1;
+}
+
+/* Glass and soft ink firm up as the light falls, so text in cards stays legible. */
+body[data-light="dusk"] {
+  --glass: rgba(255, 253, 246, 0.6);
+  --glass-strong: rgba(255, 253, 246, 0.82);
+  --ink-soft: #66553f;
+}
+
+body[data-light="night"] {
+  --glass: rgba(255, 253, 246, 0.68);
+  --glass-strong: rgba(255, 253, 246, 0.86);
+  --ink-soft: #5c4d3c;
 }
 
 /* Limewash: the mottled plaster of the walls. */
@@ -213,7 +248,16 @@ body[data-light="night"] .sky__light--night {
   mix-blend-mode: soft-light;
   opacity: 0.7;
   transform: skewY(-8deg);
+  transition: opacity 1.8s var(--ease);
   animation: sun 90s ease-in-out infinite alternate;
+}
+
+body[data-light="dusk"] .sky__sun {
+  opacity: 0.45;
+}
+
+body[data-light="night"] .sky__sun {
+  opacity: 0.15;
 }
 
 .sky__sun::before {

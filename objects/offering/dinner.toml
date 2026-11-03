@@ -18,6 +18,10 @@ mime = "application/pdf"
 name = "sample-menu.pdf"
 
 [[photo]]
+local = "custard-and-rice"
+alt = "A small bowl of silky custard topped with shiso and microgreens, with a rice bowl behind"
+
+[[photo]]
 local = "sashimi-bowl"
 alt = "A sashimi bowl with tuna, white fish and abalone in its shell, dressed with shiso, citrus and shaved radish"
 

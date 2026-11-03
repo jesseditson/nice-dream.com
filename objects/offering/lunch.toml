@@ -17,6 +17,10 @@ mime = "application/pdf"
 name = "sample-menu.pdf"
 
 [[photo]]
+local = "onigiri"
+alt = "Onigiri on a tray, coated in black sesame, chili flakes and toasted seeds"
+
+[[photo]]
 local = "fish-rice-bowl"
 alt = "Grilled fish over multigrain rice with potato salad, sesame broccolini and pickled cabbage and cucumber"
 
