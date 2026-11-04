@@ -1,8 +1,7 @@
 order = 7
 title = "Dinner"
 statement = """
-Nice Dreams of Sushi is this season's dinner concept: fish-forward, carefully sourced, and stunningly presented.
-Full cocktail & spirits menu available along with Sake and Wine selections at all tables.
+Highly variable, our dinner menu - which shifts week to week (even day to day), is a snapshot in time celebrating our current micro-season. Japanese aesthetics and techniques meet Californian sensibilities. Full cocktail, spirits, and sake menus are available at all tables.
 """
 served = "5:30 – 9pm"
 light = "night"

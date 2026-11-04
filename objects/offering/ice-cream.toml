@@ -1,8 +1,7 @@
 order = 1
 title = "Ice Cream"
 statement = """
-Where Nice Dream began: hyper-seasonal ice creams and sorbets made from peak produce, first scooped at the Joshua Tree Farmers Market.
-All ice cream is dairy-free, although you'd never know from the perfect textures & flavors.
+Where Nice Dream began: hyper-seasonal ice creams and sorbets churned from peak produce, first scooped at the Joshua Tree Farmers Market. All our ice creams and sorbets are dairy-free (and oftentimes vegan!).
 """
 served = "All day"
 light = "golden"

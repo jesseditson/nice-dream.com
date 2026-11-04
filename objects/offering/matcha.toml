@@ -1,9 +1,7 @@
 order = 3
-title = "Matcha"
+title = "Tea"
 statement = """
-A multi-varietal matcha program, with tea from our partners at Kettl.
-We only use the highest quality matchas & hojichas, and show their rich complexity without using sweeteners.
-Ask about our available cultivars, which rotate seasonally.
+We offer multiple varietals of Japanese milled (matcha, houjicha) and loose-leaf brewed (sencha, sobacha) teas, in celebration of the diverse and complex profiles tea can possess. Our partner Kettl receives shipments from producers weekly; ask about our available cultivars, which rotate seasonally.
 """
 served = "All day"
 light = "morning"

@@ -1,9 +1,7 @@
 order = 6
 title = "Cocktails"
 statement = """
-Sugar Water is our cocktail experience, a re-imagination of what a cocktail bar can be.
-Our in-house Zero Proof program, Omakase bar experience, and creative menu make this the most magical place in the desert after dark.
-Full menu served at the bar, and full cocktail menu served at our tables.
+After dark our cocktail experience comes alive, a re-imagination of what a cocktail bar can be. Our in-house Zero Proof program, Omakase bar experience, and creative menu make this the most magical place in the desert after dark. Full dinner menu is available at the bar.
 """
 served = ""
 light = "dusk"
@@ -12,28 +10,28 @@ link_label = "Book a bar seat"
 link_url = "/reservations"
 
 [[photo]]
-local = "cardamom-cocktail"
-alt = "A golden cocktail on the rocks, garnished with cardamom pods"
+local = "silvagenitus"
+alt = "Silvagenitus"
 
 [[photo]]
-local = "green-coupes"
-alt = "Two green cocktails in coupes on the terrazzo bar, with bitters bottles and a jigger"
+local = "matcha-sours"
+alt = "Matcha Sours"
 
 [[photo]]
-local = "rosemary-cocktail"
-alt = "A dark cocktail on the rocks with a sprig of rosemary, on the bar at night"
+local = "fizz-and-cosmini"
+alt = "An Orleans Fizz and a Cosmini"
 
 [[photo]]
-local = "pink-sour"
-alt = "A pink sour in a coupe with a foam top and drops of bitters, on a sunlit terrazzo table"
+local = "maduro"
+alt = "Maduro"
+
+[[photo]]
+local = "aperitif-sour"
+alt = "Aperitif Sour"
 
 [[photo]]
 local = "olive-martinis"
-alt = "Two amber martinis, each with a large olive on a steel pick"
-
-[[photo]]
-local = "highball-and-martini"
-alt = "A frothy lavender highball beside a red cocktail in a martini glass"
+alt = "Two martinis, each with a large olive on a steel pick"
 
 [[photo]]
 local = "back-bar-bottles"

@@ -1,8 +1,7 @@
 order = 2
 title = "Coffee"
 statement = """
-Our coffee program is curated weekly, and features small roasters from across the US and beyond.
-Featuring beans from Dorothea, Push x Pull, Little Wolf, Botz, Sey and April Coffee Roasters, we offer simple drinks made with care.
+Curated weekly, our espresso and pour over program rotates in roasters from around the U.S. and beyond. Currently serving: Dorothea (Mt. Vernon, WA), Push x Pull (Portland, OR), Little Wolf (Ipswich, MA), Botz (Whiting, IN), Sey (Brooklyn, NY) and April (Copenhagen).
 """
 served = "All day"
 light = "morning"

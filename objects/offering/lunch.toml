@@ -1,7 +1,7 @@
 order = 5
 title = "Lunch"
 statement = """
-Simple and filling lunches, rotating with the season: onigiri, rice bowls and farmers market sides.
+Onigiri, farmers-market-driven sides, and must-eat-everyday miso black cod and soft tofu bowls. This is food we can - and do! - eat happily everyday. We proudly source our fish from E-Fish, who connects us with local fishermen, and our produce is from the Joshua Tree Farmers Market.
 """
 served = "11am – 3pm"
 light = "midday"

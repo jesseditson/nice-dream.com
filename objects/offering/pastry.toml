@@ -1,8 +1,7 @@
 order = 4
 title = "Pastry"
 statement = """
-Our world-class pastries range from the classic to the creative, with something for every palate.
-Each week, find a new selection of beautiful and delicious selections ranging from the savory to the sweet.
+We make the pastries we love to eat, full stop. Whether croissants or cookies, cakes or pies, cruffins or muffins, all our pastries are made with tons of care, a little (lot of) OCD, and a deep, abiding passion for the craft. Vegan and gluten-free options are available.
 """
 served = "8am until sell out"
 light = "morning"

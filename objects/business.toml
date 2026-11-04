@@ -9,9 +9,11 @@ phone = "+1 760-239-7919"
 cuisine = ""
 price_range = ""
 hours_note = """
-*Coffee & tea, pastries, and ice cream are served all day. Lunch service runs 11am - 3pm; dinner service runs 5:30 - 9pm (last seating 8pm). Dinner & Cocktails are drop-in but occasionally fill up.*
+Lunch 11am – 3pm\\
+Dinner 5:30 – 9pm (last seating 8pm)\\
+Coffee, tea, pastries & ice cream served all day
 
-**[Reserve dinner or bar seats here](/reservations)**
+**[Dinner & bar reservations](/reservations)**
 """
 parking = ""
 apple_maps_url = "https://maps.apple.com/?daddr=56778+29+Palms+Highway,+Yucca+Valley,+CA+92284&q=Nice+Dream"
