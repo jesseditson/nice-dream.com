@@ -16,8 +16,8 @@ uniform vec3 iResolution;
 uniform float iTime;
 out vec4 outColor;
 
-const vec3 MUSTARD = vec3(0.80, 0.62, 0.13);
-const vec3 LILAC   = vec3(0.78, 0.64, 0.78);
+const vec3 BUTTER  = vec3(0.98, 0.88, 0.64);
+const vec3 LILAC   = vec3(0.87, 0.83, 0.92);
 
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
     float mr = min(iResolution.x, iResolution.y);
@@ -36,7 +36,7 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
     // Blue barely varies in the source palette; red vs. green carries the hue, red + green the light.
     float hue   = smoothstep(-0.25, 0.17, col.r - col.g);
     float light = smoothstep(0.55, 0.95, (col.r + col.g) * 0.5);
-    col = mix(MUSTARD, LILAC, hue) * mix(0.85, 1.12, light);
+    col = mix(BUTTER, LILAC, hue) * mix(0.94, 1.04, light);
     fragColor = vec4(col, 1);
 }
 

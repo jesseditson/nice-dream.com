@@ -1,0 +1,10 @@
+mission = "All day into the night…"
+
+[[photo]]
+alt = "Paper lanterns hanging in the doorway to the dining room, the communal table beyond in late sun"
+
+[photo.image]
+sha = "bf7bcfbfead91f517c104a9b83599d7277ba0841e867a6f9d65abbbd6eda7d55"
+filename = "lanterns-doorway.jpg"
+mime = "image/jpeg"
+display_type = "image"

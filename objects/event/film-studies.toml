@@ -1,0 +1,13 @@
+order = 2
+title = "Film Studies at Nice Dream"
+starts = 2026-11-17T18:00:00.0
+summary = ""
+image_alt = "Poster reading Film Studies at Nice Dream, over a vintage photo of students seated in the dining room"
+rsvp_url = ""
+rsvp_label = ""
+
+[image]
+display_type = "image"
+filename = "film-studies.jpg"
+sha = "0d562e1f400da89c88f8f616511fbc9d2836c6055741a4b458bb35e297f1f7dd"
+mime = "image/jpeg"

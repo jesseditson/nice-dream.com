@@ -1,0 +1,91 @@
+order = 6
+title = "Cocktails"
+statement = """
+After dark our cocktail experience comes alive, a re-imagination of what a cocktail bar can be. Our in-house Zero Proof program, Omakase bar experience, and creative menu make this the most magical place in the desert after dark. Full dinner menu is available at the bar.
+"""
+served = ""
+light = "dusk"
+menu_label = ""
+link_label = "Book a bar seat"
+link_url = "/reservations?area=bar"
+
+[[photo]]
+alt = "Silvagenitus"
+
+[photo.image]
+sha = "9727827c883d91285ddbf0c18150f0d346bc161e27c588fc7e01732e214fa1b9"
+filename = "silvagenitus.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Matcha Sours"
+
+[photo.image]
+sha = "f3b6f1fe63ca8a63d8b66d99aca96e8aa0d98ab7426a74a7ae023755b0bd2006"
+filename = "matcha-sours.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "An Orleans Fizz and a Cosmini"
+
+[photo.image]
+sha = "0758ea66a7148ad8bc0eaf81c857de457b555da00784e0660a7bfff8c17b4bd1"
+filename = "fizz-and-cosmini.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Maduro"
+
+[photo.image]
+sha = "d7ffc3d978151d92c542e8576b1f5e7ccb86ebb3e73c40edc1b10959e58165bd"
+filename = "maduro.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Aperitif Sour"
+
+[photo.image]
+sha = "ea2ba46f6484dda6eac6de5c8b749bd6a047a636442952b68ce29f45d5c3f2ae"
+filename = "aperitif-sour.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Two martinis, each with a large olive on a steel pick"
+
+[photo.image]
+sha = "f877a88724a4a200391bf59dc46890413260f70b829e8b5193dedb5a92be20dd"
+filename = "olive-martinis.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The lit back bar, rows of bottles beneath the Sugar Water sign on a pink curtain"
+
+[photo.image]
+sha = "d8f808e72109f2237e788a53b919409822973d92ea937df94f7f185e0b0d9b5e"
+filename = "back-bar-bottles.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The perforated bar top glowing pink and teal under the back bar lights"
+
+[photo.image]
+sha = "5d0cbab081e567dc3473c6bc49c6acc0e1cbbdab3ca128608d985173ee44a646"
+filename = "bar-top-glow.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The Sugar Water sign above the back bar in evening light"
+
+[photo.image]
+sha = "c8813daacbf3a8a91016af34856053b1290876be27e014bd1b72ccc4d320dbaa"
+filename = "sugar-water.jpg"
+mime = "image/jpeg"
+display_type = "image"

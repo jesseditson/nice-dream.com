@@ -1,0 +1,37 @@
+order = 3
+title = "Tea"
+statement = """
+We offer multiple varietals of Japanese milled (matcha, houjicha) and loose-leaf brewed (sencha, sobacha) teas, in celebration of the diverse and complex profiles tea can possess. Our partner Kettl receives shipments from producers weekly; ask about our available cultivars, which rotate seasonally.
+"""
+served = "All day"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+alt = "A tall iced matcha latte held up in the sun outside"
+
+[photo.image]
+sha = "d15cf9e5196831aeb947313950a3f6150a38a2e01eb4d26ed5ef5965d2cde110"
+filename = "iced-matcha.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A hot matcha latte with a heart poured in the foam, in a speckled cup"
+
+[photo.image]
+sha = "ac2afe8676f4dc83e143fc0c7c1d833d392da56f6a1e5ce42e44ba59e935b0e2"
+filename = "matcha-heart.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Iced matcha layered over milk and a bright orange purée"
+
+[photo.image]
+sha = "59ffb91fe4ef5cdd8d6e3f50b96b0338f47e8094ed4e6681f9c92f88e3dca325"
+filename = "matcha-layered.jpg"
+mime = "image/jpeg"
+display_type = "image"

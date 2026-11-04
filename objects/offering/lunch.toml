@@ -1,0 +1,71 @@
+order = 5
+title = "Lunch"
+statement = """
+Onigiri, farmers-market-driven sides, and must-eat-everyday miso black cod and soft tofu bowls. This is food we can - and do! - eat happily everyday. We proudly source our fish from E-Fish, who connects us with local fishermen, and our produce is from the Joshua Tree Farmers Market.
+"""
+served = "11am – 3pm"
+light = "midday"
+menu_label = "Sample menu"
+link_label = ""
+link_url = ""
+
+[menu]
+display_type = "upload"
+filename = "sample-menu.pdf"
+sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
+mime = "application/pdf"
+name = "sample-menu.pdf"
+
+[[photo]]
+alt = "Onigiri on a tray, coated in black sesame, chili flakes and toasted seeds"
+
+[photo.image]
+sha = "250225cc59a32f936bdf9de95bfd7afbf33e695839ed38eec7384974b992fea3"
+filename = "onigiri.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Grilled fish over multigrain rice with potato salad, sesame broccolini and pickled cabbage and cucumber"
+
+[photo.image]
+sha = "a53e497584fb6a1ac42b11461282c29936e152b40b459c684cd840b888759096"
+filename = "fish-rice-bowl.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A grilled fish collar with a coil of pickled cucumber on a blue-rimmed plate"
+
+[photo.image]
+sha = "b7f3bb2d0354d3f44a21085fd1016eb13f7f3817f5d17a7c290d93ac050234ae"
+filename = "fish-collar.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Braised eggplant in broth topped with sliced scallions, on the kitchen pass"
+
+[photo.image]
+sha = "420245b3be9922fc83434e15768bece53169ffed4c75b36fd6310e074d963289"
+filename = "braised-eggplant.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Window tables in the midday sun"
+
+[photo.image]
+sha = "1f76de663bd8ac3c8bcab203abec537a6fbe67cdb323a8e68bf300aa269517e9"
+filename = "window-flowers.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The long room, from the counter through to the dining room"
+
+[photo.image]
+sha = "82aaabe145577fbe5a10253d7ef563b4ec6d666c3b002617b6f036a7d0eddd20"
+filename = "long-room.jpg"
+mime = "image/jpeg"
+display_type = "image"

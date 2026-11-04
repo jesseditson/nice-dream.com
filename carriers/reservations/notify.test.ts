@@ -199,7 +199,7 @@ describe("guest email html", () => {
     const html = guestBookedEmail(emails, notice()).html ?? "";
     assert.match(html, /^<!doctype html>/);
     assert.match(html, /src="https:\/\/nice-dream\.com\/img\/nice-dream-logo\.png"/);
-    assert.match(html, /src="https:\/\/nice-dream\.com\/img\/nd-confirm-dog\.png"/);
+    assert.match(html, /src="https:\/\/nice-dream\.com\/img\/confirm-karen\.png"/);
     assert.match(html, /url\('https:\/\/nice-dream\.com\/fonts\/perrrot\.otf'\)/);
     assert.match(html, /You're<br>booked\./);
     assert.match(html, /<a href="https:\/\/nice-dream\.com\/reservations\.html\?token=KEY"[^>]*>Change or cancel<\/a>/);
@@ -214,9 +214,9 @@ describe("guest email html", () => {
     assert.doesNotMatch(html, /<b>Ada/);
   });
 
-  test("the cancellation uses the other dog, a book-again button and no edit link", () => {
+  test("the cancellation uses the other Karen, a book-again button and no edit link", () => {
     const html = guestCancelledEmail(emails, notice(), "https://nice-dream.com/reservations.html").html ?? "";
-    assert.match(html, /nd-hero-dog\.png/);
+    assert.match(html, /hero-karen\.png/);
     assert.match(html, /Reservation<br>cancelled\./);
     assert.match(html, /<a href="https:\/\/nice-dream\.com\/reservations\.html"[^>]*>Book again<\/a>/);
     assert.doesNotMatch(html, /token=KEY/);

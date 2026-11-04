@@ -121,6 +121,16 @@ cuisine = "string"
 # dollar signs ("$" to "$$$$") or a range like "$15-40"
 price_range = "string"
 hours_note = "markdown"
+# shown beside the map on the home page
+parking = "markdown"
+# directions to the address; visitors pick whichever map app they use, and a blank one is hidden
+apple_maps_url = "string"
+google_maps_url = "string"
+
+# the links in the footer
+[business.links]
+label = "string"
+url = "string"
 
 # days uses schema.org openingHours shorthand (Mo Tu We Th Fr Sa Su, ranges like Fr-Sa); opens/closes are 24h HH:MM, blank opens means closed
 [business.hours]
@@ -161,3 +171,43 @@ square_variation_id = "string"
 date = "string"
 first = "string"
 last = "string"
+
+# The home page's opening: the line above the hours, and the photos beside them. One photo shows
+# large; more than one shows as a stack, like a section's gallery.
+[home]
+mission = "markdown"
+
+[home.photo]
+image = "image"
+alt = "string"
+
+# Each thing we make, a home page section in order: a statement and a gallery. The file name is the
+# section's anchor, so objects/offering/coffee.toml is /#coffee.
+[offering]
+title = "string"
+statement = "markdown"
+# when it's served, e.g. "All day" or "11am – 3pm"
+served = "string"
+# the light the page takes on while the section is on screen
+light = ["morning", "midday", "golden", "dusk", "night"]
+menu = "upload"
+menu_label = "string"
+link_label = "string"
+link_url = "string"
+
+[offering.photo]
+image = "image"
+alt = "string"
+
+# Events. The home page lists the ones that haven't ended yet, and hides the section when there are none.
+[event]
+title = "string"
+# "2026-12-05 18:00:00", in Yucca Valley time
+starts = "date"
+ends = "date"
+summary = "markdown"
+image = "image"
+image_alt = "string"
+# where guests RSVP; the button is hidden while this is blank
+rsvp_url = "string"
+rsvp_label = "string"

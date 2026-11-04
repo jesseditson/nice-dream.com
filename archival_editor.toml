@@ -1,0 +1,13 @@
+[[offering.views]]
+name = "default"
+primary = "title"
+secondary = "served"
+
+[[event.views]]
+name = "default"
+primary = "title"
+secondary = "starts"
+
+[[shortcuts]]
+name = "New Event"
+path = "event"

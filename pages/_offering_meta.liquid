@@ -1,0 +1,5 @@
+{% if offering.served != blank or offering.menu != blank or offering.link_url != blank %}<p class="offering__meta">
+  {% if offering.served != blank %}<span class="eyebrow">{{ offering.served }}</span>{% endif %}
+  {% if offering.menu != blank %}<a class="text-link" href="{{ offering.menu.url }}" target="_blank" rel="noopener">{% if offering.menu_label != blank %}{{ offering.menu_label }}{% else %}Menu{% endif %}</a>{% endif %}
+  {% if offering.link_url != blank %}<a class="button" href="{{ offering.link_url }}">{{ offering.link_label }}</a>{% endif %}
+</p>{% endif %}

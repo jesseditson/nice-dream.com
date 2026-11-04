@@ -1,0 +1,100 @@
+order = 4
+title = "Pastry"
+statement = """
+We make the pastries we love to eat, full stop. Whether croissants or cookies, cakes or pies, cruffins or muffins, all our pastries are made with tons of care, a little (lot of) OCD, and a deep, abiding passion for the craft. Vegan and gluten-free options are available.
+"""
+served = "8am until sell out"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+alt = "A tray of croissants, some topped with sliced almonds and some with a piped filling"
+
+[photo.image]
+sha = "01352b3927eeea5e9799125f70fc6f5a2ce54683f20813709ca90a5120dceccf"
+filename = "almond-croissants.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Glossy laminated pastries with a crumble top beside a clay foot vase of dried lavender"
+
+[photo.image]
+sha = "cf50c15207b3b0731d7f7dd6c5a5fd6cb479a802f618850c34fd50d28479b1f8"
+filename = "pastries-lavender.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Small cakes topped with whipped frosting, a red fruit glaze and fresh herbs"
+
+[photo.image]
+sha = "c8b96bda5c3c52a2f588c2d833ed62b8961dc5e100eb20824577c503d57d72bf"
+filename = "cream-cakes.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A stand piled with sugar-crusted muffins on the pastry counter"
+
+[photo.image]
+sha = "8d1e26d169bef48a9b8f4245def7cfb754516909519b948e3ea3646212fe95bb"
+filename = "muffins.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Rows of chocolate-filled laminated pastries, close up"
+
+[photo.image]
+sha = "bb1c541602f66ab4fef2de09f087b12e273603eb3a315eb15d27e093948d0a96"
+filename = "pain-au-chocolat-close.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Pastries on blue-rimmed plates around a terrazzo table, including an almond croissant and a glazed swirl"
+
+[photo.image]
+sha = "3301bd640fec2c1a22c75de5bb9dc9ff6f6f6c0bfda54922bc7b149782d5ba64"
+filename = "pastry-plates.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Laminated swirls with herbs and flaky salt, stacked on a platter"
+
+[photo.image]
+sha = "f203e1440356edf977d591106b3d112ba60bc2ff54e77adfdbafbd636844db7c"
+filename = "savory-swirls.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A plate of glossy croissants in the sun"
+
+[photo.image]
+sha = "bf11c6310e91ba493f605c117d3a85041f34084c31826711e266482da644d32e"
+filename = "croissants-stack.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Small cakes with speckled frosting, an orange fruit center and fresh herbs, on two plates"
+
+[photo.image]
+sha = "d47d37fd2190a4b33787dc703c83f1ddb3b846f3c4a450ae36c292f45d731f08"
+filename = "frosted-cakes.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Laminated savory pastries, each topped with a cornichon on a pick"
+
+[photo.image]
+sha = "9223caa5aa9bc59d7c1481991d065ce4bdd01bf3fd4051f15531e27c21dfa383"
+filename = "cornichon-pastries.jpg"
+mime = "image/jpeg"
+display_type = "image"

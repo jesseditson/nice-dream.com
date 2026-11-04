@@ -1,0 +1,107 @@
+order = 7
+title = "Dinner"
+statement = """
+Highly variable, our dinner menu - which shifts week to week (even day to day), is a snapshot in time celebrating our current micro-season. Japanese aesthetics and techniques meet Californian sensibilities. Full cocktail, spirits, and sake menus are available at all tables.
+"""
+served = "5:30 – 9pm"
+light = "night"
+menu_label = "Sample menu"
+link_label = "Reserve a table"
+link_url = "/reservations"
+
+[menu]
+display_type = "upload"
+filename = "sample-menu.pdf"
+sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
+mime = "application/pdf"
+name = "sample-menu.pdf"
+
+[[photo]]
+alt = "A small bowl of silky custard topped with shiso and microgreens, with a rice bowl behind"
+
+[photo.image]
+sha = "64af194af3764b09d235b4f38b35afa68ffbacf889a35593bdddf6651279d7da"
+filename = "custard-and-rice.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A sashimi bowl with tuna, white fish and abalone in its shell, dressed with shiso, citrus and shaved radish"
+
+[photo.image]
+sha = "2f23f1f264ef19f5acbd4c5999f388e1e7a0bc4e999b5a7d805c28cc37d06f78"
+filename = "sashimi-bowl.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Oysters on ice with red seaweed, one under a pink granita"
+
+[photo.image]
+sha = "e8381f272a8c0f8c62dfa6683b6c65eff54ebf73abfbdc8a1dc9b03b0650be8f"
+filename = "oysters.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Raw scallops with olive oil, thin citrus slices and microgreens on a blue-rimmed plate"
+
+[photo.image]
+sha = "be9df5314972bce1533a653073539665dda208dcf9871211f703855c8410c63c"
+filename = "scallops.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Melon wedges scattered with flaky salt and savory shavings on a blue-rimmed plate"
+
+[photo.image]
+sha = "09d5f56598b9295fa991f81ca0eccb5dc1ae5dc480afa32944889ed9e3a4892d"
+filename = "melon.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The communal table under paper lanterns"
+
+[photo.image]
+sha = "8a752ea77b5e36248a0d034ec7c35840337686eda0ab83541e7e2164bb19e783"
+filename = "communal-table.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Dried flowers in a clay jug beneath a paper lantern"
+
+[photo.image]
+sha = "13c2681753e158a8485511387b6321837913972e021cd53dc6ed363f80abdee9"
+filename = "lantern-still-life.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Dried lavender on the window tables, the dining room beyond"
+
+[photo.image]
+sha = "dcc6ba91eb1d8cd1547ea40cc0664b2cec5e45a698b8d49145dc75571f0e3177"
+filename = "lavender-tables.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The long room in the evening, from the counter to the dining room"
+
+[photo.image]
+sha = "82aaabe145577fbe5a10253d7ef563b4ec6d666c3b002617b6f036a7d0eddd20"
+filename = "long-room.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "Paper lanterns in the doorway to the dining room"
+
+[photo.image]
+sha = "bf7bcfbfead91f517c104a9b83599d7277ba0841e867a6f9d65abbbd6eda7d55"
+filename = "lanterns-doorway.jpg"
+mime = "image/jpeg"
+display_type = "image"

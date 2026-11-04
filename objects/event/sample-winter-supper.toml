@@ -1,0 +1,16 @@
+order = 1
+title = "Thanksgiving Pie Preorder 2026"
+starts = 2026-11-25T18:00:00.0
+ends = 2026-11-25T20:00:00.0
+summary = """
+Thanksgiving Pie preorders are now live!
+"""
+image_alt = "A pie topped with piped, toasted meringue, close up"
+rsvp_url = "/pie-preorder"
+rsvp_label = "Preorder Now"
+
+[image]
+display_type = "image"
+filename = "pie-meringue.jpg"
+sha = "457b41cca8a8c2f4dbdb95b8aac6ab48f20f893d84cbbe0403687bd77a259980"
+mime = "image/jpeg"

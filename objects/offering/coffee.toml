@@ -1,0 +1,73 @@
+order = 2
+title = "Coffee"
+statement = """
+Curated weekly, our espresso and pour over program rotates in roasters from around the U.S. and beyond. Currently serving: Dorothea (Mt. Vernon, WA), Push x Pull (Portland, OR), Little Wolf (Ipswich, MA), Botz (Whiting, IN), Sey (Brooklyn, NY) and April (Copenhagen).
+"""
+served = "All day"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+alt = "A small latte with a heart poured in the milk, from above, on the terrazzo bar"
+
+[photo.image]
+sha = "8ed092115b2446e639c10e5255f1fb0cac84d66331eaa2ae6432ad66935e50b0"
+filename = "latte-heart.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A tall iced coffee with milk on the terrazzo table in afternoon sun"
+
+[photo.image]
+sha = "923ac41bd489acc5b35bc9dcc8a34e224f947287ebf56b1bca8b665845cf2105"
+filename = "iced-coffee-tall.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A glass of black coffee beside a clay animal vase of dried lavender"
+
+[photo.image]
+sha = "0d865f97c1427569b9e03c5002b74de0f80d65b6529d907937c1483f22f0eb87"
+filename = "black-coffee-lavender.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A short iced coffee with milk in low golden light"
+
+[photo.image]
+sha = "5374f4ee9730600f89d22652efc7864bcaaf7bbabbf25a65e055bb46c40f3cd0"
+filename = "iced-coffee-short.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The espresso machine and a pour-over dripper on the terrazzo bar"
+
+[photo.image]
+sha = "fb44e54ae6173ac417dbe48e6f15d4b9e0bbcda6bb430509ceb835d04e22036e"
+filename = "espresso-pour-over.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "The round coffee bar in morning light"
+
+[photo.image]
+sha = "fb74e4a52aec1e3d14b0e20a2ff3f6e2589b88223b5b336c3d24ab1b86cbedf1"
+filename = "coffee-bar.jpg"
+mime = "image/jpeg"
+display_type = "image"
+
+[[photo]]
+alt = "A grinder behind the glass, with the window lettering in shadow on the bar"
+
+[photo.image]
+sha = "5114ecd4b5ae31536228d0ea026712a66758226880113416bb8454e429bcfac7"
+filename = "grinder-shadow.jpg"
+mime = "image/jpeg"
+display_type = "image"

@@ -2,258 +2,227 @@
   layout 'theme'
   , title: 'Reservations — Nice Dream'
   , page: 'reservations'
-  , collection_id: '6a1e4d804c523c68c922bfed'
+  , light: 'dusk'
+  , description: 'Book a table for dinner at Nice Dream, or a seat at the Sugar Water bar.'
   , stylesheet: '/css/reservations.css'
 %}
 {% assign large_party_min = dinner.large_party_min | floor %}
 {% assign max_party = dinner.max_party | floor %}
 {% assign bar_seats = dinner.bar_seats | floor %}
 
-<article class="page-content">
-  <section class="page-region">
-    <section data-theme="" class="page-section page-section--medium">
-      <div class="page-section__border">
-        <div class="page-section__background"></div>
-      </div>
-      <div class="page-section__wrapper" style="">
-        <div class="page-section__content">
-          <div class="grid-wrapper">
-            <div class="grid reservation-grid">
-              <div class="reservation-grid__form">
-                <div class="block code-block">
-                  <div class="block__content">
-                    <div>
-                      <div id="nd-reservation-form">
-                        <!-- ── FORM VIEW ──────────────────────────────────────────────── -->
-                        <div id="nd-form-view">
-                          <div class="nd-sheet">
-                            <header class="nd-header">
-                              <img class="nd-hero-dog" src="/img/nd-hero-dog.png" alt="Karen holding a fork and spoon" />
-                              <div class="reservation-logos">
-                                <img class="nd-wordmark" src="/img/nice-dream-logo.webp" alt="Nice Dream" />
-                                <img class="sw-wordmark" src="/img/sugar-water.svg" alt="Sugar Water" />
-                              </div>
-                              <svg viewBox="0 0 200 40" class="nd-title">
-                              <!-- text-anchor="middle" centers it; x and y position it on the canvas -->
-                              <text x="100" y="25" text-anchor="middle" font-size="20">
-                                Reservations
-                              </text>
-                            </svg>
-                            </header>
+<section class="form-page" data-light="dusk">
+  <h1 class="section-title form-page__title">Reservations</h1>
+  <div id="nd-reservation-form">
+    <!-- ── FORM VIEW ──────────────────────────────────────────────── -->
+    <div id="nd-form-view">
+      <div class="nd-sheet">
+        <header class="nd-header">
+          <img class="hero-karen" src="/img/hero-karen-clear.png" alt="Karen holding a fork and spoon" />
+        </header>
 
-                            <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
-                              <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                            </svg>
+        <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
+          <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
 
-                            <p class="nd-blurb">
-                              {{ dinner.blurb }}
-                            </p>
+        <div class="nd-blurb markdown">
+          {{ dinner.blurb }}
+        </div>
 
-                            {% if dinner.sample_menu %}<a class="nd-menu-link" href="{{ dinner.sample_menu.url }}" target="_blank" rel="noopener">
-                              <span class="nd-menu-link-text">Peek at the sample menu</span>
-                              <svg class="nd-menu-link-arrow" viewBox="0 0 20 12" fill="none" aria-hidden="true">
-                                <path d="M1 6 H17 M12 1.5 L17.5 6 L12 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                              </svg>
-                            </a>
-                            {% endif %}
-                            <p class="nd-blurb-note" style="margin-top:12px;">
-                              {{ dinner.blurb_note }}
-                            </p>
+        {% if dinner.sample_menu %}<a class="nd-menu-link" href="{{ dinner.sample_menu.url }}" target="_blank" rel="noopener">
+          <span class="nd-menu-link-text">Peek at the sample menu</span>
+          <svg class="nd-menu-link-arrow" viewBox="0 0 20 12" fill="none" aria-hidden="true">
+            <path d="M1 6 H17 M12 1.5 L17.5 6 L12 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+        {% endif %}
+        <div class="nd-blurb-note markdown">
+          {{ dinner.blurb_note }}
+        </div>
 
-                            <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
-                              <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                            </svg>
+        <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
+          <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
 
-                            <form id="nd-form" data-endpoint="/carriers/reservations" data-large-party-min="{{ large_party_min }}" data-max-party="{{ max_party }}" data-bar-seats="{{ bar_seats }}" novalidate>
-                              <!-- Shown when the page was opened from a guest's edit link -->
-                              <div class="nd-notice nd-editing" id="nd-editing" role="note">
-                                <p>You're changing your reservation for <strong id="nd-editing-when"></strong>. Update anything below and save, or cancel it at the bottom.</p>
-                              </div>
-                              <p class="nd-field-error nd-token-notice" id="nd-token-notice" role="alert"></p>
+        <form id="nd-form" data-endpoint="/carriers/reservations" data-large-party-min="{{ large_party_min }}" data-max-party="{{ max_party }}" data-bar-seats="{{ bar_seats }}" novalidate>
+          <!-- Shown when the page was opened from a guest's edit link -->
+          <div class="nd-notice nd-editing" id="nd-editing" role="note">
+            <p>You're changing your reservation for <strong id="nd-editing-when"></strong>. Update anything below and save, or cancel it at the bottom.</p>
+          </div>
+          <p class="nd-field-error nd-token-notice" id="nd-token-notice" role="alert"></p>
 
-                              {% if bar_seats > 0 %}
-                              <!-- Dining room or bar -->
-                              <div class="nd-field">
-                                <div class="nd-segmented" role="radiogroup" aria-label="Where would you like to sit?">
-                                  <input class="nd-pill-radio" type="radio" name="area" id="nd-area-dining" value="dining" checked />
-                                  <label class="nd-segment" for="nd-area-dining">Dining room</label>
-                                  <input class="nd-pill-radio" type="radio" name="area" id="nd-area-bar" value="bar" />
-                                  <label class="nd-segment" for="nd-area-bar"><img class="nd-segment-logo" src="/img/sugar-water.svg" alt="Sugar Water bar" /></label>
-                                </div>
-                              </div>
-                              {% endif %}
-
-                              <!-- 1. Party size -->
-                              <div class="nd-field">
-                                <span class="nd-label" id="nd-party-label">How many of you?</span>
-                                <div class="nd-pills" role="radiogroup" aria-labelledby="nd-party-label">
-                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-1" value="1" />
-                                  <label class="nd-pill" for="nd-party-1">1</label>
-                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-2" value="2" checked />
-                                  <label class="nd-pill" for="nd-party-2">2</label>
-                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-3" value="3" />
-                                  <label class="nd-pill" for="nd-party-3">3</label>
-                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-4" value="4" />
-                                  <label class="nd-pill" for="nd-party-4">4</label>
-                                  <input class="nd-pill-radio" type="radio" name="party" id="nd-party-more" value="more" />
-                                  <label class="nd-pill" for="nd-party-more">5+</label>
-                                </div>
-                                {% if bar_seats > 0 %}
-                                <p class="nd-field-note nd-bar-note" id="nd-bar-note">
-                                  The bar seats parties of up to {{ bar_seats }}.
-                                </p>
-                                {% endif %}
-
-                                <div class="nd-subfield" id="nd-party-count-field">
-                                  <label class="nd-label" for="nd-party-count">How many exactly?</label>
-                                  <input class="nd-input nd-input--short" type="number" id="nd-party-count" name="party_count" min="5" max="{{ max_party }}" step="1" inputmode="numeric" placeholder="5" disabled />
-                                </div>
-
-                                <div class="nd-notice" id="nd-large-party" role="note">
-                                  {{ dinner.large_party_notice }}
-                                </div>
-                                <p class="nd-field-error" id="nd-party-too-big" role="alert">
-                                  For parties larger than {{ max_party }}, please email us at
-                                  <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
-                                  > and we'll sort it out together.
-                                </p>
-                              </div>
-
-                              <!-- 2. Night -->
-                              <div class="nd-field">
-                                <label class="nd-label" for="nd-date">Which night?</label>
-                                <select class="nd-select" id="nd-date" name="date" required disabled>
-                                  <option value="" disabled selected>Checking what's open…</option>
-                                </select>
-                                <p class="nd-field-note nd-walk-in-note" id="nd-walk-in-note">For service tonight, just drop by!</p>
-                                <p class="nd-field-note nd-availability-status" id="nd-availability-status" role="status"></p>
-                              </div>
-
-                              <!-- 3. Time -->
-                              <div class="nd-field">
-                                <span class="nd-label" id="nd-time-label">What time?</span>
-                                <div class="nd-pills" id="nd-times" role="radiogroup" aria-labelledby="nd-time-label"></div>
-                              </div>
-
-                              <!-- 4. Name -->
-                              <div class="nd-field">
-                                <label class="nd-label" for="nd-name">Your name</label>
-                                <input class="nd-input" type="text" id="nd-name" name="name" placeholder="First and last name" required autocomplete="name" />
-                              </div>
-
-                              <!-- 5. Contact preference -->
-                              <!--
-                                Pure-CSS toggle: radios are direct children so the :checked ~ rules
-                                can reveal the matching field with NO JavaScript.
-                              -->
-                              <div class="nd-field nd-contact-group">
-                                <span class="nd-label">How should we reach you?</span>
-
-                                <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-email" value="email" required />
-                                <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-sms" value="sms" />
-                                <label class="nd-toggle-pill nd-pill-a" for="nd-pref-email">Email</label
-                                ><label class="nd-toggle-pill nd-pill-b" for="nd-pref-sms">Text (SMS)</label>
-
-                                <!-- Email field -->
-                                <div class="nd-contact-field" id="nd-email-field">
-                                  <label class="nd-label" for="nd-email" style="margin-top:0;">Email address</label>
-                                  <input class="nd-input" type="email" id="nd-email" name="email" placeholder="you@example.com" autocomplete="email" />
-                                </div>
-
-                                <!-- Phone field -->
-                                <div class="nd-contact-field" id="nd-phone-field">
-                                  <label class="nd-label" for="nd-phone" style="margin-top:0;">Mobile number</label>
-                                  <input class="nd-input" type="tel" id="nd-phone" name="phone" placeholder="(   )   -    " autocomplete="tel" disabled />
-                                </div>
-                              </div>
-
-                              <!-- 6. Notes -->
-                              <div class="nd-field">
-                                <label class="nd-label" for="nd-notes">
-                                  Anything we should know?
-                                  <span class="nd-optional">optional</span>
-                                </label>
-                                <textarea class="nd-textarea" id="nd-notes" name="notes" placeholder="Allergies, special occasions, or other requests"></textarea>
-                              </div>
-
-                              <!-- 7. Newsletter -->
-                              <div class="nd-field">
-                                <label class="nd-newsletter-label">
-                                  <input type="checkbox" id="nd-newsletter" name="newsletter" value="yes" />
-                                  <span class="nd-newsletter-text">
-                                    Sign me up for updates from Nice Dream &amp; Sugar Water
-                                  </span>
-                                </label>
-                              </div>
-
-                              <!-- Submit -->
-                              <button class="nd-submit" type="submit">Book a table</button>
-                              <button class="nd-submit nd-submit--quiet" type="button" id="nd-cancel">Cancel reservation</button>
-                              <p class="nd-field-error nd-refusal" id="nd-refusal" role="alert"></p>
-                              <p class="nd-error" id="nd-error">
-                                Something went wrong &mdash; please email us directly at
-                                <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
-                                >.
-                              </p>
-                            </form>
-                          </div>
-                          <!-- /nd-sheet -->
-
-                          <p class="nd-footmark">Nice Dream · Sugar Water</p>
-                        </div>
-                        <!-- /nd-form-view -->
-
-                        <!-- ── CONFIRMATION VIEW ──────────────────────────────────────── -->
-                        <div id="nd-confirmation">
-                          <div class="nd-sheet">
-                            <img class="nd-confirm-dog" src="/img/nd-confirm-dog.png" alt="Karen curled up asleep" />
-                            <h2 class="nd-confirm-title" id="nd-confirm-title">
-                              You're<br>
-                              booked.
-                            </h2>
-
-                            <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
-                              <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                            </svg>
-
-                            <p class="nd-confirm-body" id="nd-confirm-body">
-                              See you soon, <strong id="nd-confirm-name"></strong> — we're holding
-                              <strong id="nd-confirm-party"></strong> on
-                              <strong id="nd-confirm-when"></strong>.
-                            </p>
-                            <p class="nd-confirm-body" id="nd-cancelled-body" style="display:none;">
-                              Your reservation for <strong id="nd-cancelled-when"></strong> is cancelled.
-                              We hope to see you another time — <a href="/reservations.html">book again</a> whenever you like.
-                            </p>
-                            <p class="nd-confirm-body nd-confirm-large" id="nd-confirm-large">
-                              Since you're a larger group, <strong>we'll reach out to confirm the details</strong>
-                              using the contact information you provided.
-                            </p>
-                            <p class="nd-confirm-note" id="nd-confirm-note">
-                              Need to change or cancel?
-                              <span id="nd-manage"><a id="nd-manage-link" href="#">Use this link</a> (<span id="nd-manage-hint"></span>), or email</span
-                              ><span id="nd-manage-fallback">Email</span> us at
-                              <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
-                              >.
-                            </p>
-                          </div>
-                          </div>
-                        <!-- /nd-confirmation -->
-                      </div>
-                      <!-- /nd-reservation-form -->
-
-                      <script src="/js/reservations.js"></script>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {% if bar_seats > 0 %}
+          <!-- Dining room or bar -->
+          <div class="nd-field">
+            <div class="nd-segmented" role="radiogroup" aria-label="Where would you like to sit?">
+              <input class="nd-pill-radio" type="radio" name="area" id="nd-area-dining" value="dining" checked />
+              <label class="nd-segment" for="nd-area-dining">Dining room</label>
+              <input class="nd-pill-radio" type="radio" name="area" id="nd-area-bar" value="bar" />
+              <label class="nd-segment" for="nd-area-bar"><img class="nd-segment-logo" src="/img/sugar-water.svg" alt="Sugar Water bar" /></label>
             </div>
           </div>
-        </div>
+          {% endif %}
+
+          <!-- 1. Party size -->
+          <div class="nd-field">
+            <span class="nd-label" id="nd-party-label">How many of you?</span>
+            <div class="nd-pills" role="radiogroup" aria-labelledby="nd-party-label">
+              <input class="nd-pill-radio" type="radio" name="party" id="nd-party-1" value="1" />
+              <label class="nd-pill" for="nd-party-1">1</label>
+              <input class="nd-pill-radio" type="radio" name="party" id="nd-party-2" value="2" checked />
+              <label class="nd-pill" for="nd-party-2">2</label>
+              <input class="nd-pill-radio" type="radio" name="party" id="nd-party-3" value="3" />
+              <label class="nd-pill" for="nd-party-3">3</label>
+              <input class="nd-pill-radio" type="radio" name="party" id="nd-party-4" value="4" />
+              <label class="nd-pill" for="nd-party-4">4</label>
+              <input class="nd-pill-radio" type="radio" name="party" id="nd-party-more" value="more" />
+              <label class="nd-pill" for="nd-party-more">5+</label>
+            </div>
+            {% if bar_seats > 0 %}
+            <p class="nd-field-note nd-bar-note" id="nd-bar-note">
+              The bar seats parties of up to {{ bar_seats }}.
+            </p>
+            {% endif %}
+
+            <div class="nd-subfield" id="nd-party-count-field">
+              <label class="nd-label" for="nd-party-count">How many exactly?</label>
+              <input class="nd-input nd-input--short" type="number" id="nd-party-count" name="party_count" min="5" max="{{ max_party }}" step="1" inputmode="numeric" placeholder="5" disabled />
+            </div>
+
+            <div class="nd-notice" id="nd-large-party" role="note">
+              {{ dinner.large_party_notice }}
+            </div>
+            <p class="nd-field-error" id="nd-party-too-big" role="alert">
+              For parties larger than {{ max_party }}, please email us at
+              <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+              > and we'll sort it out together.
+            </p>
+          </div>
+
+          <!-- 2. Night -->
+          <div class="nd-field">
+            <label class="nd-label" for="nd-date">Which night?</label>
+            <select class="nd-select" id="nd-date" name="date" required disabled>
+              <option value="" disabled selected>Checking what's open…</option>
+            </select>
+            <p class="nd-field-note nd-walk-in-note" id="nd-walk-in-note">For service tonight, just drop by!</p>
+            <p class="nd-field-note nd-availability-status" id="nd-availability-status" role="status"></p>
+          </div>
+
+          <!-- 3. Time -->
+          <div class="nd-field">
+            <span class="nd-label" id="nd-time-label">What time?</span>
+            <div class="nd-pills" id="nd-times" role="radiogroup" aria-labelledby="nd-time-label"></div>
+          </div>
+
+          <!-- 4. Name -->
+          <div class="nd-field">
+            <label class="nd-label" for="nd-name">Your name</label>
+            <input class="nd-input" type="text" id="nd-name" name="name" placeholder="First and last name" required autocomplete="name" />
+          </div>
+
+          <!-- 5. Contact preference -->
+          <!--
+            Pure-CSS toggle: radios are direct children so the :checked ~ rules
+            can reveal the matching field with NO JavaScript.
+          -->
+          <div class="nd-field nd-contact-group">
+            <span class="nd-label">How should we reach you?</span>
+
+            <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-email" value="email" required />
+            <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-sms" value="sms" />
+            <label class="nd-toggle-pill nd-pill-a" for="nd-pref-email">Email</label
+            ><label class="nd-toggle-pill nd-pill-b" for="nd-pref-sms">Text (SMS)</label>
+
+            <!-- Email field -->
+            <div class="nd-contact-field" id="nd-email-field">
+              <label class="nd-label" for="nd-email" style="margin-top:0;">Email address</label>
+              <input class="nd-input" type="email" id="nd-email" name="email" placeholder="you@example.com" autocomplete="email" />
+            </div>
+
+            <!-- Phone field -->
+            <div class="nd-contact-field" id="nd-phone-field">
+              <label class="nd-label" for="nd-phone" style="margin-top:0;">Mobile number</label>
+              <input class="nd-input" type="tel" id="nd-phone" name="phone" placeholder="(   )   -    " autocomplete="tel" disabled />
+              <p class="nd-contact-note">We'll text your confirmation and any changes to this number. Msg &amp; data rates may apply.</p>
+            </div>
+          </div>
+
+          <!-- 6. Notes -->
+          <div class="nd-field">
+            <label class="nd-label" for="nd-notes">
+              Anything we should know?
+              <span class="nd-optional">optional</span>
+            </label>
+            <textarea class="nd-textarea" id="nd-notes" name="notes" placeholder="Allergies, special occasions, or other requests"></textarea>
+          </div>
+
+          <!-- 7. Newsletter -->
+          <div class="nd-field">
+            <label class="nd-newsletter-label">
+              <input type="checkbox" id="nd-newsletter" name="newsletter" value="yes" />
+              <span class="nd-newsletter-text">
+                Sign me up for updates from Nice Dream &amp; Sugar Water
+              </span>
+            </label>
+          </div>
+
+          <!-- Submit -->
+          <button class="nd-submit" type="submit">Book a table</button>
+          <button class="nd-submit nd-submit--quiet" type="button" id="nd-cancel">Cancel reservation</button>
+          <p class="nd-field-error nd-refusal" id="nd-refusal" role="alert"></p>
+          <p class="nd-error" id="nd-error">
+            Something went wrong &mdash; please email us directly at
+            <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+            >.
+          </p>
+        </form>
       </div>
-    </section>
-  </section>
-</article>
+      <!-- /nd-sheet -->
+
+      <p class="nd-footmark">Nice Dream · Sugar Water</p>
+    </div>
+    <!-- /nd-form-view -->
+
+    <!-- ── CONFIRMATION VIEW ──────────────────────────────────────── -->
+    <div id="nd-confirmation">
+      <div class="nd-sheet">
+        <img class="confirm-karen" src="/img/confirm-karen-clear.png" alt="Karen curled up asleep" />
+        <h2 class="nd-confirm-title" id="nd-confirm-title">
+          You're<br>
+          booked.
+        </h2>
+
+        <svg class="nd-wave" viewBox="0 0 560 9" preserveAspectRatio="none" fill="none" aria-hidden="true">
+          <path d="M0 5 Q14 0 28 5 T56 5 T84 5 T112 5 T140 5 T168 5 T196 5 T224 5 T252 5 T280 5 T308 5 T336 5 T364 5 T392 5 T420 5 T448 5 T476 5 T504 5 T532 5 T560 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+
+        <p class="nd-confirm-body" id="nd-confirm-body">
+          See you soon, <strong id="nd-confirm-name"></strong> — we're holding
+          <strong id="nd-confirm-party"></strong> on
+          <strong id="nd-confirm-when"></strong>.
+        </p>
+        <p class="nd-confirm-body" id="nd-cancelled-body" style="display:none;">
+          Your reservation for <strong id="nd-cancelled-when"></strong> is cancelled.
+          We hope to see you another time — <a href="/reservations.html">book again</a> whenever you like.
+        </p>
+        <p class="nd-confirm-body nd-confirm-large" id="nd-confirm-large">
+          Since you're a larger group, <strong>we'll reach out to confirm the details</strong>
+          using the contact information you provided.
+        </p>
+        <p class="nd-confirm-note" id="nd-confirm-note">
+          Need to change or cancel?
+          <span id="nd-manage"><a id="nd-manage-link" href="#">Use this link</a> (<span id="nd-manage-hint"></span>), or email</span
+          ><span id="nd-manage-fallback">Email</span> us at
+          <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
+          >.
+        </p>
+      </div>
+    </div>
+    <!-- /nd-confirmation -->
+  </div>
+  <!-- /nd-reservation-form -->
+  <script src="/js/reservations.js"></script>
+</section>
 {% if bar_seats > 0 %}
 <canvas class="bg-shader" id="bg-shader" aria-hidden="true"></canvas>
 <script src="/js/bg-shader.js"></script>
