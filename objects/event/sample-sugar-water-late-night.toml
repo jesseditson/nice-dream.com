@@ -1,0 +1,12 @@
+order = 2
+title = "Sample: Late Night at Sugar Water"
+starts = "2026-12-19 20:00:00"
+ends = "2026-12-19 23:00:00"
+summary = """
+Another sample, with a longer description to show how the card grows. A guest bartender, a short
+menu of new drinks, and the bar open a little later than usual. Replace or delete it in the editor.
+"""
+image_local = "sugar-water"
+image_alt = "The Sugar Water sign above the back bar"
+rsvp_url = "/reservations"
+rsvp_label = "Save a seat"

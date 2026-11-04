@@ -1,0 +1,57 @@
+order = 7
+title = "Dinner"
+statement = """
+Highly variable, our dinner menu - which shifts week to week (even day to day), is a snapshot in time celebrating our current micro-season. Japanese aesthetics and techniques meet Californian sensibilities. Full cocktail, spirits, and sake menus are available at all tables.
+"""
+served = "5:30 – 9pm"
+light = "night"
+menu_label = "Sample menu"
+link_label = "Reserve a table"
+link_url = "/reservations"
+
+[menu]
+display_type = "upload"
+filename = "sample-menu.pdf"
+sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
+mime = "application/pdf"
+name = "sample-menu.pdf"
+
+[[photo]]
+local = "custard-and-rice"
+alt = "A small bowl of silky custard topped with shiso and microgreens, with a rice bowl behind"
+
+[[photo]]
+local = "sashimi-bowl"
+alt = "A sashimi bowl with tuna, white fish and abalone in its shell, dressed with shiso, citrus and shaved radish"
+
+[[photo]]
+local = "oysters"
+alt = "Oysters on ice with red seaweed, one under a pink granita"
+
+[[photo]]
+local = "scallops"
+alt = "Raw scallops with olive oil, thin citrus slices and microgreens on a blue-rimmed plate"
+
+[[photo]]
+local = "melon"
+alt = "Melon wedges scattered with flaky salt and savory shavings on a blue-rimmed plate"
+
+[[photo]]
+local = "communal-table"
+alt = "The communal table under paper lanterns"
+
+[[photo]]
+local = "lantern-still-life"
+alt = "Dried flowers in a clay jug beneath a paper lantern"
+
+[[photo]]
+local = "lavender-tables"
+alt = "Dried lavender on the window tables, the dining room beyond"
+
+[[photo]]
+local = "long-room"
+alt = "The long room in the evening, from the counter to the dining room"
+
+[[photo]]
+local = "lanterns-doorway"
+alt = "Paper lanterns in the doorway to the dining room"

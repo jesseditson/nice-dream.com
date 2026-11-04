@@ -1,0 +1,41 @@
+order = 5
+title = "Lunch"
+statement = """
+Onigiri, farmers-market-driven sides, and must-eat-everyday miso black cod and soft tofu bowls. This is food we can - and do! - eat happily everyday. We proudly source our fish from E-Fish, who connects us with local fishermen, and our produce is from the Joshua Tree Farmers Market.
+"""
+served = "11am – 3pm"
+light = "midday"
+menu_label = "Sample menu"
+link_label = ""
+link_url = ""
+
+[menu]
+display_type = "upload"
+filename = "sample-menu.pdf"
+sha = "0089844effb6a90701769abebcd08f86fe9deb2e76bf1374fa177bd9ddc901bb"
+mime = "application/pdf"
+name = "sample-menu.pdf"
+
+[[photo]]
+local = "onigiri"
+alt = "Onigiri on a tray, coated in black sesame, chili flakes and toasted seeds"
+
+[[photo]]
+local = "fish-rice-bowl"
+alt = "Grilled fish over multigrain rice with potato salad, sesame broccolini and pickled cabbage and cucumber"
+
+[[photo]]
+local = "fish-collar"
+alt = "A grilled fish collar with a coil of pickled cucumber on a blue-rimmed plate"
+
+[[photo]]
+local = "braised-eggplant"
+alt = "Braised eggplant in broth topped with sliced scallions, on the kitchen pass"
+
+[[photo]]
+local = "window-flowers"
+alt = "Window tables in the midday sun"
+
+[[photo]]
+local = "long-room"
+alt = "The long room, from the counter through to the dining room"

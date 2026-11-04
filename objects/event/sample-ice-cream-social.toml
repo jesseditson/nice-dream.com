@@ -1,0 +1,11 @@
+order = 3
+title = "Sample: Ice Cream Social"
+starts = "2027-01-09 13:00:00"
+ends = "2027-01-09 16:00:00"
+summary = """
+A sample with no photo and no RSVP link, to show the plainest card. Replace or delete it in the editor.
+"""
+image_local = ""
+image_alt = ""
+rsvp_url = ""
+rsvp_label = ""

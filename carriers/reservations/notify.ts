@@ -144,8 +144,8 @@ const escapeHtml = (value: string): string =>
 const site = (booking: Notice, path: string): string => `${booking.siteUrl.replace(/\/+$/, "")}${path}`;
 
 type Card = {
-  /** `nd-confirm-dog` (curled up asleep) or `nd-hero-dog` (fork and spoon at the ready). */
-  dog: "confirm" | "hero";
+  /** `confirm-karen` (curled up asleep) or `hero-karen` (fork and spoon at the ready). */
+  karen: "confirm" | "hero";
   /** Two lines, like the form's "You're / booked." */
   title: [string, string];
   /** HTML — already escaped. */
@@ -178,7 +178,7 @@ const wave = `<div style="font-family:${BODY_FONT};font-size:15px;line-height:1;
 const cardHtml = (emails: EmailsObject, booking: Notice, card: Card): string => {
   const paragraph = `font-family:${BODY_FONT};font-size:15px;line-height:1.75;color:${INK_70};`;
   const sections = [
-    `<tr><td align="center" style="padding:0 0 14px;"><img src="${site(booking, `/img/nd-${card.dog}-dog.png`)}" width="150" height="150" alt="" style="display:block;width:150px;height:150px;border:0;"></td></tr>`,
+    `<tr><td align="center" style="padding:0 0 14px;"><img src="${site(booking, `/img/${card.karen}-karen.png`)}" width="150" height="150" alt="" style="display:block;width:150px;height:150px;border:0;"></td></tr>`,
     `<tr><td align="center" style="font-family:${TITLE_FONT};font-size:34px;line-height:1.1;letter-spacing:0.06em;text-transform:uppercase;font-weight:700;color:${INK};padding:0 0 18px;">${card.title[0]}<br>${card.title[1]}</td></tr>`,
     `<tr><td align="center" style="padding:0 0 20px;">${wave}</td></tr>`,
     `<tr><td style="${paragraph}">${card.lead}</td></tr>`,
@@ -239,7 +239,7 @@ const manageAside = (emails: EmailsObject, booking: Notice): string =>
   booking.manageUrl ? `The button above lets you change or cancel any time. ${askUsHtml(emails)}` : askUsHtml(emails);
 
 const heldCard = (emails: EmailsObject, booking: Notice, title: [string, string], lead: string, footmark: string): Card => ({
-  dog: "confirm",
+  karen: "confirm",
   title,
   lead,
   details: [
@@ -298,7 +298,7 @@ export const guestCancelledEmail = (emails: EmailsObject, booking: Notice, bookA
     [fill(emails.guest_cancelled_body, { when: when(booking), book_url: bookAgainUrl }), bookAgainUrl],
     { ...booking, largeParty: false, manageUrl: undefined },
     {
-      dog: "hero",
+      karen: "hero",
       title: titleLines(emails.guest_cancelled_title),
       lead: fill(emails.guest_cancelled_lead, { name: strong(firstName(booking)), when: when(booking) }),
       button: { label: emails.button_book_again_label ?? "", url: bookAgainUrl },

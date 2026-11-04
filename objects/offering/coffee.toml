@@ -1,0 +1,38 @@
+order = 2
+title = "Coffee"
+statement = """
+Curated weekly, our espresso and pour over program rotates in roasters from around the U.S. and beyond. Currently serving: Dorothea (Mt. Vernon, WA), Push x Pull (Portland, OR), Little Wolf (Ipswich, MA), Botz (Whiting, IN), Sey (Brooklyn, NY) and April (Copenhagen).
+"""
+served = "All day"
+light = "morning"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+local = "latte-heart"
+alt = "A small latte with a heart poured in the milk, from above, on the terrazzo bar"
+
+[[photo]]
+local = "iced-coffee-tall"
+alt = "A tall iced coffee with milk on the terrazzo table in afternoon sun"
+
+[[photo]]
+local = "black-coffee-lavender"
+alt = "A glass of black coffee beside a clay animal vase of dried lavender"
+
+[[photo]]
+local = "iced-coffee-short"
+alt = "A short iced coffee with milk in low golden light"
+
+[[photo]]
+local = "espresso-pour-over"
+alt = "The espresso machine and a pour-over dripper on the terrazzo bar"
+
+[[photo]]
+local = "coffee-bar"
+alt = "The round coffee bar in morning light"
+
+[[photo]]
+local = "grinder-shadow"
+alt = "A grinder behind the glass, with the window lettering in shadow on the bar"

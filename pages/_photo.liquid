@@ -1,0 +1,1 @@
+{% if image != blank %}<img src="{{ image.url }}" alt="{{ alt | escape }}" loading="{{ loading }}" decoding="async" />{% else %}<img src="/img/space/{{ local }}-1200.jpg" srcset="/img/space/{{ local }}-640.jpg 640w, /img/space/{{ local }}-1200.jpg 1200w" sizes="{{ sizes }}" width="1200" height="1800" alt="{{ alt | escape }}" loading="{{ loading }}" decoding="async" />{% endif %}

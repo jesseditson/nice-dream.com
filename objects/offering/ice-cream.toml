@@ -1,0 +1,34 @@
+order = 1
+title = "Ice Cream"
+statement = """
+Where Nice Dream began: hyper-seasonal ice creams and sorbets churned from peak produce, first scooped at the Joshua Tree Farmers Market. All our ice creams and sorbets are dairy-free (and oftentimes vegan!).
+"""
+served = "All day"
+light = "golden"
+menu_label = ""
+link_label = ""
+link_url = ""
+
+[[photo]]
+local = "ice-cream-brittle"
+alt = "Pale golden ice cream scattered with shards of nut brittle"
+
+[[photo]]
+local = "ice-cream-strawberry-crumble"
+alt = "Ice cream swirled with a red fruit ripple and crumble"
+
+[[photo]]
+local = "ice-cream-passion-fruit"
+alt = "Green and white ice cream swirled with passion fruit"
+
+[[photo]]
+local = "ice-cream-cookie-crumb"
+alt = "Chocolate and pale ice cream scattered with dark cookie crumbs"
+
+[[photo]]
+local = "ice-cream-chocolate-drizzle"
+alt = "Chocolate ice cream with a pink drizzle"
+
+[[photo]]
+local = "ice-cream-red-swirl"
+alt = "Pale ice cream with a bright red swirl"
