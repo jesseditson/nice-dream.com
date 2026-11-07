@@ -37,7 +37,6 @@ import {
   formatClock,
   formatDateLabel,
   formatHHMM,
-  holdFor,
   holdForArea,
   isIsoDate,
   nowMinutesIn,
@@ -263,7 +262,7 @@ const carrier: Carrier = async (params, body, objects) => {
   // ---- POST: hold a walk-in's table -----------------------------------------
   if (walkIn) {
     const [table] = walkIn.tables;
-    const hold = holdFor(walkIn.party, rules);
+    const hold = holdForArea(areaOf(walkIn.tables), walkIn.party, rules);
     // A table already held for these hours is the booked party sitting down.
     const booked = occupiedAt(bookings, walkIn.date, walkIn.start, hold, rules).has(table);
     if (!booked) await appendBooking(client, walkInRow(walkIn), rules);

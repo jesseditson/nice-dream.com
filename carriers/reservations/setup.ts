@@ -29,6 +29,7 @@ const layoutKey = (rules: Rules): string => {
     `v${SETUP_VERSION}`,
     `slot=${rules.slotMinutes}`,
     `hold=${rules.holdMinutes}`,
+    `barhold=${rules.barHoldMinutes}`,
     ...rules.holdOverrides.map(({ min, max, minutes }) => `hold${min}-${max}=${minutes}`),
     `tables=${rules.twoTops}+${rules.fourTops}@${rules.fourTopStart}+${rules.communalTables}+${rules.barSeats}`,
     windows,
@@ -74,7 +75,11 @@ const matrixSlots = (rules: Rules): number[] => {
   const windows = [...rules.seatings.values()];
   if (!windows.length) return [];
   const first = Math.min(...windows.map((window) => window.first));
-  const longestHold = Math.max(rules.holdMinutes, ...rules.holdOverrides.map(({ minutes }) => minutes));
+  const longestHold = Math.max(
+    rules.holdMinutes,
+    ...rules.holdOverrides.map(({ minutes }) => minutes),
+    ...(rules.barSeats > 0 ? [rules.barHoldMinutes] : []),
+  );
   const last = Math.max(...windows.map((window) => window.last)) + longestHold - rules.slotMinutes;
   const slots: number[] = [];
   for (let time = first; time <= last; time += rules.slotMinutes) slots.push(time);
@@ -91,11 +96,13 @@ const HOLDS_TOP = 5;
 const partyCap = (rules: Rules): number => Math.max(rules.maxParty, rules.barSeats);
 
 /** Who holds table `$A<row>` during the seating in `<column>$3`, on the date in B1. */
-const tablesCellFormula = (row: number, column: string, rules: Rules): string => {
+const tablesCellFormula = (id: string, row: number, column: string, rules: Rules): string => {
   const slot = `ROUND(${column}$3*1440)`;
   const start = `ROUND(${tracker(COL.time)}*1440)`;
   const holds = `${CONFIG}!$A$${HOLDS_TOP}:$B$${HOLDS_TOP + partyCap(rules) - 1}`;
-  const hold = `IFERROR(VLOOKUP(${tracker(COL.party)},${holds},2,FALSE),${CONFIG}!$B$2)`;
+  const hold = id.startsWith("B")
+    ? String(rules.barHoldMinutes)
+    : `IFERROR(VLOOKUP(${tracker(COL.party)},${holds},2,FALSE),${CONFIG}!$B$2)`;
   return (
     `=IFERROR(TEXTJOIN(" / ",TRUE,FILTER(` +
     `${tracker(COL.name)}&" ("&${tracker(COL.party)}&")",` +
@@ -197,7 +204,7 @@ const buildSheet = async (client: SheetsClient, rules: Rules, layout: string): P
   const matrixTop = 3;
   const matrixRows = ids.map((id, index) => [
     `'${id}`,
-    ...slots.map((_, column) => tablesCellFormula(matrixTop + 1 + index, columnLetter(column + 1), rules)),
+    ...slots.map((_, column) => tablesCellFormula(id, matrixTop + 1 + index, columnLetter(column + 1), rules)),
   ]);
 
   await client("POST", "/values:batchClear", { ranges: [`${CONFIG}!A${HOLDS_TOP - 1}:B`] });
