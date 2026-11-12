@@ -205,20 +205,6 @@
     renderDates();
   };
 
-  const setContactVisible = (field: HTMLElement, input: HTMLInputElement, visible: boolean) => {
-    field.classList.toggle("visible", visible);
-    input.required = visible;
-    input.disabled = !visible;
-    if (!visible) {
-      input.value = "";
-    }
-  };
-
-  const showContact = (type: "email" | "phone") => {
-    setContactVisible(byId("nd-email-field"), byId("nd-email"), type === "email");
-    setContactVisible(byId("nd-phone-field"), byId("nd-phone"), type === "phone");
-  };
-
   const showTokenNotice = (message: string) => {
     const notice = byId("nd-token-notice");
     notice.textContent = message;
@@ -246,10 +232,7 @@
     wantedDate = booking.date;
     wantedTime = booking.time;
     byId<HTMLInputElement>("nd-name").value = booking.name;
-    const sms = booking.contact_method === "sms";
-    byId<HTMLInputElement>(sms ? "nd-pref-sms" : "nd-pref-email").checked = true;
-    showContact(sms ? "phone" : "email");
-    byId<HTMLInputElement>(sms ? "nd-phone" : "nd-email").value = booking.contact;
+    if (booking.contact_method === "email") byId<HTMLInputElement>("nd-email").value = booking.contact;
     byId<HTMLTextAreaElement>("nd-notes").value = booking.notes;
     byId<HTMLInputElement>("nd-newsletter").checked = booking.newsletter;
     byId("nd-editing-when").textContent = `${booking.date_label} at ${booking.time_label}`;
@@ -289,11 +272,6 @@
   partyCount.addEventListener("input", updateParty);
   dateSelect.addEventListener("change", renderTimes);
 
-  // Listeners are attached here rather than inline so they survive script-rewriting proxies like Cloudflare Rocket Loader.
-  form.querySelectorAll<HTMLInputElement>('input[name="contact_method"]').forEach((radio) => {
-    radio.addEventListener("change", () => showContact(radio.value === "email" ? "email" : "phone"));
-  });
-
   const showRefusal = (message: string) => {
     const refusal = byId("nd-refusal");
     refusal.textContent = message;
@@ -323,12 +301,7 @@
     const note = byId("nd-confirm-note");
     note.style.display = cancelled ? "none" : "";
     const manage = byId("nd-manage");
-    if (result.manage_url) {
-      byId<HTMLAnchorElement>("nd-manage-link").href = result.manage_url;
-      byId("nd-manage-hint").textContent = byId<HTMLInputElement>("nd-pref-sms").checked
-        ? "keep it somewhere safe, since we only have your number"
-        : "it's in your confirmation email too";
-    }
+    if (result.manage_url) byId<HTMLAnchorElement>("nd-manage-link").href = result.manage_url;
     manage.style.display = result.manage_url ? "" : "none";
     byId("nd-manage-fallback").style.display = result.manage_url ? "none" : "";
     byId("nd-form-view").style.display = "none";
@@ -374,7 +347,6 @@
       return;
     }
 
-    const sms = byId<HTMLInputElement>("nd-pref-sms").checked;
     const payload = {
       ...(editing ? { token } : {}),
       area: area(),
@@ -382,9 +354,8 @@
       date: dateSelect.value,
       time,
       name: byId<HTMLInputElement>("nd-name").value,
-      contact_method: sms ? "sms" : "email",
+      contact_method: "email",
       email: byId<HTMLInputElement>("nd-email").value,
-      phone: byId<HTMLInputElement>("nd-phone").value,
       notes: byId<HTMLTextAreaElement>("nd-notes").value,
       newsletter: byId<HTMLInputElement>("nd-newsletter").checked,
     };

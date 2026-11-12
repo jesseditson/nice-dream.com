@@ -120,31 +120,10 @@
             <input class="nd-input" type="text" id="nd-name" name="name" placeholder="First and last name" required autocomplete="name" />
           </div>
 
-          <!-- 5. Contact preference -->
-          <!--
-            Pure-CSS toggle: radios are direct children so the :checked ~ rules
-            can reveal the matching field with NO JavaScript.
-          -->
-          <div class="nd-field nd-contact-group">
-            <span class="nd-label">How should we reach you?</span>
-
-            <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-email" value="email" required />
-            <input class="nd-contact-radio" type="radio" name="contact_method" id="nd-pref-sms" value="sms" />
-            <label class="nd-toggle-pill nd-pill-a" for="nd-pref-email">Email</label
-            ><label class="nd-toggle-pill nd-pill-b" for="nd-pref-sms">Text (SMS)</label>
-
-            <!-- Email field -->
-            <div class="nd-contact-field" id="nd-email-field">
-              <label class="nd-label" for="nd-email" style="margin-top:0;">Email address</label>
-              <input class="nd-input" type="email" id="nd-email" name="email" placeholder="you@example.com" autocomplete="email" />
-            </div>
-
-            <!-- Phone field -->
-            <div class="nd-contact-field" id="nd-phone-field">
-              <label class="nd-label" for="nd-phone" style="margin-top:0;">Mobile number</label>
-              <input class="nd-input" type="tel" id="nd-phone" name="phone" placeholder="(   )   -    " autocomplete="tel" disabled />
-              <p class="nd-contact-note">We'll text your confirmation and any changes to this number. Msg &amp; data rates may apply.</p>
-            </div>
+          <!-- 5. Email -->
+          <div class="nd-field">
+            <label class="nd-label" for="nd-email">Email address</label>
+            <input class="nd-input" type="email" id="nd-email" name="email" placeholder="you@example.com" required autocomplete="email" />
           </div>
 
           <!-- 6. Notes -->
@@ -211,7 +190,7 @@
         </p>
         <p class="nd-confirm-note" id="nd-confirm-note">
           Need to change or cancel?
-          <span id="nd-manage"><a id="nd-manage-link" href="#">Use this link</a> (<span id="nd-manage-hint"></span>), or email</span
+          <span id="nd-manage"><a id="nd-manage-link" href="#">Use this link</a> (it's in your confirmation email too), or email</span
           ><span id="nd-manage-fallback">Email</span> us at
           <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a
           >.

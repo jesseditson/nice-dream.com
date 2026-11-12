@@ -199,8 +199,7 @@
   max-width: 9rem;
 }
 
-.nd-field-note,
-.nd-contact-note {
+.nd-field-note {
   margin-top: 0.45rem;
   font-size: 0.82rem;
   font-style: italic;
@@ -284,8 +283,7 @@
 
 /* ── Choices ─────────────────────────────────────────────────────────────── */
 
-.nd-pill-radio,
-.nd-contact-radio {
+.nd-pill-radio {
   position: absolute;
   width: 0;
   height: 0;
@@ -301,7 +299,6 @@
 }
 
 .nd-pill,
-.nd-toggle-pill,
 .nd-segment {
   display: inline-flex;
   align-items: center;
@@ -327,23 +324,19 @@
   border-radius: 999px;
 }
 
-.nd-pill:hover,
-.nd-toggle-pill:hover {
+.nd-pill:hover {
   transform: translateY(-0.0625rem);
   box-shadow: 0 0.6rem 1.2rem -0.7rem rgb(var(--shadow-color) / 0.55);
 }
 
-.nd-pill-radio:checked + .nd-pill,
-#nd-pref-email:checked ~ .nd-pill-a,
-#nd-pref-sms:checked ~ .nd-pill-b {
+.nd-pill-radio:checked + .nd-pill {
   border-color: var(--chosen);
   background: var(--chosen);
   color: var(--on-chosen);
   box-shadow: 0 0.6rem 1.2rem -0.7rem rgb(var(--shadow-color) / 0.7);
 }
 
-.nd-pill-radio:focus-visible + .nd-pill,
-.nd-contact-radio:focus-visible + .nd-toggle-pill {
+.nd-pill-radio:focus-visible + .nd-pill {
   outline: 0.125rem solid var(--ink);
   outline-offset: 0.2rem;
 }
@@ -358,28 +351,6 @@
   box-shadow: none;
   transform: none;
   cursor: not-allowed;
-}
-
-.nd-toggle-pill {
-  width: calc(50% - 0.25rem);
-  margin-top: 0.25rem;
-  padding: 0.7rem 0 0.6rem;
-  border-radius: 999px;
-  vertical-align: top;
-}
-
-.nd-pill-b {
-  margin-left: 0.5rem;
-}
-
-.nd-contact-field {
-  display: none;
-  margin-top: 1rem;
-}
-
-#nd-pref-email:checked ~ #nd-email-field,
-#nd-pref-sms:checked ~ #nd-phone-field {
-  display: block;
 }
 
 .nd-segmented {
