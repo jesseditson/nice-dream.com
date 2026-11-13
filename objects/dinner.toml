@@ -49,10 +49,6 @@ date = "2026-11-26"
 label = "Thanksgiving"
 
 [[closed_dates]]
-date = "2026-12-24"
-label = "Christmas Eve"
-
-[[closed_dates]]
 date = "2026-12-25"
 label = "Christmas"
 
