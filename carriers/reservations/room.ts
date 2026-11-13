@@ -31,6 +31,8 @@ export type Rules = {
   largePartyMin: number;
   /** First and last seating as minutes past midnight, by weekday (0 = Sunday). */
   seatings: Map<number, { first: number; last: number }>;
+  /** `YYYY-MM-DD` dates we're closed, whatever `seatings` says. */
+  closedDates: Set<string>;
 };
 
 /** Parties of `min`..`max` guests hold their tables for `minutes`. */
@@ -196,7 +198,7 @@ export const serviceDates = (today: string, now: number, rules: Rules): string[]
   for (let offset = 0; offset < limit; offset += 1) {
     const date = addDays(today, offset);
     const window = rules.seatings.get(weekdayOf(date));
-    if (!window || (offset === 0 && now >= window.first)) continue;
+    if (!window || rules.closedDates.has(date) || (offset === 0 && now >= window.first)) continue;
     const week = mondayOf(date);
     if (!weeks.has(week)) {
       if (weeks.size >= rules.weekendsAhead) break;
@@ -210,7 +212,7 @@ export const serviceDates = (today: string, now: number, rules: Rules): string[]
 /** Whether `today` is a seating night and `now` falls between its first and last seating. */
 export const servingNow = (today: string, now: number, rules: Rules): boolean => {
   const window = rules.seatings.get(weekdayOf(today));
-  return !!window && now >= window.first && now <= window.last;
+  return !!window && !rules.closedDates.has(today) && now >= window.first && now <= window.last;
 };
 
 // ---- the floor --------------------------------------------------------------
@@ -520,6 +522,7 @@ type DinnerConfig = {
   large_party_min: number | null;
   seatings: { days: string | null; first: string | null; last: string | null }[];
   hold_overrides?: { parties: string | null; hold_minutes: number | null }[];
+  closed_dates?: { date: string | null }[];
 };
 
 /** `"1-2"` → 1..2, `"5"` → 5..5, `"6+"` → 6 and up. */
@@ -550,6 +553,9 @@ export const readRules = (dinner: DinnerConfig): Rules => {
       holdOverrides.push({ ...range, minutes: Math.round(minutes) });
     }
   }
+  const closedDates = new Set(
+    (dinner.closed_dates ?? []).map((closed) => (closed.date ?? "").trim()).filter(isIsoDate),
+  );
   const twoTops = whole(dinner.two_tops, 10);
   const communalTables = whole(dinner.communal_tables, 2);
   return {
@@ -568,5 +574,6 @@ export const readRules = (dinner: DinnerConfig): Rules => {
     maxParty: whole(dinner.max_party, 8),
     largePartyMin: whole(dinner.large_party_min, 6),
     seatings,
+    closedDates,
   };
 };

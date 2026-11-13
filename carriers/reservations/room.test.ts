@@ -838,3 +838,24 @@ describe("readRules table settings", () => {
     assert.equal(room({ four_top_start: 5 }).fourTopStart, 11);
   });
 });
+
+describe("closed dates", () => {
+  const closed = room({ closed_dates: [{ date: "2026-10-09" }, { date: " 2026-10-15 " }, { date: "Oct 16" }, { date: null }] });
+
+  test("reads only YYYY-MM-DD dates", () => {
+    assert.deepEqual([...closed.closedDates].sort(), ["2026-10-09", "2026-10-15"]);
+  });
+
+  test("the form skips a closed night and keeps the rest", () => {
+    const dates = serviceDates(WEDNESDAY, 0, closed);
+    assert.ok(!dates.includes("2026-10-09"));
+    assert.ok(!dates.includes("2026-10-15"));
+    assert.ok(dates.includes(THURSDAY));
+    assert.ok(dates.includes("2026-10-10"));
+  });
+
+  test("nobody is told to walk in on a closed night", () => {
+    assert.equal(servingNow("2026-10-09", at("18:00"), closed), false);
+    assert.equal(servingNow(THURSDAY, at("18:00"), closed), true);
+  });
+});

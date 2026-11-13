@@ -123,6 +123,9 @@ Everything the carrier decides with lives on the `dinner` object
 - The form offers `weekends_ahead` service weeks, counting the current week
   only if it still has a night left. Tonight is offered until its first
   seating; once service starts, guests walk in.
+- A night listed in `[[closed_dates]]` (`date = "YYYY-MM-DD"`) is never
+  offered, and nobody is told to walk in that night. The home page lists the
+  upcoming ones, with their `label`, under the hours.
 - The dining room is `two_tops` 2-tops, `four_tops` 4-tops and
   `communal_tables` communal tables, and takes parties up to `max_party`. The
   bar is `bar_seats` seats, booked only by guests who choose it. Which table or

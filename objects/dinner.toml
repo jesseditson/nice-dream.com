@@ -44,6 +44,22 @@ last = "20:00"
 hold_minutes = 120.0
 parties = "4-8"
 
+[[closed_dates]]
+date = "2026-11-26"
+label = "Thanksgiving"
+
+[[closed_dates]]
+date = "2026-12-24"
+label = "Christmas Eve"
+
+[[closed_dates]]
+date = "2026-12-25"
+label = "Christmas"
+
+[[closed_dates]]
+date = "2026-12-31"
+label = "New Year's Eve"
+
 [[reservation_emails]]
 email = "jesse@nice-dream.com"
 

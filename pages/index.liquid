@@ -31,6 +31,18 @@
       </div>
       {% endfor %}
     </dl>
+    {% assign today = 'now' | date: '%Y-%m-%d' %}{% assign closures = dinner.closed_dates | sort: 'date' %}{% assign upcoming_closures = 0 %}{% for closed in closures %}{% if closed.date >= today %}{% assign upcoming_closures = upcoming_closures | plus: 1 %}{% endif %}{% endfor %}
+    {% if upcoming_closures > 0 %}<div class="closures" data-closures>
+      <h2 class="eyebrow">Closed</h2>
+      <dl class="hours closures__list">
+        {% for closed in closures %}{% if closed.date >= today %}<div class="hours__row" data-date="{{ closed.date }}">
+          <dt>{% if closed.label != blank %}{{ closed.label }}{% else %}Closed{% endif %}</dt>
+          <dd><time datetime="{{ closed.date }}">{{ closed.date | append: ' 12:00:00 -0800' | date: '%a, %b %-d' }}</time></dd>
+        </div>
+        {% endif %}{% endfor %}
+      </dl>
+    </div>
+    <script>(function () { var box = document.querySelector('[data-closures]'); if (!box) return; var today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()); var left = 0; box.querySelectorAll('[data-date]').forEach(function (row) { if (row.getAttribute('data-date') < today) row.hidden = true; else left += 1; }); if (!left) box.hidden = true; })();</script>{% endif %}
     <div class="hero__note markdown">{{ business.hours_note }}</div>
   </div>
 </section>

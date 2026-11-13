@@ -86,6 +86,8 @@ export interface DinnerObject {
   seatings: DinnerSeatingsObject[];
   /** booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins */
   hold_overrides: DinnerHoldOverridesObject[];
+  /** days we're closed: the reservation form skips them and the home page lists the upcoming ones under the hours; date is YYYY-MM-DD, label is optional (e.g. "Thanksgiving") */
+  closed_dates: DinnerClosedDatesObject[];
   /** staff emailed a summary of every booking the form takes, from reservation@nice-dream.com */
   reservation_emails: DinnerReservationEmailsObject[];
 }
@@ -103,6 +105,13 @@ export interface DinnerSeatingsObject {
 export interface DinnerHoldOverridesObject {
   parties: string | null;
   hold_minutes: number | null;
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** days we're closed: the reservation form skips them and the home page lists the upcoming ones under the hours; date is YYYY-MM-DD, label is optional (e.g. "Thanksgiving") */
+export interface DinnerClosedDatesObject {
+  date: string | null;
+  label: string | null;
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
