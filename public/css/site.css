@@ -389,7 +389,14 @@ body[data-compact] .masthead {
   }
 
   .masthead__nav ul {
+    flex-wrap: wrap;
+    gap: 0.3rem 0.7rem;
     padding-top: 0;
+  }
+
+  .masthead__nav a {
+    font-size: clamp(0.8rem, 3.6vw, 0.95rem);
+    letter-spacing: 0.08em;
   }
 }
 
