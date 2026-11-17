@@ -13,7 +13,11 @@ In the most criminally underseen giallo of the ‘70s, Florinda Bolkan (_A Lizar
 >
 > — _Moon in the Gutter_
 """
-programmer_note = ""
+programmer_note = """
+Like all Italian mystery-thrillers (Giallos) of the era, expect melodrama, campy over-acting, iconic English-dubbing, stunning wide shots, stylish lighting, a real exploration & celebration of place, and a hypnotic score.
+
+*Footprints on the Moon* stands out from many of these movies though as it leaves you with more questions than answers. This wealth of ambiguity will allow us to really sit back and investigate: what was actually going on there?
+"""
 trailer_youtube = ""
 reading = []
 
@@ -60,6 +64,7 @@ label = "Runtime"
 value = "90 min"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-02.jpg"
@@ -67,6 +72,7 @@ sha = "f79658e5a1057252eecc3f07170e111c6e6f49b65ee7317324887f72b44b9087"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-03.jpg"
@@ -74,6 +80,7 @@ sha = "4997921674e14d4bde86f1af0b090784306ed46a5806b824aaab53714c87e05a"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-04.jpg"
@@ -81,6 +88,7 @@ sha = "2c090121a5b75f74cfb896ebff6c35340ab0d84926e23ae9ed852f8a0fb7d4c9"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-05.jpg"
@@ -88,6 +96,7 @@ sha = "acd3c122cbddafcf294b3c0af4d9417bfd811cd81b10f4e759e552b892e4eb56"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-06.jpg"
@@ -95,6 +104,7 @@ sha = "eb63bf6aba0274e1db3cb186b5523b2e50fb37b4af9cb2fb7a093436bd7eff81"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-07.jpg"
@@ -102,6 +112,7 @@ sha = "c69a12f163b1623ad279ae089ed70e25bec4cd0d5a2ee02289f88facde2b9cad"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-08.jpg"
@@ -109,6 +120,7 @@ sha = "71f9253f3f06e20e20e1d29f204c674556a7c64e1286c1726da6563afaae2ae1"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-09.jpg"
@@ -116,6 +128,7 @@ sha = "5742c5b3de62ce17c5d4fe0e628a63151c5e5c816440597d4072dd8b6f6ce5fc"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-10.jpg"
@@ -123,6 +136,7 @@ sha = "7d86e993078f4b4d377c4130768520543e9df3d22ae12a242697287dae00410c"
 mime = "image/jpeg"
 
 [[scene]]
+
 [scene.image]
 display_type = "image"
 filename = "footprints-scene-01.jpg"
