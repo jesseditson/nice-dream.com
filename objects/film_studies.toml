@@ -7,7 +7,15 @@ Grab yourself a couple cocktails and a handful of delicious house-made snacks wh
 
 Let's cosplay as college students! Academia 🤝 lots of giggling.
 """
-about_host = ""
+about_host = """
+Andrew Sheets didn't really start liking school until his last year in undergrad. It was three classes (all queer and feminist film theory) that suddenly had him looking not only at cinema with a more critical and nuanced understanding—but all facets of life. 
+
+He created the drag character (study) of Meredeath to perform these themes & concepts with original, highly cinematic pieces in both art and nightlife spaces across San Francisco. After years of performing, he created the event Stereo Argento which celebrated 1970's Italian cinema, and other niche subgenres within the greater horror film umbrella, through the art of drag and installation.
+
+He began programming film screenings throughout the city and launched his own queer horror series within Frameline: The San Francisco LGBTQ+ Film Festival's programming called "Frameline Fangs". For years after, he's ran the marketing at other film festivals across the country.
+
+Now, Andrew wants to dip his toes back into the world of film theory and invites you to join him! Expect elements from his performance art (and that brief stint at the Groundlings school???) to make there into each night at Film Studies. Gotta go! Late for class!!!!!!!!!
+"""
 max_per_ticket = 10.0
 max_guests = 50.0
 donation_title = "Donate to Film Studies!"
