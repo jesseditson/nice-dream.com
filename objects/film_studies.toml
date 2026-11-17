@@ -1,5 +1,11 @@
 about = """
-Once a month, the dining room turns into a screening room. Our host picks the film, and the bar pours cocktails, zero-proof drinks and concessions all night.
+Break out your binders and get your ass to class – it's time for Film Studies! On the first Tuesday of each month, Nice Dream transforms into the hottest liberal arts lecture hall in town!
+
+The evening will be centered around an unique film curated to expand your cinematic range and get you thinking about the medium differently. Following each screening, host Andrew Sheets will lead the group through a lively discussion where themes/motifs will be examined, character behavior analyzed, narrative theories debated, and deeper meanings made! 
+
+Grab yourself a couple cocktails and a handful of delicious house-made snacks while you kick back and enjoy the movie! Zero-proof and gluten free + vegan options always available.
+
+Let's cosplay as college students! Academia 🤝 lots of giggling.
 """
 max_per_ticket = 10.0
 max_guests = 50.0
@@ -9,7 +15,7 @@ donation_variation_id = "7CA3FXXXP4XHYXKVHV4CRXMD"
 square_location_id = "LD5VJT9B9ADK7"
 
 [[ticket]]
-name = "Admission"
 description = "Includes one free drink or concession. Zero-proof cocktails & GF+Vegan concessions available."
+name = "Admission"
 price = 15.0
 square_variation_id = "VEJFQQFBFQJF3NWHRTGZFYCV"
