@@ -23,6 +23,7 @@ const studies: FilmStudiesObject = {
   path: "film_studies.toml",
   order: null,
   about: null,
+  about_host: null,
   max_per_ticket: 4,
   max_guests: 50,
   donation_title: null,

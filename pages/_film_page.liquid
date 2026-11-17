@@ -71,6 +71,11 @@
         <div class="markdown">{{ studies.about }}</div>
       </details>{% endif %}
 
+      {% if studies.about_host != blank %}<details class="film-drawer">
+        <summary>About Your Host</summary>
+        <div class="markdown">{{ studies.about_host }}</div>
+      </details>{% endif %}
+
       {% assign past_count = 0 %}{% for other in films_by_date %}{% if other.path != latest_film.path and other.path != film.path %}{% assign past_count = past_count | plus: 1 %}{% endif %}{% endfor %}
       {% if past_count > 0 %}<details class="film-drawer">
         <summary>Past Films</summary>

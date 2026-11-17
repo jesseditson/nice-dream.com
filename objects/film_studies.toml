@@ -7,6 +7,7 @@ Grab yourself a couple cocktails and a handful of delicious house-made snacks wh
 
 Let's cosplay as college students! Academia 🤝 lots of giggling.
 """
+about_host = ""
 max_per_ticket = 10.0
 max_guests = 50.0
 donation_title = "Donate to Film Studies!"

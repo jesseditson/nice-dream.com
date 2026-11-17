@@ -389,6 +389,8 @@ export interface FilmStudiesObject {
    * the About Film Studies dropdown, on every film's page
    */
   about: string | null;
+  /** the About Your Host dropdown, under About Film Studies; blank hides it */
+  about_host: string | null;
   /** the most of each ticket one order can take */
   max_per_ticket: number | null;
   /** how many guests each screening takes online: every ticket is one guest; blank or 0 for no limit */

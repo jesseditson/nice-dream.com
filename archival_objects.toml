@@ -256,6 +256,8 @@ image = "image"
 # Film Studies tickets — carriers/film-studies and pages/film-studies.liquid both read these.
 # the About Film Studies dropdown, on every film's page
 about = "markdown"
+# the About Your Host dropdown, under About Film Studies; blank hides it
+about_host = "markdown"
 # the most of each ticket one order can take
 max_per_ticket = "number"
 # how many guests each screening takes online: every ticket is one guest; blank or 0 for no limit
