@@ -5,26 +5,36 @@ Deployed with the site and reachable at `/carriers/film-studies`.
 
 | | |
 | --- | --- |
-| `GET ?film=` | whether the film is on sale and `spots_left` (null without a limit, or when Square can't be reached) |
-| `POST` | `{ film, tickets: { <index>: quantity }, donation, name, email, phone }` → starts a Square checkout and answers with its URL |
+| `GET ?film=` | whether the film is on sale and `spots_left` (null without a limit, or when the database can't be read) |
+| `POST` | `{ film, tickets: { <index>: quantity }, donation, name, email, phone }` → starts a checkout and answers with its URL |
 
-The order is created through Square's Checkout API with the tickets, the
-donation, and a `SCHEDULED` pickup at the screening's start carrying the
-guest's name, email and phone, so it shows on Square's order list that night.
-The guest pays on Square's checkout page, with Square's own tip screen turned
-off, and Square sends them back to the film's page with `?paid=`, where the
-form shows a confirmation. There's no spreadsheet: Square is the record.
+Checkout goes through archival payments (`site.payments`), in the payment
+account connected in the site's settings, so the site needs the Pro plan and a
+connected account. Tickets with a `variant_id` are charged at that variation's
+price; the rest, and the tip (the `donation` field, sold as "Tip Your
+Professor"), are charged as lines priced here. The guest's email fills in the
+checkout page, and the film, their name, phone and order ride along as the
+payment's metadata. The provider sends them back to the
+film's page with `?paid=`, where the form shows a confirmation.
+
+Every checkout is kept in the site's database (`site.sql`, table
+`film_checkouts`) with the guest's name, email, phone and order, which is the
+guest list for the night.
 
 Online sales close when the film's `starts` passes; the page hides the form at
 the same moment.
 
-Each ticket is one guest. Before a checkout starts, the carrier searches
-Square's pickup orders for the screening (matched by pickup time and ticket
-name or variation) and counts paid orders plus checkouts started in the last 20
-minutes against `max_guests`. An order that would go over it is refused with the
-spots left, and the page hides the tickets once the screening is full; donations
-stay open. A checkout abandoned for longer than that and paid later can still
-push a screening slightly over.
+Each ticket is one guest. Before a checkout starts, the carrier counts the
+film's paid checkouts plus those started in the last 20 minutes against
+`max_guests`. A checkout still open after that is asked about again at most
+every 5 minutes, so one paid late still counts. An order that would go over the
+limit is refused with the spots left, and the page hides the tickets once the
+screening is full; tips stay open. A variation the provider tracks stock
+for is also refused once it sells out there.
+
+`site.sql` isn't available in the editor's preview or under `archival run`, so
+there `spots_left` is null and an order with tickets is refused while
+`max_guests` is set.
 
 ## Content
 
@@ -32,22 +42,12 @@ push a screening slightly over.
   is the one `/film-studies` shows.
 - `objects/film/<name>.toml` `[[scene]]` — stills shown full screen behind the
   page, in order, drawn by `src/film-scenes.ts`.
-- `objects/film_studies.toml` — the tickets, the donation row, the About text,
-  `max_guests` and `square_location_id`.
-  - `[[ticket]]` — sold once it has a `name` and a `price`. With
-    `square_variation_id` set, Square charges that catalog variation's price
-    and tax, so keep `price` in step; blank sends a plain, untaxed line item at
-    `price`. Tickets are matched by position, so add new ones to the end.
-  - `donation_variation_id` — a variable-price Square item with no tax; blank
-    sends a plain "Tip Your Professor" line item.
-  - `donation_blocked_tax_ids` — the Square tax(es) kept off the tip, sent as
-    the tip line's `pricing_blocklists.blocked_taxes`. Square auto-applies the
-    location's sales tax to plain line items (it applies to custom amounts), so
-    without this a plain tip is taxed. Comma-separated catalog tax IDs.
-
-The Square access token is the one on the `dinner` object; it needs
-`ORDERS_WRITE` and `PAYMENTS_WRITE` (and `ITEMS_READ` once catalog variations
-are set), which the pie carrier already relies on.
+- `objects/film_studies.toml` — the tickets, the tip row (`donation_*`), the
+  About and About Your Host text, and `max_guests`.
+  - `[[ticket]]` — sold once it has a `name` and a `price`. `variant_id` is an
+    item variation in the connected account; keep `price` in step with it.
+    Blank charges a plain line at `price`. Tickets are matched by position, so
+    add new ones to the end.
 
 ## Working on it
 
