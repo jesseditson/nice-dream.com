@@ -1,0 +1,11 @@
+{% assign films_by_date = films | sort: 'starts' %}{% assign latest_film = films_by_date | last %}{% assign film_date = film.starts | date: '%B %Y' %}{% assign page_title = 'Film Studies: ' | append: film.title | append: ' — Nice Dream' %}{% assign page_description = 'Film Studies at Nice Dream in Yucca Valley: ' | append: film.title | append: ', ' | append: film_date | append: '.' %}{% assign page_image = '/img/nice-dream-logo-og.png' %}{% if film.trailer_still != blank %}{% assign page_image = film.trailer_still.url %}{% elsif film.poster != blank %}{% assign page_image = film.poster.url %}{% endif %}{%
+  layout 'theme'
+  , title: page_title
+  , page: 'film'
+  , canonical_path: film.path
+  , film_backdrop: true
+  , description: page_description
+  , og_image: page_image
+  , stylesheet: '/css/reservations.css'
+%}
+{% include 'film_page' %}

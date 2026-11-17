@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ title }}</title>
     <link rel="icon" type="image/x-icon" href="/img/favicon-100w.ico" />
-    <link rel="canonical" href="{{ site_url }}/{% if page != 'index' %}{{ page }}{% endif %}" />
-    <meta name="theme-color" content="#f3e7c6" />
+    <link rel="canonical" href="{{ site_url }}/{% if canonical_path %}{{ canonical_path }}{% elsif page != 'index' %}{{ page }}{% endif %}" />
+    <meta name="theme-color" content="{% if film_backdrop %}#000000{% else %}#f3e7c6{% endif %}" />
     {% if description %}<meta name="description" content="{{ description }}" />
     <meta property="og:description" content="{{ description }}" />
     {% endif %}<meta property="og:site_name" content="{{ business.name }}" />
     <meta property="og:title" content="{{ title }}" />
-    <meta property="og:url" content="{{ site_url }}/{% if page != 'index' %}{{ page }}{% endif %}" />
+    <meta property="og:url" content="{{ site_url }}/{% if canonical_path %}{{ canonical_path }}{% elsif page != 'index' %}{{ page }}{% endif %}" />
     <meta property="og:type" content="website" />
-    {% if og_image %}<meta property="og:image" content="{{ site_url }}{{ og_image }}" />
-    <meta property="og:image:width" content="{{ og_image_width }}" />
+    {% if og_image %}<meta property="og:image" content="{% if og_image contains '://' %}{{ og_image }}{% else %}{{ site_url }}{{ og_image }}{% endif %}" />
+    {% if og_image_width %}<meta property="og:image:width" content="{{ og_image_width }}" />
     <meta property="og:image:height" content="{{ og_image_height }}" />
-    <meta name="twitter:card" content="summary_large_image" />
+    {% endif %}    <meta name="twitter:card" content="summary_large_image" />
     {% else %}<meta name="twitter:card" content="summary" />
     {% endif %}{% if noindex %}<meta name="robots" content="noindex" />
     {% endif %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":{% include 'json_string', value: business.name %},"url":"{{ site_url }}",{% if business.description != "" %}"description":{% include 'json_string', value: business.description %},{% endif %}"image":"{{ site_url }}/img/nice-dream-logo-og.png",{% if business.phone != "" %}"telephone":{% include 'json_string', value: business.phone %},{% endif %}{% if business.cuisine != "" %}"servesCuisine":{% include 'json_string', value: business.cuisine %},{% endif %}{% if business.price_range != "" %}"priceRange":{% include 'json_string', value: business.price_range %},{% endif %}"acceptsReservations":"{{ site_url }}/reservations","address":{"@type":"PostalAddress","streetAddress":{% include 'json_string', value: business.street_address %},"addressLocality":{% include 'json_string', value: business.locality %},"addressRegion":{% include 'json_string', value: business.region %},"postalCode":{% include 'json_string', value: business.postal_code %},"addressCountry":{% include 'json_string', value: business.country %}},"openingHours":[{% assign hours_separator = "" %}{% for hours in business.hours %}{% if hours.opens != "" %}{{ hours_separator }}"{{ hours.days }} {{ hours.opens }}-{{ hours.closes }}"{% assign hours_separator = "," %}{% endif %}{% endfor %}]}</script>
@@ -26,10 +26,11 @@
     {% endif %}
   </head>
 
-  <body data-light="{% if light %}{{ light }}{% else %}golden{% endif %}"{% if page != 'index' %} data-compact{% endif %}>
+  <body data-light="{% if light %}{{ light }}{% else %}golden{% endif %}"{% if page != 'index' %} data-compact{% endif %}{% if film_backdrop %} data-backdrop="film"{% endif %}>
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <div class="sky" aria-hidden="true">
+    {% if film_backdrop %}<div class="grain" aria-hidden="true"></div>
+    {% else %}<div class="sky" aria-hidden="true">
       <div class="sky__light sky__light--morning"></div>
       <div class="sky__light sky__light--midday"></div>
       <div class="sky__light sky__light--golden"></div>
@@ -37,6 +38,7 @@
       <div class="sky__light sky__light--night"></div>
       <div class="sky__sun"></div>
     </div>
+    {% endif %}
 
     <header class="masthead">
       {% if page == 'index' %}<h1 class="masthead__title"><a class="wordmark" href="/" aria-label="{{ business.name }}">NiCE DREAM</a></h1>
@@ -68,8 +70,9 @@
       <p class="site-footer__fine">&copy; {{ "now" | date: "%Y" }} {{ business.name }}</p>
     </footer>
 
-    <canvas class="clouds" aria-hidden="true"></canvas>
-    <script defer src="/js/site.js"></script>
-    <script defer src="/js/clouds.js"></script>
+    {% if film_backdrop %}{% else %}<canvas class="clouds" aria-hidden="true"></canvas>
+    {% endif %}<script defer src="/js/site.js"></script>
+    {% if film_backdrop %}{% else %}<script defer src="/js/clouds.js"></script>
+    {% endif %}
   </body>
 </html>

@@ -86,6 +86,8 @@ export interface DinnerObject {
   seatings: DinnerSeatingsObject[];
   /** booking length by party size, overriding hold_minutes; parties is a size ("5"), a range ("1-2", "6-8") or open-ended ("6+"). The first matching row wins */
   hold_overrides: DinnerHoldOverridesObject[];
+  /** days we're closed: the reservation form skips them and the home page lists the upcoming ones under the hours; date is YYYY-MM-DD, label is optional (e.g. "Thanksgiving") */
+  closed_dates: DinnerClosedDatesObject[];
   /** staff emailed a summary of every booking the form takes, from reservation@nice-dream.com */
   reservation_emails: DinnerReservationEmailsObject[];
 }
@@ -103,6 +105,13 @@ export interface DinnerSeatingsObject {
 export interface DinnerHoldOverridesObject {
   parties: string | null;
   hold_minutes: number | null;
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** days we're closed: the reservation form skips them and the home page lists the upcoming ones under the hours; date is YYYY-MM-DD, label is optional (e.g. "Thanksgiving") */
+export interface DinnerClosedDatesObject {
+  date: string | null;
+  label: string | null;
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
@@ -179,8 +188,22 @@ export interface BusinessObject {
   /** dollar signs ("$" to "$$$$") or a range like "$15-40" */
   price_range: string | null;
   hours_note: string | null;
+  /** shown beside the map on the home page */
+  parking: string | null;
+  /** directions to the address; visitors pick whichever map app they use, and a blank one is hidden */
+  apple_maps_url: string | null;
+  google_maps_url: string | null;
+  /** the links in the footer */
+  links: BusinessLinksObject[];
   /** days uses schema.org openingHours shorthand (Mo Tu We Th Fr Sa Su, ranges like Fr-Sa); opens/closes are 24h HH:MM, blank opens means closed */
   hours: BusinessHoursObject[];
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** the links in the footer */
+export interface BusinessLinksObject {
+  label: string | null;
+  url: string | null;
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
@@ -238,6 +261,155 @@ export interface PiePreorderPickupWindowsObject {
   last: string | null;
 }
 
+/**
+ * The home page's opening: the line above the hours, and the photos beside them. One photo shows
+ * large; more than one shows as a stack, like a section's gallery.
+ */
+export interface HomeObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  mission: string | null;
+  photo: HomePhotoObject[];
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+export interface HomePhotoObject {
+  image: ArchivalFile | null;
+  alt: string | null;
+}
+
+/**
+ * Each thing we make, a home page section in order: a statement and a gallery. The file name is the
+ * section's anchor, so objects/offering/coffee.toml is /#coffee.
+ */
+export interface OfferingObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  title: string | null;
+  statement: string | null;
+  /** when it's served, e.g. "All day" or "11am – 3pm" */
+  served: string | null;
+  /** the light the page takes on while the section is on screen */
+  light: "morning" | "midday" | "golden" | "dusk" | "night" | null;
+  menu: ArchivalFile | null;
+  menu_label: string | null;
+  link_label: string | null;
+  link_url: string | null;
+  photo: OfferingPhotoObject[];
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+export interface OfferingPhotoObject {
+  image: ArchivalFile | null;
+  alt: string | null;
+}
+
+/** Events. The home page lists the ones that haven't ended yet, and hides the section when there are none. */
+export interface EventObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  title: string | null;
+  /** "2026-12-05 18:00:00", in Yucca Valley time */
+  starts: string | null;
+  ends: string | null;
+  summary: string | null;
+  image: ArchivalFile | null;
+  image_alt: string | null;
+  /** where guests RSVP; the button is hidden while this is blank */
+  rsvp_url: string | null;
+  rsvp_label: string | null;
+}
+
+/**
+ * Film Studies: one film a month. The file name is the film's archive page, so objects/film/footprints.toml
+ * is /film/footprints. /film-studies shows whichever film screens latest, and lists the rest as past films.
+ */
+export interface FilmObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  title: string | null;
+  /** other titles it goes by, e.g. "Footprints · Le Orme" */
+  also_known_as: string | null;
+  /** "2026-12-01 18:00:00", in Yucca Valley time. Online drink tickets close once it starts. */
+  starts: string | null;
+  poster: ArchivalFile | null;
+  poster_alt: string | null;
+  synopsis: string | null;
+  programmer_note: string | null;
+  /** a YouTube link; when set, it shows instead of the uploaded trailer */
+  trailer_youtube: string | null;
+  trailer: ArchivalFile | null;
+  /** the frame shown before the trailer plays, and the picture link previews use */
+  trailer_still: ArchivalFile | null;
+  /** the facts under the poster, in order, e.g. Director / Luigi Bazzoni */
+  info: FilmInfoObject[];
+  /** this month's suggested readings; url and note are optional */
+  reading: FilmReadingObject[];
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** the facts under the poster, in order, e.g. Director / Luigi Bazzoni */
+export interface FilmInfoObject {
+  label: string | null;
+  value: string | null;
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/** this month's suggested readings; url and note are optional */
+export interface FilmReadingObject {
+  title: string | null;
+  author: string | null;
+  url: string | null;
+  note: string | null;
+}
+
+export interface FilmStudiesObject {
+  /** `<object name>/<file name>` this object was read from. */
+  path: string;
+  /** The object's `order`, or null when it is unordered. */
+  order: number | null;
+  /**
+   * Film Studies drink tickets — carriers/film-studies and pages/film-studies.liquid both read these.
+   * the About Film Studies dropdown, on every film's page
+   */
+  about: string | null;
+  /** the most of each ticket one order can take */
+  max_per_ticket: number | null;
+  /** how many guests each screening takes online: every drink ticket is one guest; blank or 0 for no limit */
+  max_guests: number | null;
+  donation_title: string | null;
+  donation_description: string | null;
+  /** the Square variation donations sell as (a variable-price item with no tax); blank sends a plain line item */
+  donation_variation_id: string | null;
+  /** the Square location orders are placed at */
+  square_location_id: string | null;
+  /**
+   * price is what the page shows. With square_variation_id set, Square charges that variation's catalog price
+   * and tax, so keep the two in step; blank sends a plain, untaxed line item at price.
+   */
+  ticket: FilmStudiesTicketObject[];
+}
+
+// Child objects are read from their parent's file, so they have no path/order.
+/**
+ * price is what the page shows. With square_variation_id set, Square charges that variation's catalog price
+ * and tax, so keep the two in step; blank sends a plain, untaxed line item at price.
+ */
+export interface FilmStudiesTicketObject {
+  name: string | null;
+  description: string | null;
+  price: number | null;
+  square_variation_id: string | null;
+}
+
 /** Every object in the site, keyed by name. */
 export interface ArchivalObjects {
   about: AboutObject;
@@ -246,6 +418,24 @@ export interface ArchivalObjects {
   emails: EmailsObject;
   business: BusinessObject;
   pie_preorder: PiePreorderObject;
+  /**
+   * The home page's opening: the line above the hours, and the photos beside them. One photo shows
+   * large; more than one shows as a stack, like a section's gallery.
+   */
+  home: HomeObject;
+  /**
+   * Each thing we make, a home page section in order: a statement and a gallery. The file name is the
+   * section's anchor, so objects/offering/coffee.toml is /#coffee.
+   */
+  offering: OfferingObject[];
+  /** Events. The home page lists the ones that haven't ended yet, and hides the section when there are none. */
+  event: EventObject[];
+  /**
+   * Film Studies: one film a month. The file name is the film's archive page, so objects/film/footprints.toml
+   * is /film/footprints. /film-studies shows whichever film screens latest, and lists the rest as past films.
+   */
+  film: FilmObject[];
+  film_studies: FilmStudiesObject;
 }
 
 import type { CarrierEnv } from "@archival/carrier";

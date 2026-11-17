@@ -1,0 +1,130 @@
+title = "Footprints on the Moon"
+also_known_as = "Footprints · Le Orme"
+starts = 2026-12-01T18:00:00.0
+poster_alt = "Footprints poster: the title in yellow over blue squares, a woman in a yellow dress reaching out, and a high-contrast portrait of Florinda Bolkan"
+synopsis = """
+In the most criminally underseen giallo of the ‘70s, Florinda Bolkan (_A Lizard in a Woman’s Skin_, _Flavia the Heretic_) stars as a freelance translator who wakes one morning missing all memory of her past three days. But will a trail of odd clues lead her to a place where perception and identity are never what they seem? Nicoletta Elmi (_Deep Red_), Evelyn Stewart (_The Sweet Body of Deborah_), Lila Kedrova (_The Tenant_) and Klaus Kinski co-star in this “visually stunning gem” (Mondo Digital), directed by Luigi Bazzoni (_The Fifth Cord_) with cinematography by three-time Oscar winner Vittorio Storaro (_The Bird with the Crystal Plumage_), now scanned in 4K from the original camera negatives.
+
+> “Psychedelically haunting… An existentialist adventure that combines the narrative mystery of _Solaris_ with the vivid visions of Argento.”
+>
+> — _Electric Sheep Magazine_
+
+> “Seek it out and unravel its mystery… One of the most unique and overlooked Italian films of the ‘70s.”
+>
+> — _Moon in the Gutter_
+"""
+programmer_note = ""
+trailer_youtube = ""
+reading = []
+
+[poster]
+display_type = "image"
+filename = "footprints-poster.jpg"
+sha = "25954a63ebeef5c62b3155964d0e5b025ba1fd5d4894e59c70702bd44339742e"
+mime = "image/jpeg"
+
+[trailer]
+display_type = "video"
+filename = "footprints-trailer.mp4"
+sha = "ebae668b1cb804bd9207e472801af2195538958cd533b5be0f638f8d7afcfc8c"
+mime = "video/mp4"
+
+[trailer_still]
+display_type = "image"
+filename = "footprints-still.jpg"
+sha = "25a4364b5a195269532c69355f643c7756703b7f29c0317ef62c9d73cdce0191"
+mime = "image/jpeg"
+
+[[info]]
+label = "Year"
+value = "1975"
+
+[[info]]
+label = "Country"
+value = "Italy"
+
+[[info]]
+label = "Director"
+value = "Luigi Bazzoni"
+
+[[info]]
+label = "Starring"
+value = "Florinda Bolkan, Klaus Kinski, Nicoletta Elmi, Evelyn Stewart, Lila Kedrova"
+
+[[info]]
+label = "Cinematography"
+value = "Vittorio Storaro"
+
+[[info]]
+label = "Runtime"
+value = "90 min"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-02.jpg"
+sha = "f79658e5a1057252eecc3f07170e111c6e6f49b65ee7317324887f72b44b9087"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-03.jpg"
+sha = "4997921674e14d4bde86f1af0b090784306ed46a5806b824aaab53714c87e05a"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-04.jpg"
+sha = "2c090121a5b75f74cfb896ebff6c35340ab0d84926e23ae9ed852f8a0fb7d4c9"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-05.jpg"
+sha = "acd3c122cbddafcf294b3c0af4d9417bfd811cd81b10f4e759e552b892e4eb56"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-06.jpg"
+sha = "eb63bf6aba0274e1db3cb186b5523b2e50fb37b4af9cb2fb7a093436bd7eff81"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-07.jpg"
+sha = "c69a12f163b1623ad279ae089ed70e25bec4cd0d5a2ee02289f88facde2b9cad"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-08.jpg"
+sha = "71f9253f3f06e20e20e1d29f204c674556a7c64e1286c1726da6563afaae2ae1"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-09.jpg"
+sha = "5742c5b3de62ce17c5d4fe0e628a63151c5e5c816440597d4072dd8b6f6ce5fc"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-10.jpg"
+sha = "7d86e993078f4b4d377c4130768520543e9df3d22ae12a242697287dae00410c"
+mime = "image/jpeg"
+
+[[scene]]
+[scene.image]
+display_type = "image"
+filename = "footprints-scene-01.jpg"
+sha = "a9b0260c542c88a69c9b7aba6ffeb6bce16e60e26ac6c3bbc1df2f4f3fc7b22b"
+mime = "image/jpeg"

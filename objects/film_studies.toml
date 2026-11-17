@@ -1,0 +1,21 @@
+about = """
+Once a month, the dining room turns into a screening room. Our host picks the film, and the bar pours cocktails, zero-proof drinks and concessions all night.
+"""
+max_per_ticket = 10.0
+max_guests = 50.0
+donation_title = "Donate to Film Studies!"
+donation_description = "Helps book the film & pay our host."
+donation_variation_id = ""
+square_location_id = "LD5VJT9B9ADK7"
+
+[[ticket]]
+name = "Single Drink Ticket"
+description = "Good for one cocktail or equal value concessions. Zero-proof cocktails & GF+Vegan concessions available."
+price = 15.0
+square_variation_id = ""
+
+[[ticket]]
+name = "Double Drink Ticket"
+description = "Good for two cocktails or equal value concessions. Zero-proof cocktails & GF+Vegan concessions available."
+price = 30.0
+square_variation_id = ""

@@ -11,3 +11,12 @@ secondary = "starts"
 [[shortcuts]]
 name = "New Event"
 path = "event"
+
+[[film.views]]
+name = "default"
+primary = "title"
+secondary = "starts"
+
+[[shortcuts]]
+name = "New Film"
+path = "film"

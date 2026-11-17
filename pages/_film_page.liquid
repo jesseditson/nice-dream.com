@@ -1,0 +1,157 @@
+{% assign film_slug = film.path | remove: 'film/' %}{% assign is_latest = false %}{% if film.path == latest_film.path %}{% assign is_latest = true %}{% endif %}{% assign today_stamp = 'now' | date: '%Y%m%d' %}{% assign film_day = film.starts | date: '%Y%m%d' %}{% assign tickets_open = false %}{% if film_day >= today_stamp %}{% assign tickets_open = true %}{% endif %}{% assign studies = objects.film_studies %}
+<link rel="stylesheet" href="/css/pies.css" />
+<link rel="stylesheet" href="/css/film.css" />
+{% if film.scene.size > 0 %}<canvas class="film-scenes" aria-hidden="true" hidden data-scenes="{% for scene in film.scene %}{% if scene.image != blank %}{{ scene.image.url }} {% endif %}{% endfor %}"></canvas>
+<script defer src="/js/film-scenes.js"></script>{% endif %}
+
+<section class="film-page">
+  <h1 class="film-label">
+    <span class="film-label__tape">Film Studies</span>
+    <span class="film-label__tape">at</span>
+    <span class="film-label__tape film-label__tape--white">NiCE DREAM</span>
+  </h1>
+  {% unless is_latest %}<a class="film-page__back" href="/film-studies">This month’s film</a>{% endunless %}
+
+  <article class="film-box">
+    <header class="film-box__head">
+      <p class="film-box__kicker">{{ film.starts | date: '%B' }}’s Film</p>
+      <h2 class="film-box__title">{{ film.title }}</h2>
+      {% if film.also_known_as != blank %}<p class="film-box__aka">aka {{ film.also_known_as }}</p>{% endif %}
+      <p class="film-box__when"><time datetime="{{ film.starts | date: '%Y-%m-%dT%H:%M' }}"><span>{{ film.starts | date: '%A, %B %-d' }}</span> · <span>{{ film.starts | date: '%-I:%M %p' }}</span></time></p>
+      {% if tickets_open %}<a class="film-box__jump" href="#tickets" data-film-sale>Drink tickets</a>{% endif %}
+    </header>
+
+    {% if film.poster != blank %}<img class="film-box__poster" src="{{ film.poster.url }}" alt="{{ film.poster_alt | escape }}" decoding="async" />{% endif %}
+
+    {% if film.info.size > 0 %}<dl class="film-info">
+      {% for row in film.info %}<div class="film-info__row">
+        <dt>{{ row.label }}</dt>
+        <dd>{{ row.value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>{% endif %}
+
+    {% if film.synopsis != blank %}<section class="film-section">
+      <h3 class="film-section__title">Synopsis</h3>
+      <div class="markdown">{{ film.synopsis }}</div>
+    </section>{% endif %}
+
+    {% if film.programmer_note != blank %}<section class="film-section">
+      <h3 class="film-section__title">Programmer’s Note</h3>
+      <div class="markdown">{{ film.programmer_note }}</div>
+    </section>{% endif %}
+
+    {% assign youtube = film.trailer_youtube | strip %}{% if youtube != blank or film.trailer != blank %}<section class="film-section">
+      <h3 class="film-section__title">Trailer</h3>
+      {% if youtube != blank %}{% assign youtube_id = youtube | split: 'v=' | last | split: '&' | first | split: 'youtu.be/' | last | split: 'embed/' | last | split: 'shorts/' | last | split: '?' | first | split: '/' | last %}<div class="film-trailer film-trailer--youtube">
+        <iframe src="https://www.youtube-nocookie.com/embed/{{ youtube_id }}" title="{{ film.title | escape }} trailer" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      {% else %}<div class="film-trailer">
+        <video controls playsinline preload="none"{% if film.trailer_still != blank %} poster="{{ film.trailer_still.url }}"{% endif %}>
+          <source src="{{ film.trailer.url }}" type="{{ film.trailer.mime }}" />
+        </video>
+      </div>{% endif %}
+    </section>{% endif %}
+
+    <div class="film-drawers">
+      {% if film.reading.size > 0 %}<details class="film-drawer">
+        <summary>{% if is_latest %}This Month’s Suggested Readings{% else %}Suggested Readings{% endif %}</summary>
+        <ul class="film-readings" role="list">
+          {% for reading in film.reading %}<li>
+            <p class="film-readings__title">{% if reading.url != blank %}<a href="{{ reading.url }}" rel="noopener">{{ reading.title }}</a>{% else %}{{ reading.title }}{% endif %}</p>
+            {% if reading.author != blank %}<p class="film-readings__author">{{ reading.author }}</p>{% endif %}
+            {% if reading.note != blank %}<p class="film-readings__note">{{ reading.note }}</p>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </details>{% endif %}
+
+      {% if studies.about != blank %}<details class="film-drawer">
+        <summary>About Film Studies</summary>
+        <div class="markdown">{{ studies.about }}</div>
+      </details>{% endif %}
+
+      {% assign past_count = 0 %}{% for other in films_by_date %}{% if other.path != latest_film.path and other.path != film.path %}{% assign past_count = past_count | plus: 1 %}{% endif %}{% endfor %}
+      {% if past_count > 0 %}<details class="film-drawer">
+        <summary>Past Films</summary>
+        <ul class="film-past" role="list">
+          {% for other in films_by_date reversed %}{% if other.path != latest_film.path and other.path != film.path %}<li>
+            <a href="/{{ other.path }}"><span class="film-past__when">{{ other.starts | date: '%B %Y' }}</span> {{ other.title }}</a>
+          </li>
+          {% endif %}{% endfor %}
+        </ul>
+      </details>{% endif %}
+    </div>
+  </article>
+
+  {% if tickets_open %}{% assign max_per_ticket = studies.max_per_ticket | floor %}
+  <section class="film-box film-checkout" id="tickets" aria-labelledby="film-checkout-title" data-film="{{ film_slug }}" data-starts="{{ film.starts | date: '%Y-%m-%d %H:%M' }}" data-when="{{ film.starts | date: '%A, %B %-d' }}">
+    <h2 class="film-checkout__title" id="film-checkout-title">Drink Tickets</h2>
+
+    <div id="film-form-view">
+      <p class="nd-notice" id="film-closed" role="note">Sold Out - Thank You!</p>
+
+      <form id="film-form" data-endpoint="/carriers/film-studies" data-max="{{ max_per_ticket }}" novalidate>
+        <p class="nd-notice" id="film-full" role="note">We're full for this screening! Online drink tickets are sold out, but you can still donate to Film Studies below.</p>
+        <p class="film-spots" id="film-spots" aria-live="polite" hidden></p>
+        <ul class="nd-pie-list" role="list">
+          {% for ticket in studies.ticket %}{% if ticket.name != blank and ticket.price > 0 %}<li class="nd-pie film-ticket">
+            <div class="nd-pie-text">
+              <span class="nd-pie-name">{{ ticket.name }}</span>
+              {% if ticket.description != blank %}<span class="nd-pie-description">{{ ticket.description }}</span>{% endif %}
+              <span class="nd-pie-price" data-price="{{ ticket.price }}"></span>
+            </div>
+            <div class="nd-stepper">
+              <button class="nd-step" type="button" data-step="-1" aria-label="One fewer {{ ticket.name }}">&minus;</button>
+              <input class="nd-count film-ticket-count" type="number" min="0" max="{{ max_per_ticket }}" step="1" value="0" inputmode="numeric" data-index="{{ forloop.index0 }}" data-name="{{ ticket.name | escape }}" data-price="{{ ticket.price }}" aria-label="How many {{ ticket.name }}s" />
+              <button class="nd-step" type="button" data-step="1" aria-label="One more {{ ticket.name }}">+</button>
+            </div>
+          </li>
+          {% endif %}{% endfor %}
+          <li class="nd-pie">
+            <div class="nd-pie-text">
+              <label class="nd-pie-name" for="film-donation">{% if studies.donation_title != blank %}{{ studies.donation_title }}{% else %}Donate to Film Studies{% endif %}</label>
+              {% if studies.donation_description != blank %}<span class="nd-pie-description">{{ studies.donation_description }}</span>{% endif %}
+            </div>
+            <div class="film-donation">
+              <span aria-hidden="true">$</span>
+              <input class="film-donation__input" id="film-donation" type="text" inputmode="decimal" autocomplete="off" placeholder="0" />
+            </div>
+          </li>
+        </ul>
+
+        <div class="nd-field film-checkout__contact">
+          <label class="nd-label" for="film-name">Your name</label>
+          <input class="nd-input" type="text" id="film-name" name="name" placeholder="First and last name" required autocomplete="name" />
+        </div>
+        <div class="nd-field">
+          <label class="nd-label" for="film-email">Email address</label>
+          <input class="nd-input" type="email" id="film-email" name="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="nd-field">
+          <label class="nd-label" for="film-phone">Mobile number</label>
+          <input class="nd-input" type="tel" id="film-phone" name="phone" placeholder="(   )   -    " required autocomplete="tel" />
+        </div>
+
+        <p class="nd-pie-total" id="film-total" aria-live="polite"></p>
+        <button class="nd-submit" type="submit">Continue to payment</button>
+        <p class="nd-field-note nd-pay-note">You'll pay on Square's secure checkout, then come right back here.</p>
+        <p class="nd-field-error nd-refusal" id="film-refusal" role="alert"></p>
+        <p class="nd-error" id="film-error">
+          Something went wrong &mdash; please email us at
+          <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a>.
+        </p>
+      </form>
+    </div>
+
+    <div id="film-confirmation" hidden>
+      <p class="film-confirmation__lead" id="film-confirm-lead"></p>
+      <p class="film-confirmation__note">
+        Square has emailed your receipt. Need to change something? Email us at
+        <a class="nd-email" data-u="hello" data-d="nice-dream.com" href="#">hello<span>&#64;</span>nice-dream.com</a>.
+      </p>
+    </div>
+  </section>
+  <script src="/js/film-studies.js"></script>
+  {% endif %}
+</section>

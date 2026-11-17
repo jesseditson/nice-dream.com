@@ -216,3 +216,61 @@ image_alt = "string"
 # where guests RSVP; the button is hidden while this is blank
 rsvp_url = "string"
 rsvp_label = "string"
+
+# Film Studies: one film a month. The file name is the film's archive page, so objects/film/footprints.toml
+# is /film/footprints. /film-studies shows whichever film screens latest, and lists the rest as past films.
+[film]
+template = "film"
+title = "string"
+# other titles it goes by, e.g. "Footprints · Le Orme"
+also_known_as = "string"
+# "2026-12-01 18:00:00", in Yucca Valley time. Online drink tickets close once it starts.
+starts = "date"
+poster = "image"
+poster_alt = "string"
+synopsis = "markdown"
+programmer_note = "markdown"
+# a YouTube link; when set, it shows instead of the uploaded trailer
+trailer_youtube = "string"
+trailer = "video"
+# the frame shown before the trailer plays, and the picture link previews use
+trailer_still = "image"
+
+# the facts under the poster, in order, e.g. Director / Luigi Bazzoni
+[film.info]
+label = "string"
+value = "string"
+
+# this month's suggested readings; url and note are optional
+[film.reading]
+title = "string"
+author = "string"
+url = "string"
+note = "string"
+
+# stills from the film, shown full screen behind its page in this order
+[film.scene]
+image = "image"
+
+[film_studies]
+# Film Studies drink tickets — carriers/film-studies and pages/film-studies.liquid both read these.
+# the About Film Studies dropdown, on every film's page
+about = "markdown"
+# the most of each ticket one order can take
+max_per_ticket = "number"
+# how many guests each screening takes online: every drink ticket is one guest; blank or 0 for no limit
+max_guests = "number"
+donation_title = "string"
+donation_description = "string"
+# the Square variation donations sell as (a variable-price item with no tax); blank sends a plain line item
+donation_variation_id = "string"
+# the Square location orders are placed at
+square_location_id = "string"
+
+# price is what the page shows. With square_variation_id set, Square charges that variation's catalog price
+# and tax, so keep the two in step; blank sends a plain, untaxed line item at price.
+[film_studies.ticket]
+name = "string"
+description = "string"
+price = "number"
+square_variation_id = "string"
