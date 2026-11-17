@@ -2,14 +2,15 @@
  * What can be ordered and when it can be picked up, read from the pie_preorder
  * object, and the pure rules the carrier decides an order with.
  */
+import type { CarrierCheckoutItem } from "@archival/carrier";
 import type { PiePreorderObject } from "./archival-objects.d.ts";
 
 export const TIMEZONE = "America/Los_Angeles";
 
-/** A pie, keyed by the Square catalog item variation it sells as. */
+/** A pie, keyed by the variant it sells as in the site's connected payment account. */
 export type Pie = { id: string; name: string; price: number };
 
-export type AddOn = { name: string; price: number; modifierId: string };
+export type AddOn = { name: string; price: number };
 
 export type PickupWindow = { date: string; first: number; last: number };
 
@@ -21,10 +22,9 @@ export type Menu = {
   maxPerOrder: number;
   /** When orders stop being taken; null takes them indefinitely. */
   closesAt: Date | null;
-  locationId: string;
 };
 
-/** How many of each pie, by variation id, and how many of them carry the add-on. */
+/** How many of each pie, by variant id, and how many of them carry the add-on. */
 export type Selection = { pies: Map<string, number>; addOns: number };
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -136,19 +136,18 @@ export const readMenu = (pies: PiePreorderObject): Menu => {
   }
   windows.sort((a, b) => a.date.localeCompare(b.date) || a.first - b.first);
   const addOnName = (pies.add_on_name ?? "").trim();
-  const modifierId = (pies.add_on_modifier_id ?? "").trim();
+  const addOnPrice = pies.add_on_price ?? 0;
   return {
     pies: (pies.pies ?? []).flatMap((pie) => {
-      const id = (pie.square_variation_id ?? "").trim();
+      const id = (pie.variant_id ?? "").trim();
       const name = (pie.name ?? "").trim();
       return id && name ? [{ id, name, price: pie.price ?? 0 }] : [];
     }),
-    addOn: addOnName && modifierId ? { name: addOnName, price: pies.add_on_price ?? 0, modifierId } : null,
+    addOn: addOnName && addOnPrice > 0 ? { name: addOnName, price: addOnPrice } : null,
     windows,
     slotMinutes: Math.max(5, whole(pies.slot_minutes, 30)),
     maxPerOrder: Math.max(1, whole(pies.max_per_order, 6)),
     closesAt: parseLocalTimestamp(pies.orders_close ?? ""),
-    locationId: (pies.square_location_id ?? "").trim(),
   };
 };
 
@@ -171,31 +170,15 @@ export const pickupDates = (menu: Menu): string[] => [...new Set(menu.windows.ma
 export const pieCount = (selection: Selection): number =>
   [...selection.pies.values()].reduce((sum, count) => sum + count, 0);
 
-/**
- * The order's Square line items. The add-on is a modifier, which Square
- * charges once per unit of its line, so a pie split between some with the
- * add-on and some without becomes two lines.
- */
-export const lineItems = (menu: Menu, selection: Selection) => {
-  let addOns = menu.addOn ? selection.addOns : 0;
-  const items: {
-    catalog_object_id: string;
-    quantity: string;
-    modifiers?: { catalog_object_id: string }[];
-  }[] = [];
+/** The checkout's lines: each pie as its variant, and the add-ons as one line priced here. */
+export const checkoutItems = (menu: Menu, selection: Selection): CarrierCheckoutItem[] => {
+  const items: CarrierCheckoutItem[] = [];
   for (const pie of menu.pies) {
     const quantity = selection.pies.get(pie.id) ?? 0;
-    if (!quantity) continue;
-    const withAddOn = Math.min(quantity, addOns);
-    addOns -= withAddOn;
-    if (withAddOn && menu.addOn) {
-      items.push({
-        catalog_object_id: pie.id,
-        quantity: String(withAddOn),
-        modifiers: [{ catalog_object_id: menu.addOn.modifierId }],
-      });
-    }
-    if (quantity > withAddOn) items.push({ catalog_object_id: pie.id, quantity: String(quantity - withAddOn) });
+    if (quantity) items.push({ variant: pie.id, quantity });
+  }
+  if (menu.addOn && selection.addOns > 0) {
+    items.push({ name: menu.addOn.name, amount: Math.round(menu.addOn.price * 100), quantity: selection.addOns });
   }
   return items;
 };
@@ -209,7 +192,7 @@ export const describeSelection = (menu: Menu, selection: Selection): string => {
   return menu.addOn && selection.addOns > 0 ? `${pies} + ${selection.addOns} × ${menu.addOn.name}` : pies;
 };
 
-/** The pre-tax price the page shows; Square charges its own catalog prices. */
+/** The pre-tax price the page shows; checkout charges the variants' own prices. */
 export const subtotal = (menu: Menu, selection: Selection): number =>
   menu.pies.reduce((sum, pie) => sum + pie.price * (selection.pies.get(pie.id) ?? 0), 0) +
   (menu.addOn ? menu.addOn.price * selection.addOns : 0);
@@ -221,7 +204,7 @@ const count = (value: unknown): number => {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : NaN;
 };
 
-/** `{ pies: { <variation id>: quantity }, add_ons }` from the form. */
+/** `{ pies: { <variant id>: quantity }, add_ons }` from the form. */
 export const parseSelection = (fields: Record<string, unknown>, menu: Menu): Selection | Refusal => {
   const requested =
     fields.pies && typeof fields.pies === "object" && !Array.isArray(fields.pies)
@@ -249,7 +232,7 @@ export const parseSelection = (fields: Record<string, unknown>, menu: Menu): Sel
   return selection;
 };
 
-/** A US number as Square wants it, `+1XXXXXXXXXX`; null when it isn't one. */
+/** A phone number in E.164, like `+1XXXXXXXXXX`; null when it isn't one. */
 export const e164 = (value: string): string | null => {
   const trimmed = value.trim();
   const digits = trimmed.replace(/\D/g, "");

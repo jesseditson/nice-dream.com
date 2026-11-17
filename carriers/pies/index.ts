@@ -4,36 +4,31 @@
  *   GET             whether orders are open, and every pickup time with how
  *                   many pies it can still take
  *   GET ?order=     the same, plus that order and whether it has been paid
- *   POST (JSON)     { pies: { <variation id>: quantity }, add_ons, date, time,
- *                     name, email, phone, notes? } — starts a Square checkout
- *                     for the order with its pickup time set, logs it to the
- *                     hidden Checkouts tab, and answers with the checkout's URL
+ *   POST (JSON)     { pies: { <variant id>: quantity }, add_ons, date, time,
+ *                     name, email, phone, notes? } — starts a checkout in
+ *                     the site's connected payment account, logs it to the
+ *                     hidden Checkouts tab, and answers with its URL
  *
- * Every request also asks Square whether the checkouts still awaiting payment
- * have been paid, and writes the answer to their rows; a paid one gets a row on
- * the Orders tab. It also picks up paid pie orders placed through the dashboard
- * checkout link: each gets an Orders row, and its ASAP pickup is moved to the
- * first pickup time (see link.ts).
+ * Every request also asks archival payments whether the checkouts still
+ * awaiting payment have been paid, and writes the answer to their rows; a paid
+ * one gets a row on the Orders tab.
  *
  * The menu, pickup days and orders spreadsheet live on the pie_preorder
- * object; the Google and Square credentials are the ones the dinner object
- * already holds.
+ * object; the Google credentials are the ones the dinner object already holds.
  *
  * Anything the guest can fix comes back as `{ ok: false, error }` with a 200 so
  * the form can show it; only a misconfigured site throws.
  */
-import type { Carrier, CarrierJsonValue } from "@archival/carrier";
+import type { Carrier, CarrierJsonValue, CarrierOutOfStockError } from "@archival/carrier";
 import { accessToken, sheetsClient } from "./google.ts";
 import {
-  TIMEZONE,
+  checkoutItems,
   describeSelection,
   e164,
   formatClock,
   formatDateLabel,
   formatHHMM,
   isOpen,
-  lineItems,
-  localInstant,
   parseHHMM,
   parseSelection,
   pickupDates,
@@ -41,6 +36,7 @@ import {
   readMenu,
   timestampIn,
 } from "./menu.ts";
+import { checkoutStates, isDue } from "./payments.ts";
 import {
   CHECKOUTS,
   ORDERS,
@@ -48,11 +44,10 @@ import {
   appendOrders,
   applyStates,
   ensureSheet,
+  paidOrders,
   readOrders,
   rowsToSync,
 } from "./sheet.ts";
-import { LOOKBACK_DAYS, planFound } from "./link.ts";
-import { createCheckout, orderStates, paidPickupOrders, reschedulePickup } from "./square.ts";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_EMAIL = "hello@nice-dream.com";
@@ -65,7 +60,7 @@ type Reply = { [key: string]: CarrierJsonValue };
 
 const refuse = (error: string): Reply => ({ ok: false, error });
 
-/** The key in a guest's return link: 144 random bits, URL-safe, and short enough for Square's reference_id. */
+/** The key in a guest's return link: 144 random bits, URL-safe. */
 const randomToken = (): string => {
   const bytes = crypto.getRandomValues(new Uint8Array(18));
   let binary = "";
@@ -73,7 +68,12 @@ const randomToken = (): string => {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
-const carrier: Carrier = async (params, body, objects) => {
+const outOfStock = (error: unknown): string[] => {
+  const short = (error as Partial<CarrierOutOfStockError> | null)?.outOfStock;
+  return Array.isArray(short) ? short : [];
+};
+
+const carrier: Carrier = async (params, body, objects, site) => {
   const dinner = objects.dinner;
   const menu = readMenu(objects.pie_preorder);
   if (!dinner.google_service_account || !objects.pie_preorder.orders_sheet_id) {
@@ -81,13 +81,7 @@ const carrier: Carrier = async (params, body, objects) => {
       "Pie orders are not configured — set orders_sheet_id on the pie_preorder object and google_service_account on the dinner object.",
     );
   }
-  if (!dinner.square_access_token || !menu.locationId) {
-    throw new Error(
-      "Pie orders are not configured — set square_location_id on the pie_preorder object and square_access_token on the dinner object.",
-    );
-  }
-  const squareToken = dinner.square_access_token;
-  const siteUrl = (objects.SITE_URL || "https://nice-dream.com").replace(/\/+$/, "");
+  const siteUrl = site.url.replace(/\/+$/, "");
   const fields =
     body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
 
@@ -99,31 +93,19 @@ const carrier: Carrier = async (params, body, objects) => {
   ]);
 
   const lookup = fields ? "" : text(params.get("order"));
-  const unsettled = rowsToSync(checkouts, lookup);
-  const [states, placed] = await Promise.all([
-    unsettled.length
-      ? orderStates(squareToken, menu.locationId, unsettled.map((checkout) => checkout.squareOrder))
-      : null,
-    paidPickupOrders(squareToken, menu.locationId, new Date(Date.now() - LOOKBACK_DAYS * 86_400_000)),
-  ]);
-  if (states) await applyStates(client, unsettled, states);
-  const paid = [
-    ...(placed ?? []),
-    ...unsettled.flatMap((checkout) => {
-      const square = states?.get(checkout.squareOrder);
-      return checkout.status === STATUS.paid && square ? [square.order] : [];
-    }),
-  ];
-  if (paid.length) {
-    const found = planFound(menu, paid, new Set(orders.map((order) => order.squareOrder).filter(Boolean)));
-    await appendOrders(client, menu, ORDERS, found.rows).catch((error) => {
+  const unsettled = rowsToSync(checkouts, lookup).filter(
+    (checkout) => (lookup !== "" && checkout.token === lookup) || isDue(checkout.checkoutId),
+  );
+  if (unsettled.length) {
+    const states = await checkoutStates(
+      site.payments,
+      unsettled.map((checkout) => checkout.checkoutId),
+    );
+    await applyStates(client, unsettled, states);
+    const found = paidOrders(unsettled, new Set(orders.map((order) => order.checkoutId).filter(Boolean)));
+    await appendOrders(client, menu, ORDERS, found).catch((error) => {
       console.error("Could not write paid pie orders to the Orders tab:", error);
     });
-    await Promise.all(
-      found.moves.map((move) =>
-        reschedulePickup(squareToken, menu.locationId, move.order, move.fulfillmentUid, move.pickupAt),
-      ),
-    );
   }
 
   if (!fields) {
@@ -183,46 +165,58 @@ const carrier: Carrier = async (params, body, objects) => {
   const notes = text(fields.notes);
 
   const token = randomToken();
-  let checkout;
+  const pickup = `${formatDateLabel(date)} at ${formatClock(start)}`;
+  let checkout: { id: string; url: string };
   try {
-    checkout = await createCheckout(squareToken, {
-      token,
-      locationId: menu.locationId,
-      lineItems: lineItems(menu, selection),
-      pickupAt: localInstant(date, start, TIMEZONE),
-      name,
-      email,
-      phone,
-      note: notes,
-      redirectUrl: `${siteUrl}${FORM_PATH}?order=${encodeURIComponent(token)}`,
+    checkout = await site.payments.checkout.create({
+      items: checkoutItems(menu, selection),
+      successUrl: `${siteUrl}${FORM_PATH}?order=${encodeURIComponent(token)}`,
+      cancelUrl: `${siteUrl}${FORM_PATH}`,
+      customerEmail: email,
+      metadata: {
+        pickup,
+        guest: name.slice(0, 255),
+        phone,
+        ...(notes ? { notes: notes.slice(0, 255) } : {}),
+      },
+      idempotencyKey: token,
     });
   } catch (error) {
-    console.error("Could not start a Square checkout:", error);
+    const short = outOfStock(error);
+    if (short.length) {
+      const names = menu.pies.filter((pie) => short.includes(pie.id)).map((pie) => pie.name);
+      return refuse(
+        `${names.length ? names.join(" and ") : "One of those pies"} just sold out — reload the page and pick again.`,
+      );
+    }
+    console.error("Could not start a pie checkout:", error);
     return refuse(`We couldn't start checkout just now — please try again, or email us at ${CONTACT_EMAIL}.`);
   }
 
-  // An order whose checkout row fails to write still reaches the Orders tab
-  // once it's paid, through the next request's search of Square.
-  await appendOrders(client, menu, CHECKOUTS, [
-    {
-      date,
-      start,
-      status: STATUS.awaiting,
-      total: "",
-      name,
-      phone,
-      email,
-      notes,
-      summary: describeSelection(menu, selection),
-      selection,
-      orderedAt: timestampIn(),
-      squareOrder: checkout.orderId,
-      checkout: checkout.url,
-      token,
-    },
-  ]).catch((error) => {
+  // The Checkouts row is the only record of the pickup time, so a guest whose row can't be written doesn't go on to pay.
+  try {
+    await appendOrders(client, menu, CHECKOUTS, [
+      {
+        date,
+        start,
+        status: STATUS.awaiting,
+        total: "",
+        name,
+        phone,
+        email,
+        notes,
+        summary: describeSelection(menu, selection),
+        selection,
+        orderedAt: timestampIn(),
+        checkoutId: checkout.id,
+        checkout: checkout.url,
+        token,
+      },
+    ]);
+  } catch (error) {
     console.error("Could not write a pie checkout to the Checkouts tab:", error);
-  });
+    return refuse(`We couldn't save your order just now — please try again, or email us at ${CONTACT_EMAIL}.`);
+  }
 
   return { ok: true, checkout_url: checkout.url };
 };

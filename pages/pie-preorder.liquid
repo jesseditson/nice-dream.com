@@ -41,7 +41,7 @@
           <div class="nd-field">
             <span class="nd-label">Which pies?</span>
             <ul class="nd-pie-list" role="list">
-              {% for pie in pie_preorder.pies %}{% if pie.square_variation_id and pie.square_variation_id != "" %}
+              {% for pie in pie_preorder.pies %}{% if pie.variant_id and pie.variant_id != "" %}
               <li class="nd-pie">
                 <div class="nd-pie-text">
                   <span class="nd-pie-name">{{ pie.name }}</span>
@@ -50,7 +50,7 @@
                 </div>
                 <div class="nd-stepper">
                   <button class="nd-step" type="button" data-step="-1" aria-label="One fewer {{ pie.name }}">&minus;</button>
-                  <input class="nd-count nd-pie-count" type="number" min="0" max="{{ max_per_order }}" step="1" value="0" inputmode="numeric" data-id="{{ pie.square_variation_id }}" data-price="{{ pie.price }}" aria-label="How many {{ pie.name }}" />
+                  <input class="nd-count nd-pie-count" type="number" min="0" max="{{ max_per_order }}" step="1" value="0" inputmode="numeric" data-id="{{ pie.variant_id }}" data-price="{{ pie.price }}" aria-label="How many {{ pie.name }}" />
                   <button class="nd-step" type="button" data-step="1" aria-label="One more {{ pie.name }}">+</button>
                 </div>
               </li>
@@ -59,7 +59,7 @@
             <p class="nd-field-note">Up to {{ max_per_order }} pies per order.</p>
           </div>
 
-          {% if pie_preorder.add_on_name and pie_preorder.add_on_name != "" and pie_preorder.add_on_modifier_id and pie_preorder.add_on_modifier_id != "" %}
+          {% if pie_preorder.add_on_name and pie_preorder.add_on_name != "" and pie_preorder.add_on_price > 0 %}
           <!-- 2. Add-on -->
           <div class="nd-field">
             <span class="nd-label">Anything with it?</span>

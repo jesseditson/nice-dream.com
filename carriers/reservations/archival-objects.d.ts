@@ -230,27 +230,24 @@ export interface PiePreorderObject {
   slot_minutes: number | null;
   /** the most pies one order can take */
   max_per_order: number | null;
-  /** an extra each pie can carry, sold as a Square modifier on the pie; blank add_on_name hides it */
+  /** an extra each pie can carry, charged as its own line at add_on_price; blank add_on_name hides it */
   add_on_name: string | null;
   add_on_price: number | null;
-  add_on_modifier_id: string | null;
-  /** the Square location the orders are placed at and picked up from */
-  square_location_id: string | null;
   /** the id from the orders spreadsheet's URL; shared with dinner.google_service_account as an Editor */
   orders_sheet_id: string | null;
-  /** price is what the page shows; Square charges the catalog price of square_variation_id */
+  /** price is what the page shows; checkout charges the price of variant_id, an item variation in the site's connected payment account */
   pies: PiePreorderPiesObject[];
   /** first/last are the first and last pickup times as 24h HH:MM */
   pickup_windows: PiePreorderPickupWindowsObject[];
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
-/** price is what the page shows; Square charges the catalog price of square_variation_id */
+/** price is what the page shows; checkout charges the price of variant_id, an item variation in the site's connected payment account */
 export interface PiePreorderPiesObject {
   name: string | null;
   description: string | null;
   price: number | null;
-  square_variation_id: string | null;
+  variant_id: string | null;
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
@@ -397,27 +394,23 @@ export interface FilmStudiesObject {
   max_guests: number | null;
   donation_title: string | null;
   donation_description: string | null;
-  /** the Square variation donations sell as (a variable-price item with no tax); blank sends a plain line item */
-  donation_variation_id: string | null;
-  /** the Square location orders are placed at */
-  square_location_id: string | null;
   /**
-   * price is what the page shows. With square_variation_id set, Square charges that variation's catalog price
-   * and tax, so keep the two in step; blank sends a plain, untaxed line item at price.
+   * price is what the page shows. With variant_id set, checkout charges the price of that item variation in the
+   * site's connected payment account, so keep the two in step; blank charges a plain line at price.
    */
   ticket: FilmStudiesTicketObject[];
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
 /**
- * price is what the page shows. With square_variation_id set, Square charges that variation's catalog price
- * and tax, so keep the two in step; blank sends a plain, untaxed line item at price.
+ * price is what the page shows. With variant_id set, checkout charges the price of that item variation in the
+ * site's connected payment account, so keep the two in step; blank charges a plain line at price.
  */
 export interface FilmStudiesTicketObject {
   name: string | null;
   description: string | null;
   price: number | null;
-  square_variation_id: string | null;
+  variant_id: string | null;
 }
 
 /** Every object in the site, keyed by name. */

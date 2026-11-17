@@ -20,11 +20,9 @@ max_per_ticket = 10.0
 max_guests = 50.0
 donation_title = "Tip Your Professor!"
 donation_description = "Tips go straight to your host."
-donation_variation_id = ""
-square_location_id = "LD5VJT9B9ADK7"
 
 [[ticket]]
 description = "Includes admission to the film & post-film discussion. Full bar, zero-proof cocktails & concessions (including GF+Vegan) available for purchase."
 name = "Admission"
 price = 15.0
-square_variation_id = "VEJFQQFBFQJF3NWHRTGZFYCV"
+variant_id = "VEJFQQFBFQJF3NWHRTGZFYCV"

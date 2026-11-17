@@ -2,20 +2,19 @@
  * What a Film Studies order can hold, read from the film_studies object, and the
  * pure rules the carrier decides an order with.
  */
+import type { CarrierCheckoutItem } from "@archival/carrier";
 import type { FilmObject, FilmStudiesObject } from "./archival-objects.d.ts";
 
 export const TIMEZONE = "America/Los_Angeles";
 
 /** A ticket is only sold once it has a name and a price, since the page shows both. */
-export type Ticket = { name: string; price: number; variationId: string; available: boolean };
+export type Ticket = { name: string; price: number; variantId: string; available: boolean };
 
 export type Menu = {
   tickets: Ticket[];
   maxPerTicket: number;
   /** Null when a screening takes any number of guests. */
   maxGuests: number | null;
-  donationVariationId: string;
-  locationId: string;
 };
 
 /** How many of each ticket, by its position in film_studies.ticket, and the donation in cents. */
@@ -28,13 +27,11 @@ export const readMenu = (studies: FilmStudiesObject): Menu => ({
   tickets: (studies.ticket ?? []).map((ticket) => {
     const name = text(ticket.name);
     const price = ticket.price != null && Number.isFinite(ticket.price) && ticket.price > 0 ? ticket.price : 0;
-    return { name, price, variationId: text(ticket.square_variation_id), available: name !== "" && price > 0 };
+    return { name, price, variantId: text(ticket.variant_id), available: name !== "" && price > 0 };
   }),
   maxPerTicket:
     studies.max_per_ticket != null && studies.max_per_ticket >= 1 ? Math.floor(studies.max_per_ticket) : 10,
   maxGuests: studies.max_guests != null && studies.max_guests >= 1 ? Math.floor(studies.max_guests) : null,
-  donationVariationId: text(studies.donation_variation_id),
-  locationId: text(studies.square_location_id),
 });
 
 /** `"film/footprints"` or `"footprints"` → that film. */
@@ -124,46 +121,17 @@ export const parseSelection = (fields: Record<string, unknown>, menu: Menu): Sel
 
 export const ticketCount = (selection: Selection): number => selection.tickets.reduce((sum, count) => sum + count, 0);
 
-/** The parts of a Square order the guest count reads. */
-export type FilmOrder = {
-  state?: string;
-  created_at?: string;
-  line_items?: { catalog_object_id?: string; name?: string; quantity?: string }[];
-  fulfillments?: { type?: string; pickup_details?: { pickup_at?: string } }[];
-};
-
 /** How long a checkout that hasn't been paid yet keeps its spots. */
 export const HOLD_MINUTES = 20;
 
-/** Tickets on an order for the screening at `screeningAt`; each one is a guest. */
-export const guestsOn = (menu: Menu, order: FilmOrder, screeningAt: Date): number => {
-  const forScreening = (order.fulfillments ?? []).some(
-    (fulfillment) =>
-      fulfillment.type === "PICKUP" &&
-      new Date(fulfillment.pickup_details?.pickup_at ?? "").getTime() === screeningAt.getTime(),
-  );
-  if (!forScreening) return 0;
-  return (order.line_items ?? []).reduce((sum, item) => {
-    const isTicket = menu.tickets.some((ticket) =>
-      item.catalog_object_id
-        ? ticket.variationId !== "" && item.catalog_object_id === ticket.variationId
-        : ticket.name !== "" && item.name === ticket.name,
-    );
-    const quantity = Math.round(Number(item.quantity));
-    return isTicket && quantity > 0 ? sum + quantity : sum;
-  }, 0);
-};
+export type HeldCheckout = { status: string; guests: number; createdAt: number };
 
-/** Guests with a spot at the screening: paid orders, and checkouts started within HOLD_MINUTES. */
-export const guestsTaken = (menu: Menu, orders: FilmOrder[], screeningAt: Date, now: Date = new Date()): number =>
-  orders.reduce((sum, order) => {
-    if (order.state === "DRAFT") {
-      const age = now.getTime() - new Date(order.created_at ?? "").getTime();
-      if (!(age >= 0 && age < HOLD_MINUTES * 60_000)) return sum;
-    } else if (order.state !== "OPEN" && order.state !== "COMPLETED") {
-      return sum;
-    }
-    return sum + guestsOn(menu, order, screeningAt);
+/** Guests with a spot: paid checkouts, and checkouts started within HOLD_MINUTES. */
+export const guestsHeld = (checkouts: HeldCheckout[], now: number = Date.now()): number =>
+  checkouts.reduce((sum, checkout) => {
+    const age = now - checkout.createdAt;
+    const holding = checkout.status === "open" && age >= 0 && age < HOLD_MINUTES * 60_000;
+    return checkout.status === "paid" || holding ? sum + checkout.guests : sum;
   }, 0);
 
 export const spotsLeft = (menu: Menu, taken: number): number | null =>
@@ -176,32 +144,21 @@ export const spotsRefusal = (left: number): string =>
 
 const cents = (dollars: number): number => Math.round(dollars * 100);
 
-/** The Square order's line items: catalog variations where set, plain items at the page's price otherwise. */
-export const lineItems = (menu: Menu, selection: Selection, filmTitle: string): unknown[] => {
-  const items: unknown[] = [];
-  const note = `Film Studies: ${filmTitle}`;
+export const DONATION_NAME = "Tip Your Professor";
+
+/** The checkout's lines: variants where set, lines at the page's price otherwise, and the donation. */
+export const checkoutItems = (menu: Menu, selection: Selection): CarrierCheckoutItem[] => {
+  const items: CarrierCheckoutItem[] = [];
   menu.tickets.forEach((ticket, index) => {
     const quantity = selection.tickets[index] ?? 0;
     if (!quantity || !ticket.available) return;
     items.push(
-      ticket.variationId
-        ? { catalog_object_id: ticket.variationId, quantity: String(quantity), note }
-        : {
-            name: ticket.name,
-            quantity: String(quantity),
-            base_price_money: { amount: cents(ticket.price), currency: "USD" },
-            note,
-          },
+      ticket.variantId
+        ? { variant: ticket.variantId, quantity }
+        : { name: ticket.name, amount: cents(ticket.price), quantity },
     );
   });
-  if (selection.donationCents) {
-    const price = { amount: selection.donationCents, currency: "USD" };
-    items.push(
-      menu.donationVariationId
-        ? { catalog_object_id: menu.donationVariationId, quantity: "1", base_price_money: price }
-        : { name: "Tip Your Professor", quantity: "1", base_price_money: price },
-    );
-  }
+  if (selection.donationCents) items.push({ name: DONATION_NAME, amount: selection.donationCents, quantity: 1 });
   return items;
 };
 
