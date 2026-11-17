@@ -338,7 +338,7 @@ export interface FilmObject {
   title: string | null;
   /** other titles it goes by, e.g. "Footprints · Le Orme" */
   also_known_as: string | null;
-  /** "2026-12-01 18:00:00", in Yucca Valley time. Online drink tickets close once it starts. */
+  /** "2026-12-01 18:00:00", in Yucca Valley time. Online tickets close once it starts. */
   starts: string | null;
   poster: ArchivalFile | null;
   poster_alt: string | null;
@@ -353,6 +353,8 @@ export interface FilmObject {
   info: FilmInfoObject[];
   /** this month's suggested readings; url and note are optional */
   reading: FilmReadingObject[];
+  /** stills from the film, shown full screen behind its page in this order */
+  scene: FilmSceneObject[];
 }
 
 // Child objects are read from their parent's file, so they have no path/order.
@@ -371,19 +373,25 @@ export interface FilmReadingObject {
   note: string | null;
 }
 
+// Child objects are read from their parent's file, so they have no path/order.
+/** stills from the film, shown full screen behind its page in this order */
+export interface FilmSceneObject {
+  image: ArchivalFile | null;
+}
+
 export interface FilmStudiesObject {
   /** `<object name>/<file name>` this object was read from. */
   path: string;
   /** The object's `order`, or null when it is unordered. */
   order: number | null;
   /**
-   * Film Studies drink tickets — carriers/film-studies and pages/film-studies.liquid both read these.
+   * Film Studies tickets — carriers/film-studies and pages/film-studies.liquid both read these.
    * the About Film Studies dropdown, on every film's page
    */
   about: string | null;
   /** the most of each ticket one order can take */
   max_per_ticket: number | null;
-  /** how many guests each screening takes online: every drink ticket is one guest; blank or 0 for no limit */
+  /** how many guests each screening takes online: every ticket is one guest; blank or 0 for no limit */
   max_guests: number | null;
   donation_title: string | null;
   donation_description: string | null;

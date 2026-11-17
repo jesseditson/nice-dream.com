@@ -5,17 +5,11 @@ max_per_ticket = 10.0
 max_guests = 50.0
 donation_title = "Donate to Film Studies!"
 donation_description = "Helps book the film & pay our host."
-donation_variation_id = ""
+donation_variation_id = "7CA3FXXXP4XHYXKVHV4CRXMD"
 square_location_id = "LD5VJT9B9ADK7"
 
 [[ticket]]
-name = "Single Drink Ticket"
-description = "Good for one cocktail or equal value concessions. Zero-proof cocktails & GF+Vegan concessions available."
+name = "Admission"
+description = "Includes one free drink or concession. Zero-proof cocktails & GF+Vegan concessions available."
 price = 15.0
-square_variation_id = ""
-
-[[ticket]]
-name = "Double Drink Ticket"
-description = "Good for two cocktails or equal value concessions. Zero-proof cocktails & GF+Vegan concessions available."
-price = 30.0
-square_variation_id = ""
+square_variation_id = "VEJFQQFBFQJF3NWHRTGZFYCV"

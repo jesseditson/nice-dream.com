@@ -72,7 +72,7 @@
     input.value = String(Math.max(0, Math.min(quantity(input), spotsLeft - others)));
   };
 
-  const spotsMessage = (left: number): string => `Only ${left} spot${left === 1 ? "" : "s"} left — each drink ticket is one guest.`;
+  const spotsMessage = (left: number): string => `Only ${left} ticket${left === 1 ? "" : "s"} left.`;
 
   const donation = (): number | null => {
     const raw = donationInput.value.replace(/[$,\s]/g, "");
@@ -137,7 +137,7 @@
     for (const input of ticketInputs) fitToSpots(input);
     const note = byId("film-spots");
     note.hidden = spotsLeft == null || full || spotsLeft > 10;
-    if (!note.hidden && spotsLeft != null) note.textContent = `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`;
+    if (!note.hidden && spotsLeft != null) note.textContent = `${spotsLeft} ticket${spotsLeft === 1 ? "" : "s"} left`;
     updateTotal();
   };
 
@@ -185,7 +185,7 @@
       return;
     }
     if (!ticketInputs.some((input) => quantity(input) > 0) && !gift) {
-      showRefusal("Pick a drink ticket or add a donation.");
+      showRefusal("Pick a ticket or add a donation.");
       return;
     }
 
@@ -251,7 +251,7 @@
     if (receipt?.summary) lead.append("Your order is in: ", strong(receipt.summary), ". ");
     else lead.append("Your order is in. ");
     if (!receipt || receipt.tickets) {
-      lead.append("See you ", strong(section.dataset.when ?? "at the screening"), " — just give your name at the bar.");
+      lead.append("See you ", strong(section.dataset.when ?? "at the screening"), " — just give your name when you arrive.");
     }
     byId("film-checkout-title").textContent = "You're all set!";
     byId("film-form-view").hidden = true;

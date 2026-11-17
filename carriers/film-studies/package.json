@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "main": "index.ts",
-  "description": "Film Studies drink tickets and donations, paid through Square.",
+  "description": "Film Studies tickets and donations, paid through Square.",
   "scripts": {
     "types": "archival-carrier-types",
     "typecheck": "tsc --noEmit",

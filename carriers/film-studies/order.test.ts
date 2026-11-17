@@ -51,6 +51,7 @@ const film = (path: string, starts: string): FilmObject => ({
   trailer_still: null,
   info: [],
   reading: [],
+  scene: [],
 });
 
 test("readMenu keeps every ticket's position, and only sells priced ones", () => {
@@ -154,6 +155,7 @@ test("createCheckout schedules the pickup at the screening", async () => {
   );
   assert.deepEqual(checkout, { url: "https://square.link/u/x", orderId: "ORD" });
   assert.equal(sent.order.reference_id, "abc");
+  assert.deepEqual(sent.order.pricing_options, { auto_apply_taxes: true });
   assert.equal(sent.order.fulfillments[0].pickup_details.pickup_at, "2026-12-02T02:00:00.000Z");
   assert.equal(sent.checkout_options.allow_tipping, false);
 });
@@ -182,8 +184,8 @@ test("guestsTaken counts paid tickets and fresh checkouts for that screening", (
   assert.equal(spotsLeft(menu, taken), 41);
   assert.equal(spotsLeft(menu, 60), 0);
   assert.equal(spotsLeft(readMenu({ ...studies, max_guests: null }), 60), null);
-  assert.match(spotsRefusal(0), /full/);
-  assert.equal(spotsRefusal(1), "Only 1 spot left — each drink ticket is one guest.");
+  assert.match(spotsRefusal(0), /sold out/);
+  assert.equal(spotsRefusal(1), "Only 1 ticket left.");
 });
 
 test("pickupOrders follows Square's cursor and includes checkouts still open", async () => {

@@ -224,7 +224,7 @@ template = "film"
 title = "string"
 # other titles it goes by, e.g. "Footprints · Le Orme"
 also_known_as = "string"
-# "2026-12-01 18:00:00", in Yucca Valley time. Online drink tickets close once it starts.
+# "2026-12-01 18:00:00", in Yucca Valley time. Online tickets close once it starts.
 starts = "date"
 poster = "image"
 poster_alt = "string"
@@ -253,12 +253,12 @@ note = "string"
 image = "image"
 
 [film_studies]
-# Film Studies drink tickets — carriers/film-studies and pages/film-studies.liquid both read these.
+# Film Studies tickets — carriers/film-studies and pages/film-studies.liquid both read these.
 # the About Film Studies dropdown, on every film's page
 about = "markdown"
 # the most of each ticket one order can take
 max_per_ticket = "number"
-# how many guests each screening takes online: every drink ticket is one guest; blank or 0 for no limit
+# how many guests each screening takes online: every ticket is one guest; blank or 0 for no limit
 max_guests = "number"
 donation_title = "string"
 donation_description = "string"

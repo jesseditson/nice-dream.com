@@ -1,5 +1,5 @@
 /**
- * Film Studies drink tickets — https://<site>/carriers/film-studies
+ * Film Studies tickets — https://<site>/carriers/film-studies
  *
  *   GET ?film=   whether the film is on sale, and how many guests it can
  *                still take (`spots_left`, null without a limit)
@@ -10,7 +10,7 @@
  * The tickets and Square location live on the film_studies object; the Square
  * access token is the one the dinner object already holds. The order itself is
  * the record: it lands in Square with the guest's name and a pickup at the
- * screening's start. Each drink ticket is one guest, and Square's orders are
+ * screening's start. Each ticket is one guest, and Square's orders are
  * counted against film_studies.max_guests before a checkout starts.
  *
  * Anything the guest can fix comes back as `{ ok: false, error }` with a 200 so
@@ -93,7 +93,7 @@ const carrier: Carrier = async (params, body, objects) => {
   }
 
   if (!isOnSale(film)) {
-    return refuse("Online drink tickets for this screening are closed — come grab a drink at the bar!");
+    return refuse("Online tickets for this screening are closed.");
   }
 
   const selection = parseSelection(fields, menu);

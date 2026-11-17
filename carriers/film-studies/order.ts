@@ -122,7 +122,7 @@ export const parseSelection = (fields: Record<string, unknown>, menu: Menu): Sel
   }
   if (donationCents > 0 && donationCents < 100) return { error: "Donations start at $1." };
   if (!tickets.some((count) => count > 0) && !donationCents) {
-    return { error: "Pick a drink ticket or add a donation." };
+    return { error: "Pick a ticket or add a donation." };
   }
   return { tickets, donationCents };
 };
@@ -140,7 +140,7 @@ export type FilmOrder = {
 /** How long a checkout that hasn't been paid yet keeps its spots. */
 export const HOLD_MINUTES = 20;
 
-/** Drink tickets on an order for the screening at `screeningAt`; each one is a guest. */
+/** Tickets on an order for the screening at `screeningAt`; each one is a guest. */
 export const guestsOn = (menu: Menu, order: FilmOrder, screeningAt: Date): number => {
   const forScreening = (order.fulfillments ?? []).some(
     (fulfillment) =>
@@ -176,8 +176,8 @@ export const spotsLeft = (menu: Menu, taken: number): number | null =>
 
 export const spotsRefusal = (left: number): string =>
   left === 0
-    ? "We're full for this screening! You can still add a donation."
-    : `Only ${left} spot${left === 1 ? "" : "s"} left — each drink ticket is one guest.`;
+    ? "We're sold out for this screening! You can still add a donation."
+    : `Only ${left} ticket${left === 1 ? "" : "s"} left.`;
 
 const cents = (dollars: number): number => Math.round(dollars * 100);
 
@@ -213,7 +213,7 @@ export const lineItems = (menu: Menu, selection: Selection, filmTitle: string): 
 export const money = (amountCents: number): string =>
   amountCents % 100 ? `$${(amountCents / 100).toFixed(2)}` : `$${amountCents / 100}`;
 
-/** e.g. "2 Single Drink Tickets, a $20 donation". */
+/** e.g. "2 Admissions, a $20 donation". */
 export const describeSelection = (menu: Menu, selection: Selection): string => {
   const parts = menu.tickets.flatMap((ticket, index) => {
     const quantity = selection.tickets[index] ?? 0;

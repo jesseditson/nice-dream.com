@@ -56,6 +56,7 @@ export const createCheckout = async (
         location_id: request.locationId,
         reference_id: request.token,
         line_items: request.lineItems,
+        pricing_options: { auto_apply_taxes: true },
         fulfillments: [
           {
             type: "PICKUP",

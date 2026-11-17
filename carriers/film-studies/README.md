@@ -1,6 +1,6 @@
 # carriers/film-studies
 
-Backs the drink-ticket form on `/film-studies` and each `/film/<name>` page.
+Backs the ticket form on `/film-studies` and each `/film/<name>` page.
 Deployed with the site and reachable at `/carriers/film-studies`.
 
 | | |
@@ -18,7 +18,7 @@ form shows a confirmation. There's no spreadsheet: Square is the record.
 Online sales close when the film's `starts` passes; the page hides the form at
 the same moment.
 
-Each drink ticket is one guest. Before a checkout starts, the carrier searches
+Each ticket is one guest. Before a checkout starts, the carrier searches
 Square's pickup orders for the screening (matched by pickup time and ticket
 name or variation) and counts paid orders plus checkouts started in the last 20
 minutes against `max_guests`. An order that would go over it is refused with the
