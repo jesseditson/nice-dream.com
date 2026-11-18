@@ -97,7 +97,7 @@
       <p class="nd-notice" id="film-closed" role="note">Sold Out - Thank You!</p>
 
       <form id="film-form" data-endpoint="/carriers/film-studies" data-max="{{ max_per_ticket }}" novalidate>
-        <p class="nd-notice" id="film-full" role="note">We're sold out for this screening! You can still donate to Film Studies below.</p>
+        <p class="nd-notice" id="film-full" role="note">We're sold out for this screening! You can still tip your professor below.</p>
         <p class="film-spots" id="film-spots" aria-live="polite" hidden></p>
         <ul class="nd-pie-list" role="list">
           {% for ticket in studies.ticket %}{% if ticket.name != blank and ticket.price > 0 %}<li class="nd-pie film-ticket">
@@ -115,7 +115,7 @@
           {% endif %}{% endfor %}
           <li class="nd-pie">
             <div class="nd-pie-text">
-              <label class="nd-pie-name" for="film-donation">{% if studies.donation_title != blank %}{{ studies.donation_title }}{% else %}Donate to Film Studies{% endif %}</label>
+              <label class="nd-pie-name" for="film-donation">{% if studies.donation_title != blank %}{{ studies.donation_title }}{% else %}Tip Your Professor{% endif %}</label>
               {% if studies.donation_description != blank %}<span class="nd-pie-description">{{ studies.donation_description }}</span>{% endif %}
             </div>
             <div class="film-donation">

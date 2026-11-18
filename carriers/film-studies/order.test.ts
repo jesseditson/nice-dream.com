@@ -31,8 +31,7 @@ const studies: FilmStudiesObject = {
   donation_variation_id: "",
   square_location_id: "LOC",
   ticket: [
-    { name: "Single Drink Ticket", description: null, price: 15, square_variation_id: "" },
-    { name: "Double Drink Ticket", description: null, price: 28, square_variation_id: "VAR2" },
+    { name: "Admission", description: null, price: 15, square_variation_id: "" },
     { name: "Unpriced", description: null, price: null, square_variation_id: "" },
   ],
 };
@@ -59,7 +58,7 @@ test("readMenu keeps every ticket's position, and only sells priced ones", () =>
   const menu = readMenu(studies);
   assert.deepEqual(
     menu.tickets.map((ticket) => ticket.available),
-    [true, true, false],
+    [true, false],
   );
   assert.equal(menu.maxPerTicket, 4);
   assert.equal(menu.maxGuests, 50);
@@ -104,32 +103,31 @@ test("parseDollars", () => {
 test("parseSelection", () => {
   const menu = readMenu(studies);
   assert.deepEqual(parseSelection({ tickets: { 0: 2 }, donation: "10" }, menu), {
-    tickets: [2, 0, 0],
+    tickets: [2, 0],
     donationCents: 1000,
   });
-  assert.deepEqual(parseSelection({ donation: "5" }, menu), { tickets: [0, 0, 0], donationCents: 500 });
+  assert.deepEqual(parseSelection({ donation: "5" }, menu), { tickets: [0, 0], donationCents: 500 });
   assert.ok("error" in parseSelection({ tickets: {}, donation: "" }, menu));
   assert.ok("error" in parseSelection({ tickets: { 0: 5 } }, menu));
   assert.ok("error" in parseSelection({ tickets: { 0: 1.5 } }, menu));
   assert.ok("error" in parseSelection({ tickets: { 7: 1 } }, menu));
-  assert.ok("error" in parseSelection({ tickets: { 2: 1 } }, menu));
+  assert.ok("error" in parseSelection({ tickets: { 1: 1 } }, menu));
   assert.ok("error" in parseSelection({ donation: "0.50" }, menu));
 });
 
 test("lineItems use the catalog where a variation is set", () => {
-  const menu = readMenu(studies);
-  const selection = { tickets: [1, 2, 0], donationCents: 2000 };
+  const menu = readMenu({ ...studies, donation_variation_id: "TIP" });
+  const selection = { tickets: [2, 0], donationCents: 2000 };
   assert.deepEqual(lineItems(menu, selection, "Footprints"), [
     {
-      name: "Single Drink Ticket",
-      quantity: "1",
+      name: "Admission",
+      quantity: "2",
       base_price_money: { amount: 1500, currency: "USD" },
       note: "Film Studies: Footprints",
     },
-    { catalog_object_id: "VAR2", quantity: "2", note: "Film Studies: Footprints" },
-    { name: "Donation to Film Studies", quantity: "1", base_price_money: { amount: 2000, currency: "USD" } },
+    { catalog_object_id: "TIP", quantity: "1", base_price_money: { amount: 2000, currency: "USD" } },
   ]);
-  assert.equal(describeSelection(menu, selection), "1 Single Drink Ticket, 2 Double Drink Tickets, a $20 donation");
+  assert.equal(describeSelection(menu, selection), "2 Admissions, a $20 tip");
 });
 
 test("createCheckout schedules the pickup at the screening", async () => {
@@ -172,13 +170,13 @@ test("guestsTaken counts paid tickets and fresh checkouts for that screening", (
     fulfillments: [{ type: "PICKUP", pickup_details: { pickup_at: pickupAt.toISOString().replace(".000Z", "Z") } }],
   });
   const orders: FilmOrder[] = [
-    order("OPEN", 600, [{ name: "Single Drink Ticket", quantity: "3" }, { name: "Donation to Film Studies", quantity: "1" }]),
-    order("COMPLETED", 900, [{ catalog_object_id: "VAR2", quantity: "2" }]),
-    order("DRAFT", 5, [{ name: "Single Drink Ticket", quantity: "4" }]),
-    order("DRAFT", 45, [{ name: "Single Drink Ticket", quantity: "4" }]),
-    order("CANCELED", 60, [{ name: "Single Drink Ticket", quantity: "4" }]),
-    order("OPEN", 60, [{ name: "Single Drink Ticket", quantity: "4" }], localInstant("2027-01-05 18:00")),
-    order("OPEN", 60, [{ catalog_object_id: "PIE", name: "Single Drink Ticket", quantity: "1" }]),
+    order("OPEN", 600, [{ name: "Admission", quantity: "3" }, { name: "Tip Your Professor", quantity: "1" }]),
+    order("COMPLETED", 900, [{ name: "Admission", quantity: "2" }]),
+    order("DRAFT", 5, [{ name: "Admission", quantity: "4" }]),
+    order("DRAFT", 45, [{ name: "Admission", quantity: "4" }]),
+    order("CANCELED", 60, [{ name: "Admission", quantity: "4" }]),
+    order("OPEN", 60, [{ name: "Admission", quantity: "4" }], localInstant("2027-01-05 18:00")),
+    order("OPEN", 60, [{ catalog_object_id: "PIE", name: "Admission", quantity: "1" }]),
   ];
   const taken = guestsTaken(menu, orders, screeningAt, now);
   assert.equal(taken, 3 + 2 + 4);

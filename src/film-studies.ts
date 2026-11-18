@@ -87,7 +87,7 @@
       return count ? [`${count} ${input.dataset.name}${count === 1 ? "" : "s"}`] : [];
     });
     const gift = donation();
-    if (gift) parts.push(`a ${money(gift)} donation`);
+    if (gift) parts.push(`a ${money(gift)} tip`);
     return parts.join(", ");
   };
 
@@ -181,11 +181,11 @@
 
     const gift = donation();
     if (gift == null) {
-      showRefusal("Enter the donation in dollars, like 20.");
+      showRefusal("Enter the tip in dollars, like 20.");
       return;
     }
     if (!ticketInputs.some((input) => quantity(input) > 0) && !gift) {
-      showRefusal("Pick a ticket or add a donation.");
+      showRefusal("Pick a ticket or add a tip.");
       return;
     }
 

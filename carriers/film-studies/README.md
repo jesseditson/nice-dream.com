@@ -39,7 +39,7 @@ push a screening slightly over.
     and tax, so keep `price` in step; blank sends a plain, untaxed line item at
     `price`. Tickets are matched by position, so add new ones to the end.
   - `donation_variation_id` — a variable-price Square item with no tax; blank
-    sends a plain "Donation to Film Studies" line item.
+    sends a plain "Tip Your Professor" line item.
 
 The Square access token is the one on the `dinner` object; it needs
 `ORDERS_WRITE` and `PAYMENTS_WRITE` (and `ITEMS_READ` once catalog variations

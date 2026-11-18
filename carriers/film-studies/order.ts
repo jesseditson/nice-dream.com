@@ -21,8 +21,6 @@ export type Menu = {
 /** How many of each ticket, by its position in film_studies.ticket, and the donation in cents. */
 export type Selection = { tickets: number[]; donationCents: number };
 
-export const MAX_DONATION_CENTS = 500_000;
-
 const text = (value: unknown): string =>
   typeof value === "string" ? value.trim() : typeof value === "number" ? String(value) : "";
 
@@ -116,13 +114,10 @@ export const parseSelection = (fields: Record<string, unknown>, menu: Menu): Sel
     tickets[index] = count;
   }
   const donationCents = parseDollars(fields.donation);
-  if (donationCents == null) return { error: "Enter the donation in dollars, like 20." };
-  if (donationCents > MAX_DONATION_CENTS) {
-    return { error: "That's a generous donation! Email us at hello@nice-dream.com and we'll set it up." };
-  }
-  if (donationCents > 0 && donationCents < 100) return { error: "Donations start at $1." };
+  if (donationCents == null) return { error: "Enter the tip in dollars, like 20." };
+  if (donationCents > 0 && donationCents < 100) return { error: "Tips start at $1." };
   if (!tickets.some((count) => count > 0) && !donationCents) {
-    return { error: "Pick a ticket or add a donation." };
+    return { error: "Pick a ticket or add a tip." };
   }
   return { tickets, donationCents };
 };
@@ -176,7 +171,7 @@ export const spotsLeft = (menu: Menu, taken: number): number | null =>
 
 export const spotsRefusal = (left: number): string =>
   left === 0
-    ? "We're sold out for this screening! You can still add a donation."
+    ? "We're sold out for this screening! You can still add a tip."
     : `Only ${left} ticket${left === 1 ? "" : "s"} left.`;
 
 const cents = (dollars: number): number => Math.round(dollars * 100);
@@ -204,7 +199,7 @@ export const lineItems = (menu: Menu, selection: Selection, filmTitle: string): 
     items.push(
       menu.donationVariationId
         ? { catalog_object_id: menu.donationVariationId, quantity: "1", base_price_money: price }
-        : { name: "Donation to Film Studies", quantity: "1", base_price_money: price },
+        : { name: "Tip Your Professor", quantity: "1", base_price_money: price },
     );
   }
   return items;
@@ -213,14 +208,14 @@ export const lineItems = (menu: Menu, selection: Selection, filmTitle: string): 
 export const money = (amountCents: number): string =>
   amountCents % 100 ? `$${(amountCents / 100).toFixed(2)}` : `$${amountCents / 100}`;
 
-/** e.g. "2 Admissions, a $20 donation". */
+/** e.g. "2 Admissions, a $20 tip". */
 export const describeSelection = (menu: Menu, selection: Selection): string => {
   const parts = menu.tickets.flatMap((ticket, index) => {
     const quantity = selection.tickets[index] ?? 0;
     if (!quantity) return [];
     return [`${quantity} ${ticket.name}${quantity === 1 ? "" : "s"}`];
   });
-  if (selection.donationCents) parts.push(`a ${money(selection.donationCents)} donation`);
+  if (selection.donationCents) parts.push(`a ${money(selection.donationCents)} tip`);
   return parts.join(", ");
 };
 
