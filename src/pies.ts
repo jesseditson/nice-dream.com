@@ -338,7 +338,7 @@
     updateTotal();
     renderDates();
     showClosedIfPast();
-    // Each request to the carrier also copies orders placed through the Square link onto the sheet.
+    // Each request to the carrier also settles checkouts still awaiting payment on the sheet.
     void fetch(endpoint, { headers: { accept: "application/json" } }).catch(() => {});
   }
 })();

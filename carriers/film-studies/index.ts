@@ -4,29 +4,28 @@
  *   GET ?film=   whether the film is on sale, and how many guests it can
  *                still take (`spots_left`, null without a limit)
  *   POST (JSON)  { film: "footprints", tickets: { <ticket index>: quantity },
- *                  donation, name, email, phone } — starts a Square checkout
- *                and answers with its URL
+ *                  donation, name, email, phone } — starts a checkout in the
+ *                site's connected payment account and answers with its URL
  *
- * The tickets and Square location live on the film_studies object; the Square
- * access token is the one the dinner object already holds. The order itself is
- * the record: it lands in Square with the guest's name and a pickup at the
- * screening's start. Each ticket is one guest, and Square's orders are
- * counted against film_studies.max_guests before a checkout starts.
+ * The tickets live on the film_studies object. Each checkout is kept in the
+ * site's database with the guest's details, and each ticket is one guest:
+ * paid checkouts, and ones started in the last HOLD_MINUTES, are counted
+ * against film_studies.max_guests before a checkout starts.
  *
  * Anything the guest can fix comes back as `{ ok: false, error }` with a 200 so
- * the form can show it; only a misconfigured site throws.
+ * the form can show it.
  */
-import type { Carrier, CarrierJsonValue } from "@archival/carrier";
+import type { Carrier, CarrierJsonValue, CarrierOutOfStockError, CarrierSite } from "@archival/carrier";
+import { filmCheckouts, recordCheckout } from "./checkouts.ts";
 import {
   type Menu,
+  checkoutItems,
   describeSelection,
   e164,
   findFilm,
-  guestsTaken,
+  guestsHeld,
   isOnSale,
   latestFilm,
-  lineItems,
-  localInstant,
   localStamp,
   parseSelection,
   readMenu,
@@ -34,7 +33,6 @@ import {
   spotsRefusal,
   ticketCount,
 } from "./order.ts";
-import { createCheckout, pickupOrders } from "./square.ts";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_EMAIL = "hello@nice-dream.com";
@@ -46,17 +44,13 @@ type Reply = { [key: string]: CarrierJsonValue };
 
 const refuse = (error: string): Reply => ({ ok: false, error });
 
-/** How far back Square is searched for a screening's orders. */
-const LOOKBACK_DAYS = 90;
-
-/** Spots the screening has left, null without a limit; throws when Square can't be reached. */
-const remainingSpots = async (token: string, menu: Menu, screeningAt: Date): Promise<number | null> => {
+/** Spots the screening has left, null without a limit; throws when the database can't be read. */
+const remainingSpots = async (site: CarrierSite, menu: Menu, film: string): Promise<number | null> => {
   if (menu.maxGuests == null) return null;
-  const orders = await pickupOrders(token, menu.locationId, new Date(Date.now() - LOOKBACK_DAYS * 86_400_000));
-  return spotsLeft(menu, guestsTaken(menu, orders, screeningAt));
+  return spotsLeft(menu, guestsHeld(await filmCheckouts(site.sql, site.payments, film)));
 };
 
-/** 144 random bits, URL-safe, and short enough for Square's reference_id. */
+/** 144 random bits, URL-safe. */
 const randomToken = (): string => {
   const bytes = crypto.getRandomValues(new Uint8Array(18));
   let binary = "";
@@ -64,27 +58,26 @@ const randomToken = (): string => {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
-const carrier: Carrier = async (params, body, objects) => {
+const outOfStock = (error: unknown): string[] => {
+  const short = (error as Partial<CarrierOutOfStockError> | null)?.outOfStock;
+  return Array.isArray(short) ? short : [];
+};
+
+const carrier: Carrier = async (params, body, objects, site) => {
   const menu = readMenu(objects.film_studies);
-  const squareToken = objects.dinner.square_access_token;
-  if (!squareToken || !menu.locationId) {
-    throw new Error(
-      "Film Studies tickets are not configured — set square_location_id on the film_studies object and square_access_token on the dinner object.",
-    );
-  }
   const fields =
     body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
 
   const films = objects.film ?? [];
   const film = findFilm(films, text(fields ? fields.film : params.get("film")));
-  const stamp = film ? localStamp(film.starts) : null;
-  if (!film || !stamp) return refuse("We couldn't find that screening — refresh the page and try again.");
-  const screeningAt = localInstant(stamp);
+  if (!film || !localStamp(film.starts)) {
+    return refuse("We couldn't find that screening — refresh the page and try again.");
+  }
 
   if (!fields) {
     const onSale = isOnSale(film);
     const left = onSale
-      ? await remainingSpots(squareToken, menu, screeningAt).catch((error) => {
+      ? await remainingSpots(site, menu, film.path).catch((error) => {
           console.error("Could not count Film Studies guests:", error);
           return null;
         })
@@ -110,7 +103,7 @@ const carrier: Carrier = async (params, body, objects) => {
   if (guests > 0 && menu.maxGuests != null) {
     let left: number | null;
     try {
-      left = await remainingSpots(squareToken, menu, screeningAt);
+      left = await remainingSpots(site, menu, film.path);
     } catch (error) {
       console.error("Could not count Film Studies guests:", error);
       return refuse("We couldn't check how many spots are left — please try again in a moment.");
@@ -119,27 +112,34 @@ const carrier: Carrier = async (params, body, objects) => {
   }
 
   const title = text(film.title) || "Film Studies";
-  const siteUrl = (objects.SITE_URL || "https://nice-dream.com").replace(/\/+$/, "");
+  const summary = describeSelection(menu, selection);
+  const siteUrl = site.url.replace(/\/+$/, "");
   const page = latestFilm(films)?.path === film.path ? "/film-studies" : `/${film.path}`;
   const token = randomToken();
 
+  let checkout: { id: string; url: string };
   try {
-    const checkout = await createCheckout(squareToken, {
-      token,
-      locationId: menu.locationId,
-      lineItems: lineItems(menu, selection, title),
-      screeningAt,
-      name,
-      email,
-      phone,
-      note: `Film Studies: ${title} — ${describeSelection(menu, selection)}`,
-      redirectUrl: `${siteUrl}${page}?paid=${encodeURIComponent(token)}`,
+    checkout = await site.payments.checkout.create({
+      items: checkoutItems(menu, selection),
+      successUrl: `${siteUrl}${page}?paid=${encodeURIComponent(token)}`,
+      cancelUrl: `${siteUrl}${page}`,
+      customerEmail: email,
+      metadata: { film: title.slice(0, 255), guest: name.slice(0, 255), phone, order: summary.slice(0, 255) },
+      idempotencyKey: token,
     });
-    return { ok: true, checkout_url: checkout.url };
   } catch (error) {
-    console.error("Could not start a Square checkout:", error);
+    if (outOfStock(error).length) return { ...refuse(spotsRefusal(0)), spots_left: 0 };
+    console.error("Could not start a Film Studies checkout:", error);
     return refuse(`We couldn't start checkout just now — please try again, or email us at ${CONTACT_EMAIL}.`);
   }
+
+  try {
+    await recordCheckout(site.sql, { id: checkout.id, film: film.path, guests, summary, name, email, phone });
+  } catch (error) {
+    console.error(`Could not record Film Studies checkout ${checkout.id}:`, error);
+  }
+
+  return { ok: true, checkout_url: checkout.url };
 };
 
 export default carrier;
