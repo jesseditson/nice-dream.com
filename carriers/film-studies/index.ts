@@ -133,7 +133,6 @@ const carrier: Carrier = async (params, body, objects) => {
       email,
       phone,
       note: `Film Studies: ${title} — ${describeSelection(menu, selection)}`,
-      allowTipping: guests > 0,
       redirectUrl: `${siteUrl}${page}?paid=${encodeURIComponent(token)}`,
     });
     return { ok: true, checkout_url: checkout.url };

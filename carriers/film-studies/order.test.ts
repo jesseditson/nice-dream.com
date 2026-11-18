@@ -147,7 +147,6 @@ test("createCheckout schedules the pickup at the screening", async () => {
       email: "ada@example.com",
       phone: "+17605550100",
       note: "Film Studies",
-      allowTipping: false,
       redirectUrl: "https://nice-dream.com/film-studies?paid=abc",
     },
     fetcher,

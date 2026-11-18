@@ -11,8 +11,8 @@ Deployed with the site and reachable at `/carriers/film-studies`.
 The order is created through Square's Checkout API with the tickets, the
 donation, and a `SCHEDULED` pickup at the screening's start carrying the
 guest's name, email and phone, so it shows on Square's order list that night.
-The guest pays on Square's checkout page (tipping is offered when the order has
-tickets) and Square sends them back to the film's page with `?paid=`, where the
+The guest pays on Square's checkout page, with Square's own tip screen turned
+off, and Square sends them back to the film's page with `?paid=`, where the
 form shows a confirmation. There's no spreadsheet: Square is the record.
 
 Online sales close when the film's `starts` passes; the page hides the form at

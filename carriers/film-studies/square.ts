@@ -36,7 +36,6 @@ export type CheckoutRequest = {
   email: string;
   phone: string;
   note: string;
-  allowTipping: boolean;
   redirectUrl: string;
 };
 
@@ -77,7 +76,7 @@ export const createCheckout = async (
       },
       checkout_options: {
         redirect_url: request.redirectUrl,
-        allow_tipping: request.allowTipping,
+        allow_tipping: false,
         ask_for_shipping_address: false,
       },
     },
