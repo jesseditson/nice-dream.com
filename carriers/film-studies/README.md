@@ -40,6 +40,10 @@ push a screening slightly over.
     `price`. Tickets are matched by position, so add new ones to the end.
   - `donation_variation_id` — a variable-price Square item with no tax; blank
     sends a plain "Tip Your Professor" line item.
+  - `donation_blocked_tax_ids` — the Square tax(es) kept off the tip, sent as
+    the tip line's `pricing_blocklists.blocked_taxes`. Square auto-applies the
+    location's sales tax to plain line items (it applies to custom amounts), so
+    without this a plain tip is taxed. Comma-separated catalog tax IDs.
 
 The Square access token is the one on the `dinner` object; it needs
 `ORDERS_WRITE` and `PAYMENTS_WRITE` (and `ITEMS_READ` once catalog variations
