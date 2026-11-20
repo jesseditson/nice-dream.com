@@ -399,6 +399,11 @@ export interface FilmStudiesObject {
   donation_description: string | null;
   /** the Square variation donations sell as (a variable-price item with no tax); blank sends a plain line item */
   donation_variation_id: string | null;
+  /**
+   * the Square tax Square auto-applies at the location (it also lands on plain line items), kept off the tip;
+   * separate several with commas, blank leaves the tip as Square taxes it
+   */
+  donation_blocked_tax_ids: string | null;
   /** the Square location orders are placed at */
   square_location_id: string | null;
   /**

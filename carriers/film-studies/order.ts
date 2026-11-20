@@ -15,6 +15,8 @@ export type Menu = {
   /** Null when a screening takes any number of guests. */
   maxGuests: number | null;
   donationVariationId: string;
+  /** Square catalog taxes blocked on the tip line, so Square's auto-applied location tax skips it. */
+  donationBlockedTaxIds: string[];
   locationId: string;
 };
 
@@ -34,6 +36,9 @@ export const readMenu = (studies: FilmStudiesObject): Menu => ({
     studies.max_per_ticket != null && studies.max_per_ticket >= 1 ? Math.floor(studies.max_per_ticket) : 10,
   maxGuests: studies.max_guests != null && studies.max_guests >= 1 ? Math.floor(studies.max_guests) : null,
   donationVariationId: text(studies.donation_variation_id),
+  donationBlockedTaxIds: text(studies.donation_blocked_tax_ids)
+    .split(/[\s,]+/)
+    .filter((id) => id !== ""),
   locationId: text(studies.square_location_id),
 });
 
@@ -196,10 +201,21 @@ export const lineItems = (menu: Menu, selection: Selection, filmTitle: string): 
   });
   if (selection.donationCents) {
     const price = { amount: selection.donationCents, currency: "USD" };
+    // Square auto-applies the location's tax to plain line items too; a tip isn't taxable.
+    const untaxed = menu.donationBlockedTaxIds.length
+      ? {
+          pricing_blocklists: {
+            blocked_taxes: menu.donationBlockedTaxIds.map((id, index) => ({
+              uid: `tip-untaxed-${index}`,
+              tax_catalog_object_id: id,
+            })),
+          },
+        }
+      : {};
     items.push(
       menu.donationVariationId
-        ? { catalog_object_id: menu.donationVariationId, quantity: "1", base_price_money: price }
-        : { name: "Tip Your Professor", quantity: "1", base_price_money: price },
+        ? { catalog_object_id: menu.donationVariationId, quantity: "1", base_price_money: price, ...untaxed }
+        : { name: "Tip Your Professor", quantity: "1", base_price_money: price, ...untaxed },
     );
   }
   return items;

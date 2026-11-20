@@ -29,6 +29,7 @@ const studies: FilmStudiesObject = {
   donation_title: null,
   donation_description: null,
   donation_variation_id: "",
+  donation_blocked_tax_ids: null,
   square_location_id: "LOC",
   ticket: [
     { name: "Admission", description: null, price: 15, square_variation_id: "" },
@@ -128,6 +129,32 @@ test("lineItems use the catalog where a variation is set", () => {
     { catalog_object_id: "TIP", quantity: "1", base_price_money: { amount: 2000, currency: "USD" } },
   ]);
   assert.equal(describeSelection(menu, selection), "2 Admissions, a $20 tip");
+});
+
+test("the tip line blocks the configured taxes, and only the tip", () => {
+  const menu = readMenu({ ...studies, donation_blocked_tax_ids: " TAX1, TAX2 " });
+  assert.deepEqual(menu.donationBlockedTaxIds, ["TAX1", "TAX2"]);
+  const items = lineItems(menu, { tickets: [1, 0], donationCents: 1500 }, "Footprints") as Record<string, unknown>[];
+  assert.equal(items[0].pricing_blocklists, undefined);
+  assert.deepEqual(items[1], {
+    name: "Tip Your Professor",
+    quantity: "1",
+    base_price_money: { amount: 1500, currency: "USD" },
+    pricing_blocklists: {
+      blocked_taxes: [
+        { uid: "tip-untaxed-0", tax_catalog_object_id: "TAX1" },
+        { uid: "tip-untaxed-1", tax_catalog_object_id: "TAX2" },
+      ],
+    },
+  });
+  const catalogTip = lineItems(
+    readMenu({ ...studies, donation_variation_id: "TIP", donation_blocked_tax_ids: "TAX1" }),
+    { tickets: [0, 0], donationCents: 500 },
+    "Footprints",
+  ) as Record<string, unknown>[];
+  assert.deepEqual(catalogTip[0].pricing_blocklists, {
+    blocked_taxes: [{ uid: "tip-untaxed-0", tax_catalog_object_id: "TAX1" }],
+  });
 });
 
 test("createCheckout schedules the pickup at the screening", async () => {

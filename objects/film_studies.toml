@@ -21,6 +21,7 @@ max_guests = 50.0
 donation_title = "Tip Your Professor!"
 donation_description = "Tips go straight to your host."
 donation_variation_id = ""
+donation_blocked_tax_ids = "TO3IZCA5TJFV2OC2PK4WRZZS"
 square_location_id = "LD5VJT9B9ADK7"
 
 [[ticket]]
