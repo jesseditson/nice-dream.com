@@ -120,7 +120,7 @@ const carrier: Carrier = async (params, body, objects, site) => {
   let checkout: { id: string; url: string };
   try {
     checkout = await site.payments.checkout.create({
-      items: checkoutItems(menu, selection),
+      items: checkoutItems(menu, selection, [title, name, phone].join(" · ")),
       successUrl: `${siteUrl}${page}?paid=${encodeURIComponent(token)}`,
       cancelUrl: `${siteUrl}${page}`,
       customerEmail: email,

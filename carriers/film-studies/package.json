@@ -14,7 +14,7 @@
     "test": "node --test"
   },
   "devDependencies": {
-    "@archival/carrier": "^1.8.0",
+    "@archival/carrier": "^1.9.0",
     "@types/node": "^26.6.4",
     "typescript": "^7.0.0"
   }

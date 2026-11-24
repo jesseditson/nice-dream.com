@@ -146,8 +146,15 @@ const cents = (dollars: number): number => Math.round(dollars * 100);
 
 export const DONATION_NAME = "Tip Your Professor";
 
-/** The checkout's lines: variants where set, lines at the page's price otherwise, and the donation. */
-export const checkoutItems = (menu: Menu, selection: Selection): CarrierCheckoutItem[] => {
+/** How long a checkout line's note can be. */
+const NOTE_LENGTH = 500;
+
+/**
+ * The checkout's lines: variants where set, lines at the page's price
+ * otherwise, and the donation. `note` rides on the first line, where the
+ * provider shows it on the order.
+ */
+export const checkoutItems = (menu: Menu, selection: Selection, note = ""): CarrierCheckoutItem[] => {
   const items: CarrierCheckoutItem[] = [];
   menu.tickets.forEach((ticket, index) => {
     const quantity = selection.tickets[index] ?? 0;
@@ -159,6 +166,7 @@ export const checkoutItems = (menu: Menu, selection: Selection): CarrierCheckout
     );
   });
   if (selection.donationCents) items.push({ name: DONATION_NAME, amount: selection.donationCents, quantity: 1 });
+  if (note && items.length) items[0] = { ...items[0], note: note.slice(0, NOTE_LENGTH) };
   return items;
 };
 

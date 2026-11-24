@@ -123,6 +123,10 @@ test("checkoutItems sell variants where set, and price the rest here", () => {
   ]);
   const sold = readMenu({ ...studies, ticket: [{ ...studies.ticket[0], variant_id: "VAR" }] });
   assert.deepEqual(checkoutItems(sold, { tickets: [2], donationCents: 0 }), [{ variant: "VAR", quantity: 2 }]);
+  assert.deepEqual(checkoutItems(sold, { tickets: [2], donationCents: 500 }, "Footprints · Ada").map((item) => item.note), [
+    "Footprints · Ada",
+    undefined,
+  ]);
   assert.equal(describeSelection(menu, selection), "2 Admissions, a $20 tip");
 });
 
