@@ -5,9 +5,9 @@
  * carrier builds them on an empty spreadsheet and rebuilds the headers and Bake
  * List whenever the menu or pickup days change.
  */
+import type { CarrierCheckout } from "@archival/carrier";
 import type { SheetsClient } from "./google.ts";
 import { type Menu, type Selection, formatClock, isIsoDate, parseHHMM, parseLocalTimestamp } from "./menu.ts";
-import type { OrderState } from "./square.ts";
 
 export const ORDERS = "Orders";
 export const BAKE = "Bake List";
@@ -29,7 +29,7 @@ export const FIXED_COLUMNS = [
   "Notes",
   "Total Paid",
   "Ordered At",
-  "Square Order",
+  "Checkout ID",
   "Checkout Link",
   "Token",
 ];
@@ -46,7 +46,7 @@ export const COL = {
   notes: 8,
   total: 9,
   orderedAt: 10,
-  squareOrder: 11,
+  checkoutId: 11,
   checkout: 12,
   token: 13,
   counts: 14,
@@ -61,7 +61,7 @@ export const STATUS = {
 
 /** How long a checkout can go unpaid before its row says so. */
 export const UNPAID_AFTER_MINUTES = 30;
-/** Unpaid checkouts older than this are no longer looked up in Square, except by their own guest. */
+/** Unpaid checkouts older than this are no longer looked up, except by their own guest. */
 const SYNC_DAYS = 2;
 
 export const headers = (menu: Menu): string[] => [
@@ -115,10 +115,20 @@ export type OrderRow = {
   name: string;
   status: string;
   summary: string;
+  phone: string;
+  email: string;
+  notes: string;
+  total: string;
   orderedAt: string;
-  squareOrder: string;
+  checkoutId: string;
   checkout: string;
   token: string;
+  selection: Selection;
+};
+
+const cellCount = (cell: Cell): number => {
+  const count = Math.round(Number(cell));
+  return Number.isFinite(count) && count > 0 ? count : 0;
 };
 
 export const readOrders = async (client: SheetsClient, menu: Menu, tab: string): Promise<OrderRow[]> => {
@@ -134,20 +144,34 @@ export const readOrders = async (client: SheetsClient, menu: Menu, tab: string):
     name: cellText(cells[COL.name]),
     status: cellText(cells[COL.status]).toLowerCase(),
     summary: cellText(cells[COL.summary]),
+    phone: cellText(cells[COL.phone]),
+    email: cellText(cells[COL.email]),
+    notes: cellText(cells[COL.notes]),
+    total: cellText(cells[COL.total]),
     orderedAt: cellText(cells[COL.orderedAt]),
-    squareOrder: cellText(cells[COL.squareOrder]),
+    checkoutId: cellText(cells[COL.checkoutId]),
     checkout: cellText(cells[COL.checkout]),
     token: cellText(cells[COL.token]),
+    selection: {
+      pies: new Map(menu.pies.map((pie, offset) => [pie.id, cellCount(cells[COL.counts + offset])])),
+      addOns: menu.addOn ? cellCount(cells[COL.counts + menu.pies.length]) : 0,
+    },
   }));
 };
 
-/** The status Square says a row should have, or null to leave it. */
-export const statusFrom = (current: string, square: OrderState, now: Date = new Date()): string | null => {
+/** The status a checkout says its row should have, or null to leave it. */
+export const statusFrom = (
+  current: string,
+  status: CarrierCheckout["status"],
+  orderedAt: Date | null,
+  now: Date = new Date(),
+): string | null => {
   let next: string;
-  if (square.state === "CANCELED") next = STATUS.cancelled;
-  else if (square.state === "OPEN" || square.state === "COMPLETED") next = STATUS.paid;
-  else if (square.state === "DRAFT") {
-    const age = square.createdAt ? now.getTime() - square.createdAt.getTime() : 0;
+  if (status === "canceled") next = STATUS.cancelled;
+  else if (status === "paid") next = STATUS.paid;
+  else if (status === "expired") next = STATUS.notPaid;
+  else if (status === "open") {
+    const age = orderedAt ? now.getTime() - orderedAt.getTime() : 0;
     next = age > UNPAID_AFTER_MINUTES * 60_000 ? STATUS.notPaid : STATUS.awaiting;
   } else return null;
   return next === current ? null : next;
@@ -156,7 +180,7 @@ export const statusFrom = (current: string, square: OrderState, now: Date = new 
 /** Rows whose payment is still unknown, plus `token`'s row however old it is. */
 export const rowsToSync = (orders: OrderRow[], token: string, now: Date = new Date()): OrderRow[] =>
   orders.filter((order) => {
-    if (!order.squareOrder) return false;
+    if (!order.checkoutId) return false;
     if (token && order.token === token) return true;
     if (order.status === STATUS.awaiting) return true;
     if (order.status !== STATUS.notPaid) return false;
@@ -166,23 +190,24 @@ export const rowsToSync = (orders: OrderRow[], token: string, now: Date = new Da
 
 export const dollars = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
-/** Writes what Square says back to the checkouts' rows, and updates `checkouts` to match. */
+/** Writes each checkout's status back to its row, and updates `checkouts` to match. */
 export const applyStates = async (
   client: SheetsClient,
   checkouts: OrderRow[],
-  states: Map<string, OrderState>,
+  states: Map<string, CarrierCheckout>,
   now: Date = new Date(),
 ): Promise<void> => {
   const data: { range: string; values: Cell[][] }[] = [];
   for (const checkout of checkouts) {
-    const square = states.get(checkout.squareOrder);
-    if (!square) continue;
-    const next = statusFrom(checkout.status, square, now);
+    const state = states.get(checkout.checkoutId);
+    if (!state) continue;
+    const next = statusFrom(checkout.status, state.status, parseLocalTimestamp(checkout.orderedAt), now);
     if (!next) continue;
     checkout.status = next;
     data.push({ range: `${CHECKOUTS}!${columnLetter(COL.status)}${checkout.row}`, values: [[next]] });
-    if (next === STATUS.paid && square.total != null) {
-      data.push({ range: `${CHECKOUTS}!${columnLetter(COL.total)}${checkout.row}`, values: [[dollars(square.total)]] });
+    if (next === STATUS.paid && state.amountTotal != null) {
+      checkout.total = dollars(state.amountTotal);
+      data.push({ range: `${CHECKOUTS}!${columnLetter(COL.total)}${checkout.row}`, values: [[checkout.total]] });
     }
   }
   if (!data.length) return;
@@ -209,10 +234,36 @@ export type NewOrder = {
   summary: string;
   selection: Selection;
   orderedAt: string;
-  squareOrder: string;
+  checkoutId: string;
   checkout: string;
   token: string;
 };
+
+/** Orders rows for the checkouts that are paid and not on the Orders tab yet; `known` holds the checkout ids it has. */
+export const paidOrders = (checkouts: OrderRow[], known: Set<string>): NewOrder[] =>
+  checkouts.flatMap((checkout) => {
+    if (checkout.status !== STATUS.paid || !checkout.date || !checkout.checkoutId) return [];
+    if (known.has(checkout.checkoutId)) return [];
+    known.add(checkout.checkoutId);
+    return [
+      {
+        date: checkout.date,
+        start: checkout.start,
+        status: STATUS.paid,
+        total: checkout.total,
+        name: checkout.name,
+        phone: checkout.phone,
+        email: checkout.email,
+        notes: checkout.notes,
+        summary: checkout.summary,
+        selection: checkout.selection,
+        orderedAt: checkout.orderedAt,
+        checkoutId: checkout.checkoutId,
+        checkout: checkout.checkout,
+        token: checkout.token,
+      },
+    ];
+  });
 
 const orderRow = (menu: Menu, order: NewOrder): Cell[] => {
   const row: Cell[] = [];
@@ -227,7 +278,7 @@ const orderRow = (menu: Menu, order: NewOrder): Cell[] => {
   row[COL.notes] = order.notes;
   row[COL.total] = order.total;
   row[COL.orderedAt] = order.orderedAt;
-  row[COL.squareOrder] = order.squareOrder;
+  row[COL.checkoutId] = order.checkoutId;
   row[COL.checkout] = order.checkout;
   row[COL.token] = order.token;
   menu.pies.forEach((pie, offset) => {
